@@ -2,7 +2,7 @@
 
 import type { Dispatch } from "react";
 import type { Action, AppState } from "../state/appState";
-import { measuredCalibrationDistanceMm } from "../core/transform";
+import { measuredCalibrationDistanceMm, sourcePxToDisplayedPx } from "../core/transform";
 
 interface Props {
   state: AppState;
@@ -15,7 +15,7 @@ export function CalibrationVerificationDialog({ state, dispatch }: Props) {
   const expected = state.project.calibration.realDistanceMm;
   if (!a || !b || !mmPerPixel || !expected) return null;
 
-  const measured = measuredCalibrationDistanceMm(a, b, mmPerPixel);
+  const measured = measuredCalibrationDistanceMm(sourcePxToDisplayedPx(a, state.project.background), sourcePxToDisplayedPx(b, state.project.background), mmPerPixel);
   const errorPercent = ((measured - expected) / expected) * 100;
   const withinTarget = Math.abs(errorPercent) <= 1;
 

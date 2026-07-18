@@ -1,0 +1,96 @@
+/* Phase 3の出力ダイアログ。既存の画面レイアウトとは分離して保守する。 */
+
+.export-dialog {
+  width: min(560px, 95vw);
+}
+
+.export-dialog label {
+  display: block;
+  margin: 0 0 8px;
+  color: #555;
+}
+
+.export-dialog input:not([type="checkbox"]),
+.export-dialog select,
+.export-dialog textarea {
+  display: block;
+  width: 100%;
+  margin-top: 2px;
+  padding: 5px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.export-dialog textarea {
+  resize: vertical;
+}
+
+.export-dialog h3 {
+  margin: 14px 0 6px;
+  font-size: 13px;
+}
+
+.export-grid-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.export-checks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px 12px;
+}
+
+.export-checks .row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.export-dialog .primary {
+  border-color: #2f7fd1;
+  background: #2f7fd1;
+  color: #fff;
+}
+
+.export-dialog .hint {
+  margin-bottom: 0;
+}
+
+/* iPad幅ではライブラリを消すと配置操作が完結しないため、
+   キャンバス上部の折り返し領域へ残す。CSSのgridは指での縦スクロールを許可する。 */
+@media (max-width: 700px) {
+  .main-area {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(280px, 1fr) auto;
+  }
+
+  .library-panel {
+    display: block;
+    max-height: 28vh;
+    border-right: 0;
+    border-bottom: 1px solid #d5d8dc;
+  }
+
+  .library-panel li button,
+  .property-button-grid button,
+  .object-properties .actions button {
+    min-height: 38px;
+  }
+
+  .property-panel {
+    max-height: 34vh;
+  }
+
+  .toolbar button {
+    min-height: 36px;
+  }
+}
+
+@media (max-width: 480px) {
+  .export-grid-fields {
+    grid-template-columns: 1fr;
+  }
+}

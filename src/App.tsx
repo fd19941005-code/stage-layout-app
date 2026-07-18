@@ -1,10 +1,10 @@
 // アプリ全体の画面構成(10.1)とデータフロー。
-// 自動保存(FR-002): 最終操作から1.5秒後にデバウンスして実行する(6.3)。
+// 自動保存(FR-002): IndexedDBへ最終操作から1.5秒後にデバウンスして実行する。
 
 import { useEffect, useReducer, useRef, useState } from "react";
 import type { PointMm } from "./types/project";
 import { appReducer, createInitialState } from "./state/appState";
-import { deserializeProject, serializeProject } from "./core/project";
+import { loadAutosavedProject, saveAutosavedProject } from "./core/storage";
 import { Toolbar } from "./components/Toolbar";
 import { LibraryPanel } from "./components/LibraryPanel";
 import { CanvasStage } from "./components/CanvasStage";
@@ -12,23 +12,16 @@ import { PropertyPanel } from "./components/PropertyPanel";
 import { StatusBar } from "./components/StatusBar";
 import { CalibrationDialog } from "./components/CalibrationDialog";
 import { CalibrationVerificationDialog } from "./components/CalibrationVerificationDialog";
-
-const AUTOSAVE_KEY = "stageLayout.autosave.v1";
-
-function loadAutosave() {
-  try {
-    const json = localStorage.getItem(AUTOSAVE_KEY);
-    return json ? deserializeProject(json) : undefined;
-  } catch {
-    return undefined;
-  }
-}
+import { ExportDialog } from "./components/ExportDialog";
 
 export function App() {
-  const [state, dispatch] = useReducer(appReducer, undefined, () => createInitialState(loadAutosave()));
+  const [state, dispatch] = useReducer(appReducer, undefined, () => createInitialState());
+  const [storageReady, setStorageReady] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
   const [cursorMm, setCursorMm] = useState<PointMm | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const noticeTimer = useRef<number | undefined>(undefined);
+  const storageLoadStarted = useRef(false);
 
   function showNotice(message: string) {
     setNotice(message);
@@ -37,16 +30,23 @@ export function App() {
   }
 
   useEffect(() => {
-    if (state.saveState !== "dirty") return;
+    if (storageLoadStarted.current) return;
+    storageLoadStarted.current = true;
+    loadAutosavedProject()
+      .then((project) => {
+        if (project) dispatch({ type: "LOAD_PROJECT", project });
+      })
+      .catch(() => showNotice("自動保存データを読み込めませんでした。新規プロジェクトを表示します。"))
+      .finally(() => setStorageReady(true));
+  }, []);
+
+  useEffect(() => {
+    if (!storageReady || state.saveState !== "dirty") return;
     const timer = window.setTimeout(() => {
-      try {
-        localStorage.setItem(AUTOSAVE_KEY, serializeProject(state.project));
-      } catch {
-        showNotice("自動保存に失敗しました(容量超過の可能性があります)");
-      }
+      saveAutosavedProject(state.project).catch(() => showNotice("自動保存に失敗しました(容量超過の可能性があります)"));
     }, 1500);
     return () => window.clearTimeout(timer);
-  }, [state.project, state.saveState]);
+  }, [state.project, state.saveState, storageReady]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -73,7 +73,8 @@ export function App() {
 
   return (
     <div className="app-layout">
-      <Toolbar state={state} dispatch={dispatch} onNotice={showNotice} />
+      <Toolbar state={state} dispatch={dispatch} onNotice={showNotice} onExport={() => setExportOpen(true)} />
+      {!storageReady && <div className="banner info">ローカル保存データを確認中…</div>}
       {state.project.calibration.mmPerPixel === null && (
         <div className="banner warning">未校正です。背景を読み込み、「校正」で図面上の2点と実距離(例: 1マス=910mm)を指定してください。</div>
       )}
@@ -95,6 +96,7 @@ export function App() {
       <StatusBar state={state} cursorMm={cursorMm} />
       {calibrationReady && <CalibrationDialog dispatch={dispatch} />}
       {verificationReady && <CalibrationVerificationDialog state={state} dispatch={dispatch} />}
+      {exportOpen && <ExportDialog state={state} dispatch={dispatch} onClose={() => setExportOpen(false)} onNotice={showNotice} />}
     </div>
   );
 }

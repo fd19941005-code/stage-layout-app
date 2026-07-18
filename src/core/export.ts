@@ -1,0 +1,288 @@
+// 出力機能(FR-080〜085)。画面のスクリーンショットではなく、プロジェクトの
+// mm正本から再描画する。選択枠・回転ハンドル・測定ガイドは出力しない。
+
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import type { Background, Project, SceneObject } from "../types/project";
+import { effectiveMmPerPixel } from "../state/appState";
+import { getBackgroundDisplaySizePx, getEffectiveCrop, rotatedBoundsMm } from "./transform";
+
+export const PDF_POINTS_PER_INCH = 72;
+export const MM_PER_INCH = 25.4;
+export const POINTS_PER_MM = PDF_POINTS_PER_INCH / MM_PER_INCH;
+
+export interface ExportLayerOptions {
+  background: boolean;
+  objects: boolean;
+  labels: boolean;
+  grid: boolean;
+}
+
+export const DEFAULT_EXPORT_LAYERS: ExportLayerOptions = {
+  background: true,
+  objects: true,
+  labels: true,
+  grid: false,
+};
+
+export interface ExportBounds {
+  minXMm: number;
+  minYMm: number;
+  maxXMm: number;
+  maxYMm: number;
+  widthMm: number;
+  heightMm: number;
+}
+
+export interface PngExportOptions {
+  longSidePx: number;
+  layers: ExportLayerOptions;
+}
+
+export interface PdfExportOptions {
+  paper: "A4" | "A3";
+  orientation: "portrait" | "landscape";
+  scale: "1:50" | "1:100" | "fit";
+  layers: ExportLayerOptions;
+}
+
+export function pageSizePoints(
+  paper: "A4" | "A3",
+  orientation: "portrait" | "landscape",
+): { widthPt: number; heightPt: number } {
+  const portrait = paper === "A4"
+    ? { widthPt: 210 * POINTS_PER_MM, heightPt: 297 * POINTS_PER_MM }
+    : { widthPt: 297 * POINTS_PER_MM, heightPt: 420 * POINTS_PER_MM };
+  return orientation === "portrait"
+    ? portrait
+    : { widthPt: portrait.heightPt, heightPt: portrait.widthPt };
+}
+
+/** 実寸mmを指定縮尺のPDFポイントへ変換する(11.4、AC-012) */
+export function mmToPdfPoints(mm: number, scaleDenominator: 50 | 100 | number): number {
+  if (!Number.isFinite(mm) || !Number.isFinite(scaleDenominator) || scaleDenominator <= 0) {
+    throw new Error("縮尺計算の入力値が不正です");
+  }
+  return (mm / scaleDenominator) * POINTS_PER_MM;
+}
+
+function layerIsVisible(project: Project, layerId: string): boolean {
+  const layer = project.layers.find((candidate) => candidate.id === layerId);
+  return layer ? layer.visible : true;
+}
+
+/** 出力対象レイヤーの選択ロジック(11.4) */
+export function selectExportObjects(project: Project, layers: ExportLayerOptions): SceneObject[] {
+  if (!layers.objects) return [];
+  return project.objects.filter((object) => object.visible && layerIsVisible(project, object.layerId));
+}
+
+export function exportBoundsMm(project: Project, layers: ExportLayerOptions): ExportBounds {
+  const mmPerPixel = effectiveMmPerPixel(project);
+  const points: { xMm: number; yMm: number }[] = [];
+  if (layers.background && project.background.visible && project.background.imageDataUrl) {
+    const size = getBackgroundDisplaySizePx(project.background);
+    points.push(
+      { xMm: 0, yMm: 0 },
+      { xMm: size.widthPx * mmPerPixel, yMm: size.heightPx * mmPerPixel },
+    );
+  }
+  for (const object of selectExportObjects(project, layers)) {
+    const bounds = rotatedBoundsMm(object);
+    points.push(
+      { xMm: bounds.minXMm, yMm: bounds.minYMm },
+      { xMm: bounds.maxXMm, yMm: bounds.maxYMm },
+    );
+  }
+  if (points.length === 0) points.push({ xMm: 0, yMm: 0 }, { xMm: 1000, yMm: 1000 });
+  const minXMm = Math.min(...points.map((point) => point.xMm));
+  const minYMm = Math.min(...points.map((point) => point.yMm));
+  const maxXMm = Math.max(...points.map((point) => point.xMm));
+  const maxYMm = Math.max(...points.map((point) => point.yMm));
+  return {
+    minXMm,
+    minYMm,
+    maxXMm,
+    maxYMm,
+    widthMm: Math.max(1, maxXMm - minXMm),
+    heightMm: Math.max(1, maxYMm - minYMm),
+  };
+}
+
+function escapeXml(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  }[character] ?? character));
+}
+
+function backgroundRotationTransform(background: Background, mmPerPixel: number): string {
+  const crop = getEffectiveCrop(background);
+  const cropWidthMm = crop.widthPx * mmPerPixel;
+  const cropHeightMm = crop.heightPx * mmPerPixel;
+  switch (background.rotationDeg) {
+    case 90:
+      return `translate(${cropHeightMm} 0) rotate(90)`;
+    case 180:
+      return `translate(${cropWidthMm} ${cropHeightMm}) rotate(180)`;
+    case 270:
+      return `translate(0 ${cropWidthMm}) rotate(270)`;
+    default:
+      return "";
+  }
+}
+
+function renderBackgroundSvg(project: Project, layers: ExportLayerOptions, mmPerPixel: number): string {
+  const background = project.background;
+  if (!layers.background || !background.imageDataUrl || !background.visible) return "";
+  const crop = getEffectiveCrop(background);
+  const cropWidthMm = crop.widthPx * mmPerPixel;
+  const cropHeightMm = crop.heightPx * mmPerPixel;
+  return `<g transform="${backgroundRotationTransform(background, mmPerPixel)}"><svg x="0" y="0" width="${cropWidthMm}" height="${cropHeightMm}" viewBox="${crop.xPx} ${crop.yPx} ${crop.widthPx} ${crop.heightPx}" preserveAspectRatio="none" overflow="visible"><image href="${escapeXml(background.imageDataUrl)}" x="0" y="0" width="${background.naturalWidthPx}" height="${background.naturalHeightPx}" opacity="${background.opacity}" preserveAspectRatio="none" /></svg></g>`;
+}
+
+function renderGridSvg(bounds: ExportBounds, intervalMm = 910): string {
+  const lines: string[] = [];
+  const firstX = Math.floor(bounds.minXMm / intervalMm) * intervalMm;
+  const firstY = Math.floor(bounds.minYMm / intervalMm) * intervalMm;
+  for (let x = firstX; x <= bounds.maxXMm; x += intervalMm) lines.push(`<line x1="${x}" y1="${bounds.minYMm}" x2="${x}" y2="${bounds.maxYMm}" />`);
+  for (let y = firstY; y <= bounds.maxYMm; y += intervalMm) lines.push(`<line x1="${bounds.minXMm}" y1="${y}" x2="${bounds.maxXMm}" y2="${y}" />`);
+  return `<g class="export-grid" stroke="#9aa6b2" stroke-width="8" opacity="0.35">${lines.join("")}</g>`;
+}
+
+function renderObjectsSvg(objects: readonly SceneObject[], layers: ExportLayerOptions): string {
+  return objects.map((object) => {
+    const shape = object.shape === "circle"
+      ? `<ellipse rx="${object.widthMm / 2}" ry="${object.depthMm / 2}" />`
+      : `<rect x="${-object.widthMm / 2}" y="${-object.depthMm / 2}" width="${object.widthMm}" height="${object.depthMm}" />`;
+    const label = layers.labels
+      ? `<text y="${object.depthMm / 2 + 260}" text-anchor="middle">${escapeXml(object.label || object.name)}</text>`
+      : "";
+    return `<g transform="translate(${object.xMm} ${object.yMm}) rotate(${object.rotationDeg})" fill="rgba(47,127,209,0.18)" stroke="#2f7fd1" stroke-width="18">${shape}${label}</g>`;
+  }).join("");
+}
+
+/** 出力専用SVG。編集UIを含めないためPNGとPDFの共通基盤になる */
+export function renderProjectToSvg(
+  project: Project,
+  layers: ExportLayerOptions = DEFAULT_EXPORT_LAYERS,
+  outputWidthPx?: number,
+  outputHeightPx?: number,
+): string {
+  const bounds = exportBoundsMm(project, layers);
+  const mmPerPixel = effectiveMmPerPixel(project);
+  const widthPx = outputWidthPx ?? Math.max(1, Math.round(bounds.widthMm));
+  const heightPx = outputHeightPx ?? Math.max(1, Math.round(bounds.heightMm));
+  const grid = layers.grid ? renderGridSvg(bounds) : "";
+  const objects = renderObjectsSvg(selectExportObjects(project, layers), layers);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${widthPx}" height="${heightPx}" viewBox="${bounds.minXMm} ${bounds.minYMm} ${bounds.widthMm} ${bounds.heightMm}"><rect x="${bounds.minXMm}" y="${bounds.minYMm}" width="${bounds.widthMm}" height="${bounds.heightMm}" fill="#ffffff" />${renderBackgroundSvg(project, layers, mmPerPixel)}${grid}${objects}</svg>`;
+}
+
+function clampLongSide(value: number): number {
+  return Math.min(6000, Math.max(2000, Math.round(value)));
+}
+
+/** ブラウザのcanvasで出力SVGをPNG化する */
+export async function renderProjectToPng(project: Project, options: PngExportOptions): Promise<Blob> {
+  if (project.calibration.mmPerPixel === null) throw new Error("未校正のため出力できません");
+  const bounds = exportBoundsMm(project, options.layers);
+  const longSidePx = clampLongSide(options.longSidePx);
+  const landscape = bounds.widthMm >= bounds.heightMm;
+  const widthPx = landscape ? longSidePx : Math.max(1, Math.round(longSidePx * bounds.widthMm / bounds.heightMm));
+  const heightPx = landscape ? Math.max(1, Math.round(longSidePx * bounds.heightMm / bounds.widthMm)) : longSidePx;
+  const svg = renderProjectToSvg(project, options.layers, widthPx, heightPx);
+  const svgBlob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+  const url = URL.createObjectURL(svgBlob);
+  try {
+    const image = new Image();
+    image.src = url;
+    await new Promise<void>((resolve, reject) => {
+      image.onload = () => resolve();
+      image.onerror = () => reject(new Error("PNG出力用の図面を描画できません"));
+    });
+    const canvas = document.createElement("canvas");
+    canvas.width = widthPx;
+    canvas.height = heightPx;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("PNG出力用のキャンバスを作成できません");
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, widthPx, heightPx);
+    context.drawImage(image, 0, 0, widthPx, heightPx);
+    return await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("PNGを生成できません")), "image/png");
+    });
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+function scaleDenominator(scale: PdfExportOptions["scale"]): number | null {
+  if (scale === "1:50") return 50;
+  if (scale === "1:100") return 100;
+  return null;
+}
+
+function safePdfText(value: string): string {
+  // 標準Helveticaは日本語グリフを持たないため、文字化けでPDF生成を壊さない。
+  return [...value].map((character) => character.charCodeAt(0) <= 0x7e ? character : "?").join("").replace(/[\\r\\n]+/g, " ");
+}
+
+/** A4/A3と1:50/1:100からページ内の描画倍率を求める */
+export function resolvePdfScaleDenominator(
+  bounds: ExportBounds,
+  options: Pick<PdfExportOptions, "paper" | "orientation" | "scale">,
+): number {
+  const fixed = scaleDenominator(options.scale);
+  if (fixed) return fixed;
+  const page = pageSizePoints(options.paper, options.orientation);
+  const marginPt = 36;
+  const infoHeightPt = 64;
+  const availableWidthMm = Math.max(1, (page.widthPt - marginPt * 2) / POINTS_PER_MM);
+  const availableHeightMm = Math.max(1, (page.heightPt - marginPt * 2 - infoHeightPt) / POINTS_PER_MM);
+  return Math.max(bounds.widthMm / availableWidthMm, bounds.heightMm / availableHeightMm);
+}
+
+export async function createProjectPdf(project: Project, options: PdfExportOptions): Promise<Blob> {
+  if (project.calibration.mmPerPixel === null) throw new Error("未校正のため出力できません");
+  const bounds = exportBoundsMm(project, options.layers);
+  const denominator = resolvePdfScaleDenominator(bounds, options);
+  const pageSize = pageSizePoints(options.paper, options.orientation);
+  const marginPt = 36;
+  const infoHeightPt = 64;
+  const imageWidthPt = mmToPdfPoints(bounds.widthMm, denominator);
+  const imageHeightPt = mmToPdfPoints(bounds.heightMm, denominator);
+  const imageBlob = await renderProjectToPng(project, { longSidePx: 4000, layers: options.layers });
+  const imageBytes = new Uint8Array(await imageBlob.arrayBuffer());
+  const pdf = await PDFDocument.create();
+  const page = pdf.addPage([pageSize.widthPt, pageSize.heightPt]);
+  const image = await pdf.embedPng(imageBytes);
+  const imageY = marginPt + infoHeightPt + Math.max(0, (pageSize.heightPt - marginPt * 2 - infoHeightPt - imageHeightPt) / 2);
+  page.drawImage(image, {
+    x: Math.max(marginPt, (pageSize.widthPt - imageWidthPt) / 2),
+    y: imageY,
+    width: imageWidthPt,
+    height: imageHeightPt,
+  });
+
+  const font = await pdf.embedFont(StandardFonts.Helvetica);
+  const metadata = project.metadata;
+  const info = [
+    `Title: ${safePdfText(project.name)}`,
+    `Hall: ${safePdfText(metadata.hallName)}  Performance: ${safePdfText(metadata.performanceName)}  Date: ${safePdfText(metadata.date)}`,
+    `Author: ${safePdfText(metadata.author)}  Notes: ${safePdfText(metadata.notes)}`,
+    `Scale: ${options.scale === "fit" ? "fit" : `1:${denominator}`}  Print at 100% (no scaling)`,
+  ];
+  info.forEach((line, index) => page.drawText(line, { x: marginPt, y: marginPt + infoHeightPt - 14 - index * 12, size: 8, font, color: rgb(0.15, 0.18, 0.22) }));
+  const scaleBarPt = mmToPdfPoints(1820, denominator);
+  const barY = marginPt + 7;
+  page.drawLine({ start: { x: marginPt, y: barY }, end: { x: marginPt + scaleBarPt, y: barY }, thickness: 1, color: rgb(0.1, 0.1, 0.1) });
+  page.drawText(`1820 mm reference / 1:${denominator}`, { x: marginPt, y: barY - 11, size: 7, font, color: rgb(0.15, 0.18, 0.22) });
+  pdf.setTitle(safePdfText(project.name));
+  const bytes = await pdf.save();
+  // pdf-libのUint8ArrayはArrayBufferLikeを保持するため、BlobのDOM型へ明示的に変換する。
+  return new Blob([bytes.buffer as ArrayBuffer], { type: "application/pdf" });
+}
+
+

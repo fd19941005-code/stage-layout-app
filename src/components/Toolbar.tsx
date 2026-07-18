@@ -1,4 +1,4 @@
-// 上部ツールバー(10.1): 新規、開く、保存、背景読込、編集履歴、選択、校正、測定、ズーム
+// 上部ツールバー(10.1): 新規、開く、保存、背景読込、編集履歴、選択、校正、測定、出力、ズーム
 
 import { useRef, useState, type ChangeEvent, type Dispatch } from "react";
 import type { Action, AppState, ToolMode } from "../state/appState";
@@ -10,9 +10,10 @@ interface Props {
   state: AppState;
   dispatch: Dispatch<Action>;
   onNotice: (message: string) => void;
+  onExport: () => void;
 }
 
-export function Toolbar({ state, dispatch, onNotice }: Props) {
+export function Toolbar({ state, dispatch, onNotice, onExport }: Props) {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const projectInputRef = useRef<HTMLInputElement>(null);
   const [pdfPages, setPdfPages] = useState<PdfPageImage[]>([]);
@@ -125,6 +126,7 @@ export function Toolbar({ state, dispatch, onNotice }: Props) {
         <button type="button" onClick={handleNew}>新規</button>
         <button type="button" onClick={() => projectInputRef.current?.click()}>開く</button>
         <button type="button" onClick={handleSave}>保存(JSON)</button>
+        <button type="button" onClick={onExport} disabled={project.calibration.mmPerPixel === null}>出力</button>
         <span className="separator" />
         <button type="button" onClick={() => dispatch({ type: "UNDO" })} disabled={state.past.length === 0} title="Ctrl/Cmd+Z">↶ Undo</button>
         <button type="button" onClick={() => dispatch({ type: "REDO" })} disabled={state.future.length === 0} title="Ctrl/Cmd+Shift+Z">↷ Redo</button>
