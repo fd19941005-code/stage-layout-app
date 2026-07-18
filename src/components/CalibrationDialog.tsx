@@ -40,7 +40,7 @@ export function CalibrationDialog({ dispatch }: Props) {
             <li>その2点間の実寸を下から選ぶ</li>
             <li>校正後に未知の距離を測るときは、上部の「測定」を使う</li>
           </ol>
-          <p><b>例:</b> グリッド1マスが910mmなら、1マス分の両端をクリックして「910mm」を押します。</p>
+          <p><b>寸法の目安:</b> 1間 = 1820mm、3尺(半間) = 910mmです。図面の線の間隔が1間なら「1820mm」、半間なら「910mm」を選びます。</p>
         </div>
         <h3>クリックした2点間の実寸</h3>
         <div className="preset-buttons">
@@ -79,4 +79,6 @@ export function CalibrationDialog({ dispatch }: Props) {
     </div>
   );
 }
+
+
 

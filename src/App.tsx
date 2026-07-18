@@ -80,7 +80,7 @@ export function App() {
       <Toolbar state={state} dispatch={dispatch} onNotice={showNotice} onExport={() => setExportOpen(true)} />
       {!storageReady && <div className="banner info">ローカル保存データを確認中…</div>}
       {state.project.calibration.mmPerPixel === null && (
-        <div className="banner warning">未校正です。背景読込 → 校正で既知の2点をクリック → その2点間の実寸を選択、の順で始めてください(例: 1マス=910mm)。</div>
+        <div className="banner warning">未校正です。背景読込 → 校正で既知の2点をクリック → その2点間の実寸を選択、の順で始めてください(1間=1820mm、半間=910mm)。</div>
       )}
       {state.mode === "calibrate" && state.calibPointsPx.length < 2 && (
         <div className="banner info">校正モード: 図面上の既知距離の{state.calibPointsPx.length === 0 ? "始点" : "終点"}をクリックしてください({state.calibPointsPx.length}/2)</div>
@@ -107,6 +107,8 @@ export function App() {
     </div>
   );
 }
+
+
 
 
 
