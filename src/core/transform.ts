@@ -1,0 +1,124 @@
+// 座標変換の純粋関数群(9.4 座標変換の原則、12.1 実装上の制約)。
+// UIコンポーネントへ散在させず、ここに集約する。自動テスト必須領域(11.4)。
+
+import type { PointMm, PointPx, ViewState } from "../types/project";
+
+/** 画面上の点(px)。保存対象にしてはならない */
+export interface ScreenPoint {
+  x: number;
+  y: number;
+}
+
+/** 2点間のピクセル距離 */
+export function pxDistance(a: PointPx, b: PointPx): number {
+  return Math.hypot(b.xPx - a.xPx, b.yPx - a.yPx);
+}
+
+/** 2点間の実寸距離(mm) */
+export function mmDistance(a: PointMm, b: PointMm): number {
+  return Math.hypot(b.xMm - a.xMm, b.yMm - a.yMm);
+}
+
+/**
+ * 2点校正(FR-020): 画像上の2点と実距離からmm/pxを算出する。
+ * 入力実距離は正数のみ(6.1)。2点が同一の場合もエラー。
+ */
+export function computeMmPerPixel(
+  pointA: PointPx,
+  pointB: PointPx,
+  realDistanceMm: number,
+): number {
+  if (!Number.isFinite(realDistanceMm) || realDistanceMm <= 0) {
+    throw new Error("実距離は正の数値で入力してください");
+  }
+  const dPx = pxDistance(pointA, pointB);
+  if (dPx <= 0) {
+    throw new Error("校正の2点が同一位置です。異なる2点を指定してください");
+  }
+  return realDistanceMm / dPx;
+}
+
+/** 単位入力の正規化(FR-022): mm/cm/m → mm */
+export function toMm(value: number, unit: "mm" | "cm" | "m"): number {
+  switch (unit) {
+    case "mm":
+      return value;
+    case "cm":
+      return value * 10;
+    case "m":
+      return value * 1000;
+  }
+}
+
+/** 背景画像px座標 → 実寸mm座標 */
+export function imagePxToMm(p: PointPx, mmPerPixel: number): PointMm {
+  return { xMm: p.xPx * mmPerPixel, yMm: p.yPx * mmPerPixel };
+}
+
+/** 実寸mm座標 → 背景画像px座標 */
+export function mmToImagePx(p: PointMm, mmPerPixel: number): PointPx {
+  return { xPx: p.xMm / mmPerPixel, yPx: p.yMm / mmPerPixel };
+}
+
+/** 実寸mm座標 → 画面px座標(描画時のみ使用) */
+export function mmToScreen(p: PointMm, view: ViewState): ScreenPoint {
+  return {
+    x: p.xMm * view.zoom + view.panX,
+    y: p.yMm * view.zoom + view.panY,
+  };
+}
+
+/** 画面px座標 → 実寸mm座標(ポインター入力は直ちにmmへ逆変換して保存する) */
+export function screenToMm(p: ScreenPoint, view: ViewState): PointMm {
+  return {
+    xMm: (p.x - view.panX) / view.zoom,
+    yMm: (p.y - view.panY) / view.zoom,
+  };
+}
+
+/** 角度を0〜360度へ正規化(9.2) */
+export function normalizeDeg(deg: number): number {
+  const d = deg % 360;
+  return d < 0 ? d + 360 : d;
+}
+
+/**
+ * 回転を含むオブジェクトの外接矩形(mm)を求める(11.4)。
+ * 中心(xMm, yMm)・寸法(widthMm, depthMm)・角度(rotationDeg)から算出。
+ */
+export function rotatedBoundsMm(obj: {
+  xMm: number;
+  yMm: number;
+  widthMm: number;
+  depthMm: number;
+  rotationDeg: number;
+}): { minXMm: number; minYMm: number; maxXMm: number; maxYMm: number } {
+  const rad = (obj.rotationDeg * Math.PI) / 180;
+  const cos = Math.abs(Math.cos(rad));
+  const sin = Math.abs(Math.sin(rad));
+  const halfW = (obj.widthMm * cos + obj.depthMm * sin) / 2;
+  const halfH = (obj.widthMm * sin + obj.depthMm * cos) / 2;
+  return {
+    minXMm: obj.xMm - halfW,
+    minYMm: obj.yMm - halfH,
+    maxXMm: obj.xMm + halfW,
+    maxYMm: obj.yMm + halfH,
+  };
+}
+
+/**
+ * カーソル位置を中心にズーム倍率を変更したときの新しいViewStateを返す。
+ * ズームは表示のみで、実寸データへ影響しない(AC-003)。
+ */
+export function zoomAt(
+  view: ViewState,
+  screenCenter: ScreenPoint,
+  nextZoom: number,
+): ViewState {
+  const anchor = screenToMm(screenCenter, view);
+  return {
+    zoom: nextZoom,
+    panX: screenCenter.x - anchor.xMm * nextZoom,
+    panY: screenCenter.y - anchor.yMm * nextZoom,
+  };
+}

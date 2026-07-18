@@ -1,0 +1,368 @@
+/* 画面構成(10.1)のレイアウトと基本スタイル */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif;
+  font-size: 13px;
+  color: #222;
+  background: #f0f1f3;
+}
+
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* ツールバー */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: #2b3440;
+  color: #fff;
+  flex-wrap: wrap;
+}
+
+.toolbar button {
+  padding: 5px 10px;
+  border: 1px solid #4a5568;
+  border-radius: 4px;
+  background: #3a4552;
+  color: #fff;
+  cursor: pointer;
+}
+
+.toolbar button:hover {
+  background: #4a5768;
+}
+
+.toolbar button.active {
+  background: #2f7fd1;
+  border-color: #2f7fd1;
+}
+
+.toolbar .project-name {
+  width: 180px;
+  padding: 5px 8px;
+  border: 1px solid #4a5568;
+  border-radius: 4px;
+  background: #1f2730;
+  color: #fff;
+}
+
+.toolbar .separator {
+  width: 1px;
+  height: 22px;
+  background: #4a5568;
+  margin: 0 4px;
+}
+
+/* バナー(10.3: 未校正・未保存等の状態を明確に表示) */
+.banner {
+  padding: 6px 12px;
+  font-weight: 600;
+}
+
+.banner.warning {
+  background: #fff3cd;
+  color: #7a5c00;
+  border-bottom: 1px solid #e6c65c;
+}
+
+.banner.info {
+  background: #d8ecff;
+  color: #114d80;
+}
+
+.banner.notice {
+  background: #e6f4e6;
+  color: #1e5c1e;
+}
+
+/* メイン領域 */
+.main-area {
+  display: grid;
+  grid-template-columns: 230px 1fr 250px;
+  flex: 1;
+  min-height: 0;
+}
+
+/* 左: ライブラリ */
+.library-panel {
+  overflow-y: auto;
+  background: #fff;
+  border-right: 1px solid #d5d8dc;
+  padding: 10px;
+}
+
+.library-panel h2,
+.property-panel h2 {
+  font-size: 14px;
+  margin: 0 0 8px;
+}
+
+.library-panel h3 {
+  font-size: 12px;
+  color: #666;
+  margin: 12px 0 4px;
+}
+
+.library-panel ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.library-panel li button {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 6px 8px;
+  margin-bottom: 3px;
+  border: 1px solid #d5d8dc;
+  border-radius: 4px;
+  background: #fafbfc;
+  cursor: pointer;
+}
+
+.library-panel li button:hover:not(:disabled) {
+  background: #eef4fb;
+}
+
+.library-panel li button.active {
+  background: #2f7fd1;
+  border-color: #2f7fd1;
+  color: #fff;
+}
+
+.library-panel li button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.library-panel .dims {
+  color: #888;
+  font-size: 11px;
+}
+
+.library-panel li button.active .dims {
+  color: #d8e8f8;
+}
+
+.hint {
+  color: #888;
+  font-size: 12px;
+}
+
+/* 中央: キャンバス */
+.canvas-stage {
+  width: 100%;
+  height: 100%;
+  background: #e8eaed;
+  touch-action: none; /* ブラウザ既定のスクロール・ズームと競合させない(NFR-002) */
+  cursor: crosshair;
+}
+
+.scene-object rect,
+.scene-object ellipse {
+  fill: rgba(47, 127, 209, 0.15);
+  stroke: #2f7fd1;
+  stroke-width: 20; /* mm単位 */
+}
+
+.scene-object.selected rect,
+.scene-object.selected ellipse {
+  fill: rgba(240, 140, 0, 0.2);
+  stroke: #e07b00;
+  stroke-width: 40;
+}
+
+.scene-object.locked rect,
+.scene-object.locked ellipse {
+  stroke-dasharray: 60 60;
+}
+
+.scene-object .facing {
+  stroke: #2f7fd1;
+  stroke-width: 20;
+}
+
+.scene-object text {
+  font-size: 280px; /* mm空間: 280mm相当のラベル文字 */
+  fill: #333;
+  user-select: none;
+}
+
+.calib-point {
+  fill: #d12f2f;
+}
+
+.calib-line,
+.measure-line {
+  stroke: #d12f2f;
+  stroke-width: 25;
+  stroke-dasharray: 100 100;
+}
+
+.measure-point {
+  fill: #7b2fd1;
+}
+
+.measure-line {
+  stroke: #7b2fd1;
+}
+
+.measure-text {
+  font-size: 400px;
+  fill: #7b2fd1;
+  font-weight: 700;
+}
+
+/* 右: プロパティ */
+.property-panel {
+  overflow-y: auto;
+  background: #fff;
+  border-left: 1px solid #d5d8dc;
+  padding: 10px;
+}
+
+.property-panel label {
+  display: block;
+  margin-bottom: 8px;
+  color: #555;
+}
+
+.property-panel label.row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.property-panel input:not([type="checkbox"]) {
+  display: block;
+  width: 100%;
+  padding: 5px 8px;
+  margin-top: 2px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.property-panel .object-name {
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.property-panel .actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.property-panel .actions button {
+  flex: 1;
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fafbfc;
+  cursor: pointer;
+}
+
+.property-panel .actions button.danger {
+  color: #b02020;
+  border-color: #d9a0a0;
+}
+
+/* ステータスバー */
+.status-bar {
+  display: flex;
+  gap: 18px;
+  padding: 5px 12px;
+  background: #2b3440;
+  color: #cfd6dd;
+  font-size: 12px;
+}
+
+.status-bar .warning {
+  color: #ffd24d;
+  font-weight: 700;
+}
+
+/* ダイアログ */
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.dialog {
+  background: #fff;
+  border-radius: 8px;
+  padding: 18px;
+  width: 340px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+
+.dialog h2 {
+  margin: 0 0 12px;
+  font-size: 15px;
+}
+
+.dialog .preset-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.dialog .preset-buttons button {
+  padding: 8px 12px;
+  border: 1px solid #2f7fd1;
+  border-radius: 4px;
+  background: #eef4fb;
+  color: #114d80;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.dialog .custom-input {
+  display: flex;
+  gap: 6px;
+}
+
+.dialog .custom-input input {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.dialog .error {
+  color: #b02020;
+  margin: 8px 0 0;
+}
+
+.dialog .cancel {
+  margin-top: 14px;
+  width: 100%;
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fafbfc;
+  cursor: pointer;
+}
