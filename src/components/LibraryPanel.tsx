@@ -21,6 +21,26 @@ export function LibraryPanel({ state, dispatch }: Props) {
       {!calibrated && <p className="hint">未校正のため配置できません。先に背景を読み込み「校正」を実行してください。</p>}
       {calibrated && (!activeLayer?.visible || activeLayer.locked) && <p className="hint">選択中のレイヤーが非表示またはロックされています。</p>}
       {calibrated && <p className="hint">配置先: {activeLayer?.name ?? "—"}</p>}
+      <section className="placement-controls" aria-label="配置操作">
+        <label className="row placement-mode-toggle">
+          <input
+            type="checkbox"
+            checked={state.placementContinuous}
+            onChange={(event) => dispatch({ type: "SET_PLACEMENT_CONTINUOUS", continuous: event.target.checked })}
+          />
+          <span>連続配置</span>
+        </label>
+        <p className="hint placement-hint">
+          {state.placementContinuous
+            ? "同じプリセットを続けて配置します。"
+            : "1個置くと選択モードに戻ります。Shiftを押しながら置くと一時的に連続配置できます。"}
+        </p>
+        {state.pendingPresetId && (
+          <p className="placement-status" role="status">
+            配置待機中：キャンバスをクリックしてください。
+          </p>
+        )}
+      </section>
       {PRESET_CATEGORIES.map((category) => (
         <section key={category}>
           <h3>{category}</h3>

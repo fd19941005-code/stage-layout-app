@@ -68,9 +68,23 @@ export function App() {
         dispatch({ type: "DELETE_SELECTED" });
       }
     }
+
+    function handleKeyUp(event: KeyboardEvent) {
+      const target = event.target as HTMLElement | null;
+      if (target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.tagName === "SELECT") return;
+      if (event.key === "Shift" && state.pendingPresetId && !state.placementContinuous) {
+        // Shift連続配置はキーを離した時点で待機を解除し、次のクリックを誤配置にしない。
+        dispatch({ type: "SET_PENDING_PRESET", presetId: null });
+      }
+    }
+
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [state.selectedIds.length]);
+    window.addEventListener("keyup", handleKeyUp);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, [state.selectedIds.length, state.pendingPresetId, state.placementContinuous]);
 
   const calibrationReady = state.mode === "calibrate" && state.calibPointsPx.length === 2;
   const verificationReady = state.mode === "verifyCalibration" && state.calibPointsPx.length === 2;

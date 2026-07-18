@@ -104,7 +104,7 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
   const [marquee, setMarquee] = useState<{ startMm: PointMm; currentMm: PointMm } | null>(null);
   const [annotationPreview, setAnnotationPreview] = useState<AnnotationPreview | null>(null);
 
-  const { project, mode, selectedIds, pendingPresetId } = state;
+  const { project, mode, selectedIds, pendingPresetId, placementContinuous } = state;
   const { view, background, calibration } = project;
   const mmpp = effectiveMmPerPixel(project);
   const calibrated = calibration.mmPerPixel !== null;
@@ -142,7 +142,7 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
     dispatch({ type: "SET_VIEW", view: zoomAt(view, toScreen(e), nextZoom) });
   }
 
-  function placePreset(pMm: PointMm) {
+  function placePreset(pMm: PointMm, keepPending: boolean) {
     if (!pendingPresetId) return;
     if (!calibrated) {
       onNotice("未校正のため配置できません。先に「校正」で2点と実距離を指定してください。");
@@ -177,7 +177,7 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
       zIndex: project.objects.length,
       shape: preset.shape,
     };
-    dispatch({ type: "ADD_OBJECT", object });
+    dispatch({ type: "ADD_OBJECT", object, keepPending });
   }
 
   function createAnnotation(annotationKind: AnnotationKind, start: PointMm, current: PointMm) {
@@ -276,7 +276,7 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
     }
 
     if (pendingPresetId) {
-      placePreset(pMm);
+      placePreset(pMm, placementContinuous || e.shiftKey);
       return;
     }
 

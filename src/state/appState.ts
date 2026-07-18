@@ -42,6 +42,7 @@ export interface AppState {
   selectedId: string | null;
   selectedIds: string[];
   pendingPresetId: string | null;
+  placementContinuous: boolean;
   activeLayerId: string;
   mode: ToolMode;
   calibPointsPx: PointPx[];
@@ -65,6 +66,7 @@ export function createInitialState(project?: Project): AppState {
     selectedId: null,
     selectedIds: [],
     pendingPresetId: null,
+    placementContinuous: false,
     activeLayerId: defaultActiveLayer(nextProject),
     mode: "select",
     calibPointsPx: [],
@@ -103,8 +105,9 @@ export type Action =
   | { type: "SET_LAYER_NAME"; layerId: string; name: string }
   | { type: "SET_SNAP_SETTINGS"; settings: SnapSettings }
   | { type: "SET_MODE"; mode: ToolMode }
+  | { type: "SET_PLACEMENT_CONTINUOUS"; continuous: boolean }
   | { type: "SET_PENDING_PRESET"; presetId: string | null }
-  | { type: "ADD_OBJECT"; object: SceneObject }
+  | { type: "ADD_OBJECT"; object: SceneObject; keepPending?: boolean }
   | { type: "UPDATE_OBJECT"; id: string; patch: Partial<SceneObject> }
   | { type: "MOVE_OBJECT"; id: string; xMm: number; yMm: number }
   | { type: "MOVE_OBJECTS"; moves: ObjectMove[]; preview?: boolean }
@@ -383,10 +386,12 @@ export function appReducer(state: AppState, action: Action): AppState {
     }
     case "SET_SNAP_SETTINGS": return commitProject(state, { ...state.project, snapSettings: normalizeSnapSettings(action.settings) });
     case "SET_MODE": return { ...state, mode: action.mode, calibPointsPx: [], measurePointsMm: [], pendingPresetId: null };
+    case "SET_PLACEMENT_CONTINUOUS": return { ...state, placementContinuous: action.continuous };
     case "SET_PENDING_PRESET": return { ...state, pendingPresetId: action.presetId, mode: "select" };
     case "ADD_OBJECT": {
       if (layerIsLocked(state.project, action.object.layerId) || !layerIsVisible(state.project, action.object.layerId)) return state;
-      return setSelection(commitProject(state, { ...state.project, objects: [...state.project.objects, action.object] }), [action.object.id]);
+      const next = commitProject(state, { ...state.project, objects: [...state.project.objects, action.object] });
+      return setSelection({ ...next, pendingPresetId: action.keepPending ? next.pendingPresetId : null }, [action.object.id]);
     }
     case "UPDATE_OBJECT": return updateObject(state, action.id, action.patch);
     case "MOVE_OBJECT": {

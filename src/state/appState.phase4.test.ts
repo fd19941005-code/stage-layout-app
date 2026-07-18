@@ -76,7 +76,30 @@ describe("Phase 4 reducer受入条件", () => {
     state = appReducer(state, { type: "SET_LAYER_VISIBLE", layerId: "layer-objects", visible: false });
     expect(state.selectedIds).toEqual([]);
   });
+  it("プリセットは1個配置後に選択へ戻り、連続配置またはShift指定時だけ待機を維持する", () => {
+    let state = createInitialState();
+    expect(state.placementContinuous).toBe(false);
+
+    state = appReducer(state, { type: "SET_PENDING_PRESET", presetId: "chair" });
+    state = appReducer(state, { type: "ADD_OBJECT", object: object("placed-once", "chair") });
+    expect(state.pendingPresetId).toBeNull();
+
+    state = appReducer(state, { type: "SET_PLACEMENT_CONTINUOUS", continuous: true });
+    state = appReducer(state, { type: "SET_PENDING_PRESET", presetId: "chair" });
+    state = appReducer(state, {
+      type: "ADD_OBJECT",
+      object: object("placed-repeat", "chair", 500, 500),
+      keepPending: true,
+    });
+    expect(state.pendingPresetId).toBe("chair");
+
+    state = appReducer(state, {
+      type: "ADD_OBJECT",
+      object: object("placed-last", "chair", 1000, 1000),
+      keepPending: false,
+    });
+    expect(state.pendingPresetId).toBeNull();
+  });
+
 });
-
-
 

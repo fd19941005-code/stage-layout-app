@@ -1,4 +1,38 @@
 /* Phase 4: レイヤー、スナップ、注釈、一括配置 */
+.placement-controls {
+  padding: 8px 0 4px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #e1e4e8;
+}
+
+.placement-mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 6px;
+  padding: 6px 8px;
+  border: 1px solid #b9d5ed;
+  border-radius: 5px;
+  background: #f1f8ff;
+  color: #214b70;
+  font-weight: 700;
+}
+
+.placement-mode-toggle input {
+  margin: 0;
+}
+
+.placement-hint {
+  margin: 0 0 6px;
+}
+
+.placement-status {
+  margin: 0;
+  color: #114d80;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .layer-panel,
 .snap-panel,
 .arrangement-tools {
