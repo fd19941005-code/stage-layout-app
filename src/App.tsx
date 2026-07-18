@@ -1,7 +1,7 @@
 // アプリ全体の画面構成(10.1)とデータフロー。
 // 自動保存(FR-002): IndexedDBへ最終操作から1.5秒後にデバウンスして実行する。
 
-import { lazy, Suspense, useEffect, useReducer, useRef, useState } from "react";
+import { Component, lazy, Suspense, useEffect, useReducer, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import type { PointMm } from "./types/project";
 import { appReducer, createInitialState } from "./state/appState";
 import { generateId } from "./core/project";
@@ -18,6 +18,52 @@ import { ArrangementDialog } from "./components/ArrangementDialog";
 import { PultArcDialog } from "./components/PultArcDialog";
 
 const Viewer3D = lazy(() => import("./components/Viewer3D").then((module) => ({ default: module.Viewer3D })));
+
+interface Viewer3DErrorBoundaryProps {
+  onClose: () => void;
+  children: ReactNode;
+}
+
+interface Viewer3DErrorBoundaryState {
+  hasError: boolean;
+}
+
+class Viewer3DErrorBoundary extends Component<Viewer3DErrorBoundaryProps, Viewer3DErrorBoundaryState> {
+  state: Viewer3DErrorBoundaryState = { hasError: false };
+
+  static getDerivedStateFromError(): Viewer3DErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error("3Dビューの読み込みに失敗しました", error, info);
+  }
+
+  render() {
+    if (!this.state.hasError) return this.props.children;
+    return (
+      <section className="viewer3d-error-screen" aria-label="3Dビューエラー">
+        <div className="viewer3d-error" role="alert">
+          <h2>3Dビューを表示できません</h2>
+          <p>WebGLまたは3Dモジュールの読み込みに失敗しました。</p>
+          <p>2D編集画面へ戻って作業を続けられます。</p>
+          <button type="button" onClick={this.props.onClose}>2D編集へ戻る</button>
+        </div>
+      </section>
+    );
+  }
+}
+
+function Viewer3DLoading({ onClose }: { onClose: () => void }) {
+  return (
+    <section className="viewer3d-error-screen" aria-label="3Dビュー読み込み中">
+      <div className="viewer3d-loading" role="status">
+        <p>3Dビューを読み込んでいます…</p>
+        <button type="button" onClick={onClose}>2D編集へ戻る</button>
+      </div>
+    </section>
+  );
+}
 
 export function App() {
   const [state, dispatch] = useReducer(appReducer, undefined, () => createInitialState());
@@ -138,7 +184,7 @@ export function App() {
 
   return (
     <div className="app-layout">
-      <Toolbar state={state} dispatch={dispatch} onNotice={showNotice} onExport={() => setExportOpen(true)} onToggle3d={toggleViewer3D} is3dOpen={viewer3dOpen} wallDraft={wallDraft} onFinishWall={finishWallTrace} onClearWallDraft={() => setWallDraft([])} />
+      {!viewer3dOpen && <Toolbar state={state} dispatch={dispatch} onNotice={showNotice} onExport={() => setExportOpen(true)} onToggle3d={toggleViewer3D} is3dOpen={viewer3dOpen} wallDraft={wallDraft} onFinishWall={finishWallTrace} onClearWallDraft={() => setWallDraft([])} />}
       {!storageReady && <div className="banner info">ローカル保存データを確認中…</div>}
       {state.mode === "traceWall" && <div className="banner info">壁トレースモード: 背景上を順にクリックして壁の頂点を追加します。2点以上で「壁を確定」、高さはmmで指定してください({wallDraft.length}点)</div>}
       {state.project.calibration.mmPerPixel === null && (
@@ -156,9 +202,11 @@ export function App() {
       {notice && <div className="banner notice">{notice}</div>}
 
       {viewer3dOpen ? (
-        <Suspense fallback={<div className="viewer3d-loading">3Dビューを読み込んでいます…</div>}>
-          <Viewer3D state={state} onClose={() => setViewer3dOpen(false)} onNotice={showNotice} />
-        </Suspense>
+        <Viewer3DErrorBoundary onClose={() => setViewer3dOpen(false)}>
+          <Suspense fallback={<Viewer3DLoading onClose={() => setViewer3dOpen(false)} />}>
+            <Viewer3D state={state} onClose={() => setViewer3dOpen(false)} onNotice={showNotice} />
+          </Suspense>
+        </Viewer3DErrorBoundary>
       ) : (
         <>
           <main className="main-area">

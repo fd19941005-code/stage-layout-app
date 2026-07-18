@@ -103,10 +103,58 @@
 .viewer3d-loading {
   display: grid;
   flex: 1;
+  gap: 14px;
   place-items: center;
+  align-content: center;
+  padding: 24px;
   color: #dbeafe;
   background: #151b22;
   font-size: 15px;
+}
+
+.viewer3d-loading p {
+  margin: 0;
+}
+
+.viewer3d-error-screen {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+  place-items: center;
+  padding: 24px;
+  background: #151b22;
+  color: #e5e7eb;
+}
+
+.viewer3d-error {
+  width: min(100%, 520px);
+  padding: 24px;
+  border: 1px solid #7f1d1d;
+  border-radius: 8px;
+  background: #2a1d22;
+  box-shadow: 0 10px 30px #0006;
+}
+
+.viewer3d-error h2 {
+  margin: 0 0 12px;
+  color: #fecaca;
+  font-size: 18px;
+}
+
+.viewer3d-error p {
+  margin: 0 0 10px;
+  color: #f1f5f9;
+  line-height: 1.55;
+}
+
+.viewer3d-error button {
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid #fca5a5;
+  border-radius: 5px;
+  background: #7f1d1d;
+  color: #fff;
+  cursor: pointer;
 }
 
 .viewer3d-screen {

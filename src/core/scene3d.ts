@@ -1,8 +1,8 @@
 // Phase 5の3Dシーン計算。2Dのmm正本から閲覧用の立体プリミティブと
 // カメラ初期値を導出する。Three.js固有の値はUI側で作り、ここは純粋関数に保つ。
 
-import type { PointMm, Project, SceneObject } from "../types/project";
-import { getBackgroundDisplaySizePx, rotatedBoundsMm } from "./transform";
+import type { CropPx, PointMm, Project, SceneObject } from "../types/project";
+import { getBackgroundDisplaySizePx, getEffectiveCrop, rotatedBoundsMm } from "./transform";
 
 export type Scene3DPrimitiveKind = "object" | "wall" | "avatar";
 export type Scene3DShape = "box" | "cylinder";
@@ -47,6 +47,8 @@ export interface Scene3DBackgroundPlane {
   xMm: number;
   yMm: number;
   opacity: number;
+  crop: CropPx;
+  rotationDeg: Project["background"]["rotationDeg"];
 }
 
 export interface FirstPersonPose {
@@ -136,8 +138,10 @@ function finishBounds(bounds: Scene3DBoundsMm): Scene3DBoundsMm {
 }
 
 function backgroundPlaneForProject(project: Project): Scene3DBackgroundPlane | null {
-  if (!project.background.imageDataUrl) return null;
+  const backgroundLayerVisible = project.layers.find((layer) => layer.id === "layer-background")?.visible ?? true;
+  if (!project.background.imageDataUrl || !project.background.visible || !backgroundLayerVisible) return null;
   const mmPerPixel = project.calibration.mmPerPixel ?? 10;
+  const crop = getEffectiveCrop(project.background);
   const displaySize = getBackgroundDisplaySizePx(project.background);
   const widthMm = Math.max(1, displaySize.widthPx * mmPerPixel);
   const depthMm = Math.max(1, displaySize.heightPx * mmPerPixel);
@@ -147,6 +151,8 @@ function backgroundPlaneForProject(project: Project): Scene3DBackgroundPlane | n
     xMm: widthMm / 2,
     yMm: depthMm / 2,
     opacity: Math.min(1, Math.max(0, project.background.opacity)),
+    crop,
+    rotationDeg: project.background.rotationDeg,
   };
 }
 

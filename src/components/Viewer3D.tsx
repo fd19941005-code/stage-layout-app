@@ -12,6 +12,7 @@ import {
   objectBaseElevationMm,
   rotateFirstPersonPose,
   type FirstPersonPose,
+  type Scene3DBackgroundPlane,
   type Scene3DModel,
   type Scene3DPrimitive,
 } from "../core/scene3d";
@@ -177,6 +178,39 @@ function eyeHeightForPreset(preset: EyePreset, customMm: number): number {
   return 1200;
 }
 
+function createBackgroundCanvas(image: HTMLImageElement, plane: Scene3DBackgroundPlane): HTMLCanvasElement {
+  const { crop, rotationDeg } = plane;
+  const rotated = rotationDeg === 90 || rotationDeg === 270;
+  const canvas = document.createElement("canvas");
+  canvas.width = rotated ? crop.heightPx : crop.widthPx;
+  canvas.height = rotated ? crop.widthPx : crop.heightPx;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("背景画像を3D用テクスチャへ変換できません。");
+
+  if (rotationDeg === 90) {
+    context.translate(canvas.width, 0);
+    context.rotate(Math.PI / 2);
+  } else if (rotationDeg === 180) {
+    context.translate(canvas.width, canvas.height);
+    context.rotate(Math.PI);
+  } else if (rotationDeg === 270) {
+    context.translate(0, canvas.height);
+    context.rotate(-Math.PI / 2);
+  }
+  context.drawImage(
+    image,
+    crop.xPx,
+    crop.yPx,
+    crop.widthPx,
+    crop.heightPx,
+    0,
+    0,
+    crop.widthPx,
+    crop.heightPx,
+  );
+  return canvas;
+}
+
 interface MiniMapProps {
   model: Scene3DModel;
   pose: FirstPersonPose;
@@ -206,7 +240,7 @@ function MiniMap({ model, pose, onMove }: MiniMapProps) {
         viewBox={model.bounds.minXMm + " " + model.bounds.minYMm + " " + widthMm + " " + depthMm}
         preserveAspectRatio="none"
         role="application"
-        aria-label="3Dミニマップ。タップした位置へ一人称視点を移動"
+        aria-label="3Dミニマップ。橙色の点が視点位置、線が視線方向。タップした位置へ移動"
         onPointerDown={handlePointerDown}
       >
         <rect x={model.bounds.minXMm} y={model.bounds.minYMm} width={widthMm} height={depthMm} fill="#111827" />
@@ -232,9 +266,18 @@ function MiniMap({ model, pose, onMove }: MiniMapProps) {
             transform={"rotate(" + primitive.rotationDeg + " " + primitive.xMm + " " + primitive.yMm + ")"}
           />
         ))}
+        <line
+          x1={pose.xMm}
+          y1={pose.yMm}
+          x2={pose.xMm + Math.sin((pose.yawDeg * Math.PI) / 180) * Math.max(widthMm, depthMm) * 0.08}
+          y2={pose.yMm - Math.cos((pose.yawDeg * Math.PI) / 180) * Math.max(widthMm, depthMm) * 0.08}
+          stroke="#f59e0b"
+          strokeWidth={Math.max(widthMm, depthMm) * 0.006}
+          strokeLinecap="round"
+        />
         <circle cx={pose.xMm} cy={pose.yMm} r={Math.max(widthMm, depthMm) * 0.012} fill="#f59e0b" stroke="#fff" strokeWidth={Math.max(widthMm, depthMm) * 0.004} />
       </svg>
-      <p>タップした位置へ移動（現在位置は橙色）</p>
+      <p>橙色の点が位置、線が視線方向。タップした位置へ移動します。</p>
     </div>
   );
 }
@@ -248,10 +291,12 @@ export function Viewer3D({ state, onClose, onNotice }: Props) {
   const modelGroupRef = useRef<THREE.Group | null>(null);
   const cameraModeRef = useRef<CameraMode>("orbit");
   const pointerRef = useRef<FirstPersonPointer | null>(null);
+  const [rendererError, setRendererError] = useState<string | null>(null);
   const [cameraMode, setCameraMode] = useState<CameraMode>("orbit");
   const [floorMode, setFloorMode] = useState<FloorMode>("grid");
   const [showAvatars, setShowAvatars] = useState(true);
   const [eyePreset, setEyePreset] = useState<EyePreset>("seated");
+  const [backgroundTextureError, setBackgroundTextureError] = useState(false);
   const [customEyeHeightMm, setCustomEyeHeightMm] = useState(1200);
   const model = useMemo(() => buildScene3D(state.project, { showAvatars }), [state.project, showAvatars]);
   const [pose, setPose] = useState<FirstPersonPose>(() => defaultFirstPersonPose(model));
@@ -291,10 +336,17 @@ export function Viewer3D({ state, onClose, onNotice }: Props) {
   useEffect(() => {
     const mount = viewportRef.current;
     if (!mount) return;
+    setRendererError(null);
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+    } catch {
+      setRendererError("WebGLを初期化できません。ブラウザの設定を確認して2D編集画面へ戻ってください。");
+      return;
+    }
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x151b22);
     const camera = new THREE.PerspectiveCamera(55, 1, 0.01, 200);
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setSize(Math.max(1, mount.clientWidth), Math.max(1, mount.clientHeight));
     renderer.domElement.setAttribute("aria-label", "3D舞台ビュー");
@@ -318,7 +370,7 @@ export function Viewer3D({ state, onClose, onNotice }: Props) {
     setOrbitCamera(camera, controls, model);
 
     function handleCanvasPointerDown(event: PointerEvent) {
-      if (cameraModeRef.current !== "firstPerson") return;
+      if (cameraModeRef.current !== "firstPerson" || (pointerRef.current && pointerRef.current.pointerId !== event.pointerId)) return;
       event.preventDefault();
       mount?.focus();
       try {
@@ -374,10 +426,17 @@ export function Viewer3D({ state, onClose, onNotice }: Props) {
       }
     }
 
+    function handleCanvasLostPointerCapture(event: PointerEvent) {
+      if (pointerRef.current?.pointerId === event.pointerId) {
+        pointerRef.current = null;
+      }
+    }
+
     renderer.domElement.addEventListener("pointerdown", handleCanvasPointerDown);
     renderer.domElement.addEventListener("pointermove", handleCanvasPointerMove);
     renderer.domElement.addEventListener("pointerup", handleCanvasPointerUp);
     renderer.domElement.addEventListener("pointercancel", handleCanvasPointerCancel);
+    renderer.domElement.addEventListener("lostpointercapture", handleCanvasLostPointerCapture);
 
     function resize() {
       if (!viewportRef.current) return;
@@ -387,23 +446,52 @@ export function Viewer3D({ state, onClose, onNotice }: Props) {
       camera.updateProjectionMatrix();
       renderer.setSize(width, height);
     }
+    const resizeObserver = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(resize);
+    resizeObserver?.observe(mount);
     window.addEventListener("resize", resize);
     let frame = 0;
+    let renderErrorHandled = false;
+    function handleRendererError(message: string) {
+      if (renderErrorHandled) return;
+      renderErrorHandled = true;
+      window.cancelAnimationFrame(frame);
+      pointerRef.current = null;
+      setRendererError(message);
+    }
+    function handleWebglContextLost(event: Event) {
+      event.preventDefault();
+      handleRendererError("WebGLコンテキストが失われました。2D編集画面へ戻って、必要ならブラウザを再読み込みしてください。");
+    }
+    renderer.domElement.addEventListener("webglcontextlost", handleWebglContextLost);
     const render = () => {
-      controls.update();
-      renderer.render(scene, camera);
+      if (renderErrorHandled) return;
+      try {
+        controls.update();
+        renderer.render(scene, camera);
+      } catch {
+        handleRendererError("3D描画中にエラーが発生しました。2D編集画面へ戻って作業を続けてください。");
+        return;
+      }
       frame = window.requestAnimationFrame(render);
     };
     render();
     return () => {
       window.cancelAnimationFrame(frame);
+      resizeObserver?.disconnect();
       window.removeEventListener("resize", resize);
       renderer.domElement.removeEventListener("pointerdown", handleCanvasPointerDown);
       renderer.domElement.removeEventListener("pointermove", handleCanvasPointerMove);
       renderer.domElement.removeEventListener("pointerup", handleCanvasPointerUp);
       renderer.domElement.removeEventListener("pointercancel", handleCanvasPointerCancel);
+      renderer.domElement.removeEventListener("lostpointercapture", handleCanvasLostPointerCapture);
+      renderer.domElement.removeEventListener("webglcontextlost", handleWebglContextLost);
       controls.dispose();
       renderer.dispose();
+      if (modelGroupRef.current) {
+        scene.remove(modelGroupRef.current);
+        disposeObject(modelGroupRef.current);
+        modelGroupRef.current = null;
+      }
       if (renderer.domElement.parentElement === mount) mount.removeChild(renderer.domElement);
       sceneRef.current = null;
       cameraRef.current = null;
@@ -428,22 +516,54 @@ export function Viewer3D({ state, onClose, onNotice }: Props) {
   }, [floorMode, model]);
 
   useEffect(() => {
+    if (floorMode === "background" && !model.backgroundPlane) {
+      setFloorMode("grid");
+    }
+  }, [floorMode, model.backgroundPlane]);
+
+  useEffect(() => {
     const floor = modelGroupRef.current?.getObjectByName("floor") as THREE.Mesh | undefined;
     const dataUrl = state.project.background.imageDataUrl;
-    if (!floor || floorMode !== "background" || !dataUrl) return;
+    const plane = model.backgroundPlane;
+    if (!floor || floorMode !== "background" || !dataUrl || !plane) {
+      setBackgroundTextureError(false);
+      return;
+    }
     const material = floor.material as THREE.MeshStandardMaterial;
-    const texture = new THREE.TextureLoader().load(dataUrl);
-    texture.colorSpace = THREE.SRGBColorSpace;
-    material.map = texture;
-    material.needsUpdate = true;
+    let disposed = false;
+    let texture: THREE.CanvasTexture | null = null;
+    setBackgroundTextureError(false);
+    new THREE.ImageLoader().load(
+      dataUrl,
+      (image) => {
+        if (disposed) return;
+        try {
+          const canvas = createBackgroundCanvas(image, plane);
+          texture = new THREE.CanvasTexture(canvas);
+          texture.colorSpace = THREE.SRGBColorSpace;
+          material.map = texture;
+          material.needsUpdate = true;
+        } catch {
+          setBackgroundTextureError(true);
+          setFloorMode("grid");
+        }
+      },
+      undefined,
+      () => {
+        if (disposed) return;
+        setBackgroundTextureError(true);
+        setFloorMode("grid");
+      },
+    );
     return () => {
-      texture.dispose();
-      if (material.map === texture) {
+      disposed = true;
+      texture?.dispose();
+      if (texture && material.map === texture) {
         material.map = null;
         material.needsUpdate = true;
       }
     };
-  }, [floorMode, state.project.background.imageDataUrl]);
+  }, [floorMode, model.backgroundPlane, state.project.background.imageDataUrl]);
 
   function moveFirstPerson(forwardMm: number, sideMm = 0) {
     setPose((current) => {
@@ -496,17 +616,44 @@ export function Viewer3D({ state, onClose, onNotice }: Props) {
     setCameraMode("firstPerson");
   }
 
+  function resetView() {
+    if (cameraMode === "orbit") {
+      if (cameraRef.current && controlsRef.current) {
+        setOrbitCamera(cameraRef.current, controlsRef.current, model);
+      }
+      return;
+    }
+    const baseHeightMm = selectedChairId ? objectBaseElevationMm(state.project, selectedChairId) : 0;
+    setPose({
+      ...defaultFirstPersonPose(model),
+      eyeHeightMm: baseHeightMm + eyeHeightForPreset(eyePreset, customEyeHeightMm),
+    });
+  }
+
   function moveToMiniMap(position: { xMm: number; yMm: number }) {
     setPose((current) => ({ ...current, xMm: position.xMm, yMm: position.yMm }));
     setCameraMode("firstPerson");
   }
 
+  if (rendererError) {
+    return (
+      <section className="viewer3d-error-screen" aria-label="3Dビューエラー">
+        <div className="viewer3d-error" role="alert">
+          <h2>3Dビューを表示できません</h2>
+          <p>{rendererError}</p>
+          <button type="button" onClick={onClose}>2D編集へ戻る</button>
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section className="viewer3d-screen" aria-label="3D一人称ビュー">
+    <section className="viewer3d-screen" aria-label={cameraMode === "firstPerson" ? "3D一人称ビュー" : "3D俯瞰ビュー"}>
       <div className="viewer3d-toolbar">
         <button type="button" onClick={onClose}>← 2D編集へ</button>
         <button type="button" className={cameraMode === "orbit" ? "active" : ""} onClick={() => setCameraMode("orbit")}>俯瞰</button>
         <button type="button" className={cameraMode === "firstPerson" ? "active" : ""} onClick={() => setCameraMode("firstPerson")}>一人称</button>
+        <button type="button" onClick={resetView}>視点リセット</button>
         <button type="button" disabled={!selectedChairId} onClick={switchToSeatView}>この席から見る</button>
         <label>視点高さ
           <select value={eyePreset} onChange={(event) => setEyePresetAndPose(event.target.value as EyePreset)}>
@@ -521,7 +668,7 @@ export function Viewer3D({ state, onClose, onNotice }: Props) {
           <select value={floorMode} onChange={(event) => setFloorMode(event.target.value as FloorMode)}>
             <option value="grid">実寸グリッド</option>
             <option value="plain">無地</option>
-            <option value="background">背景画像</option>
+            <option value="background" disabled={!model.backgroundPlane}>背景画像{model.backgroundPlane ? "" : "（未読込）"}</option>
           </select>
         </label>
         <label className="viewer3d-check"><input type="checkbox" checked={showAvatars} onChange={(event) => setShowAvatars(event.target.checked)} />アバター</label>
@@ -539,8 +686,9 @@ export function Viewer3D({ state, onClose, onNotice }: Props) {
         <aside className="viewer3d-help">
           <MiniMap model={model} pose={pose} onMove={moveToMiniMap} />
           <h2>3D確認</h2>
-          <p>{cameraMode === "firstPerson" ? "ミニマップで位置を決めた後、中央の3D画面をドラッグして視線を回転。WASD／矢印キーで移動。iPadはタップで前進します。" : "ドラッグで俯瞰回転。ホイール／ピンチでズームします。"}</p>
+          <p>{cameraMode === "firstPerson" ? "ミニマップで位置を決めた後、中央の3D画面をドラッグして視線を回転。WASD／矢印キーで移動。iPadはタップで前進します。視点リセットで初期位置へ戻せます。" : "ドラッグで俯瞰回転。ホイール／ピンチでズームします。視点リセットで舞台全体へ戻せます。"}</p>
           <p>ミニマップをタップすると、その位置から一人称視点を確認できます。</p>
+          {backgroundTextureError && <p className="error-message" role="alert">背景画像を3D表示できないため、実寸グリッドへ切り替えました。</p>}
           <p>3Dは閲覧専用です。位置・寸法・壁の編集は2Dへ戻って行います。</p>
           {selectedChairId ? <p className="success-message">選択中の椅子から見ることができます。</p> : <p className="hint">椅子を選択すると席視点ボタンが有効になります。</p>}
         </aside>

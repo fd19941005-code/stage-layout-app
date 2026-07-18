@@ -113,6 +113,38 @@ describe("Phase 5 3Dシーン計算", () => {
     expect(model.bounds.maxYMm).toBeGreaterThanOrEqual(3000);
   });
 
+  it("AC-201: 背景の切り抜き範囲と回転を3Dテクスチャ用メタデータへ引き継ぐ", () => {
+    const project = createEmptyProject("ホール");
+    project.background = {
+      ...project.background,
+      imageDataUrl: "data:image/png;base64,placeholder",
+      naturalWidthPx: 2000,
+      naturalHeightPx: 1000,
+      crop: { xPx: 100, yPx: 200, widthPx: 500, heightPx: 300 },
+      rotationDeg: 90,
+    };
+    project.calibration.mmPerPixel = 2;
+
+    const model = buildScene3D(project, { showAvatars: false });
+
+    expect(model.backgroundPlane).toMatchObject({
+      widthMm: 600,
+      depthMm: 1000,
+      crop: { xPx: 100, yPx: 200, widthPx: 500, heightPx: 300 },
+      rotationDeg: 90,
+    });
+  });
+
+  it("AC-201: 非表示の背景または背景レイヤーは3D床へ表示しない", () => {
+    const project = createEmptyProject("ホール");
+    project.background = { ...project.background, imageDataUrl: "data:image/png;base64,placeholder", visible: false };
+    expect(buildScene3D(project, { showAvatars: false }).backgroundPlane).toBeNull();
+
+    project.background.visible = true;
+    project.layers.find((layer) => layer.id === "layer-background")!.visible = false;
+    expect(buildScene3D(project, { showAvatars: false }).backgroundPlane).toBeNull();
+  });
+
   it("AC-201: 舞台前端が設定されると客席方向へ床の範囲を延長する", () => {
     const project = createEmptyProject("ホール");
     project.stageFront = { yMm: 0 };
