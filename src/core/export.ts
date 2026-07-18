@@ -229,6 +229,43 @@ function safePdfText(value: string): string {
   return [...value].map((character) => character.charCodeAt(0) <= 0x7e ? character : "?").join("").replace(/[\\r\\n]+/g, " ");
 }
 
+export function renderPdfInfoSvg(project: Project, scale: PdfExportOptions["scale"], denominator: number): string {
+  const metadata = project.metadata;
+  const lines = [
+    `タイトル: ${project.name}`,
+    `ホール: ${metadata.hallName}  公演名: ${metadata.performanceName}  日付: ${metadata.date}`,
+    `作成者: ${metadata.author}  備考: ${metadata.notes}`,
+    `縮尺: ${scale === "fit" ? `用紙にフィット（計算値1:${denominator.toFixed(2)}）` : scale}  印刷時は倍率100%（拡大縮小なし）`,
+  ];
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="260" viewBox="0 0 1600 260"><rect width="1600" height="260" fill="#ffffff"/><g font-family="sans-serif" font-size="28" fill="#222">${lines.map((line, index) => `<text x="24" y="${42 + index * 54}">${escapeXml(line.replace(/[\\r\\n]+/g, " "))}</text>`).join("")}</g></svg>`;
+}
+
+async function renderPdfInfoToPng(project: Project, scale: PdfExportOptions["scale"], denominator: number): Promise<Blob> {
+  const svg = renderPdfInfoSvg(project, scale, denominator);
+  const svgBlob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+  const url = URL.createObjectURL(svgBlob);
+  try {
+    const image = new Image();
+    image.src = url;
+    await new Promise<void>((resolve, reject) => {
+      image.onload = () => resolve();
+      image.onerror = () => reject(new Error("PDF出力情報欄を描画できません"));
+    });
+    const canvas = document.createElement("canvas");
+    canvas.width = 1600;
+    canvas.height = 260;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("PDF出力情報欄のキャンバスを作成できません");
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    return await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("PDF出力情報欄を生成できません")), "image/png");
+    });
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
 /** A4/A3と1:50/1:100からページ内の描画倍率を求める */
 export function resolvePdfScaleDenominator(
   bounds: ExportBounds,
@@ -266,15 +303,16 @@ export async function createProjectPdf(project: Project, options: PdfExportOptio
     height: imageHeightPt,
   });
 
+  const infoBlob = await renderPdfInfoToPng(project, options.scale, denominator);
+  const infoBytes = new Uint8Array(await infoBlob.arrayBuffer());
+  const infoImage = await pdf.embedPng(infoBytes);
+  page.drawImage(infoImage, {
+    x: marginPt,
+    y: marginPt,
+    width: pageSize.widthPt - marginPt * 2,
+    height: infoHeightPt,
+  });
   const font = await pdf.embedFont(StandardFonts.Helvetica);
-  const metadata = project.metadata;
-  const info = [
-    `Title: ${safePdfText(project.name)}`,
-    `Hall: ${safePdfText(metadata.hallName)}  Performance: ${safePdfText(metadata.performanceName)}  Date: ${safePdfText(metadata.date)}`,
-    `Author: ${safePdfText(metadata.author)}  Notes: ${safePdfText(metadata.notes)}`,
-    `Scale: ${options.scale === "fit" ? "fit" : `1:${denominator}`}  Print at 100% (no scaling)`,
-  ];
-  info.forEach((line, index) => page.drawText(line, { x: marginPt, y: marginPt + infoHeightPt - 14 - index * 12, size: 8, font, color: rgb(0.15, 0.18, 0.22) }));
   const scaleBarPt = mmToPdfPoints(1820, denominator);
   const barY = marginPt + 7;
   page.drawLine({ start: { x: marginPt, y: barY }, end: { x: marginPt + scaleBarPt, y: barY }, thickness: 1, color: rgb(0.1, 0.1, 0.1) });
@@ -284,5 +322,3 @@ export async function createProjectPdf(project: Project, options: PdfExportOptio
   // pdf-libのUint8ArrayはArrayBufferLikeを保持するため、BlobのDOM型へ明示的に変換する。
   return new Blob([bytes.buffer as ArrayBuffer], { type: "application/pdf" });
 }
-
-
