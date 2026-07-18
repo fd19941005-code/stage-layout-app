@@ -1,9 +1,9 @@
 // 中央キャンバス(10.1)。SVG第一候補(第12章)。
-// ポインター入力はPointer Events APIで統一し(12.1)、
-// 取得したpx座標は直ちにmmへ逆変換して扱う(9.4)。
+// ポインター入力はPointer Events APIで統一し(12.1)。1本指の編集と
+// 2本指のパン/ピンチを同じイベント列から判定する(iPad Safari対応)。
 
-import { useRef, type Dispatch, type PointerEvent, type WheelEvent } from "react";
-import type { PointMm, SceneObject } from "../types/project";
+import { useRef, useState, type Dispatch, type PointerEvent, type WheelEvent } from "react";
+import type { PointMm, SceneObject, ViewState } from "../types/project";
 import {
   displayedPxToSourcePx,
   getBackgroundDisplaySizePx,
@@ -16,7 +16,7 @@ import {
   zoomAt,
   type ScreenPoint,
 } from "../core/transform";
-import { effectiveMmPerPixel, type Action, type AppState } from "../state/appState";
+import { effectiveMmPerPixel, type Action, type AppState, type ObjectMove } from "../state/appState";
 import { findPreset } from "../core/presets";
 import { generateId, DEFAULT_LAYER_ID } from "../core/project";
 
@@ -29,7 +29,15 @@ interface Props {
 
 type DragState =
   | { kind: "pan"; startX: number; startY: number; startPanX: number; startPanY: number }
-  | { kind: "move"; id: string; offsetXMm: number; offsetYMm: number };
+  | { kind: "move"; startMm: PointMm; startPositions: ObjectMove[] }
+  | { kind: "rotate"; id: string; centerMm: PointMm }
+  | { kind: "marquee"; startMm: PointMm }
+  | { kind: "pinch"; startDistance: number; startCenter: ScreenPoint; anchorMm: PointMm; startView: ViewState };
+
+interface MarqueeMm {
+  startMm: PointMm;
+  currentMm: PointMm;
+}
 
 function backgroundRotationTransform(
   rotationDeg: 0 | 90 | 180 | 270,
@@ -48,11 +56,28 @@ function backgroundRotationTransform(
   }
 }
 
+function pointerMetrics(points: ReadonlyMap<number, ScreenPoint>) {
+  const entries = [...points.values()];
+  const first = entries[0];
+  const second = entries[1];
+  if (!first || !second) return null;
+  return {
+    distance: Math.max(1, Math.hypot(second.x - first.x, second.y - first.y)),
+    center: { x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 },
+  };
+}
+
+function snapRotation(deg: number): number {
+  return Math.round(deg / 15) * 15;
+}
+
 export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const dragRef = useRef<DragState | null>(null);
+  const pointersRef = useRef(new Map<number, ScreenPoint>());
+  const [marquee, setMarquee] = useState<MarqueeMm | null>(null);
 
-  const { project, mode, selectedId, pendingPresetId } = state;
+  const { project, mode, selectedIds, pendingPresetId } = state;
   const { view, background, calibration } = project;
   const mmpp = effectiveMmPerPixel(project);
   const calibrated = calibration.mmPerPixel !== null;
@@ -76,7 +101,6 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
   function placePreset(pMm: PointMm) {
     if (!pendingPresetId) return;
     if (!calibrated) {
-      // 未校正状態では実寸配置を禁止する(6.1、AC-013)
       onNotice("未校正のため配置できません。先に「校正」で2点と実距離を指定してください。");
       return;
     }
@@ -106,22 +130,37 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
     dispatch({ type: "ADD_OBJECT", object });
   }
 
+  function beginPinch() {
+    const metrics = pointerMetrics(pointersRef.current);
+    if (!metrics) return;
+    dragRef.current = {
+      kind: "pinch",
+      startDistance: metrics.distance,
+      startCenter: metrics.center,
+      anchorMm: screenToMm(metrics.center, view),
+      startView: view,
+    };
+    setMarquee(null);
+  }
+
   function handlePointerDown(e: PointerEvent<SVGSVGElement>) {
+    e.preventDefault();
     const screen = toScreen(e);
-    const pMm = screenToMm(screen, view);
+    pointersRef.current.set(e.pointerId, screen);
     try {
       svgRef.current?.setPointerCapture(e.pointerId);
     } catch {
       // 既に解放済みのポインター等では失敗しうるが、操作自体は続行できる
     }
+    if (pointersRef.current.size >= 2) {
+      beginPinch();
+      return;
+    }
 
+    const pMm = screenToMm(screen, view);
     if (mode === "calibrate" || mode === "verifyCalibration") {
       const displayedPx = mmToImagePx(pMm, mmpp);
-      // 校正点は元画像pxで保存し、切り抜き・90度回転後も同一点を再利用する。
-      dispatch({
-        type: "ADD_CALIB_POINT",
-        point: displayedPxToSourcePx(displayedPx, background),
-      });
+      dispatch({ type: "ADD_CALIB_POINT", point: displayedPxToSourcePx(displayedPx, background) });
       return;
     }
     if (mode === "measure") {
@@ -132,184 +171,161 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
       placePreset(pMm);
       return;
     }
-    // 対象オブジェクトの探索はイベント委譲(data-object-id)で行う
+
     const target = (e.target as Element).closest("[data-object-id]");
+    const rotateTarget = (e.target as Element).closest("[data-rotate-handle]");
+    if (rotateTarget) {
+      const id = rotateTarget.getAttribute("data-object-id");
+      const object = project.objects.find((item) => item.id === id);
+      if (object && !object.locked) {
+        dispatch({ type: "SELECT", id });
+        dragRef.current = { kind: "rotate", id: object.id, centerMm: { xMm: object.xMm, yMm: object.yMm } };
+      }
+      return;
+    }
     const objectId = target?.getAttribute("data-object-id") ?? null;
     if (objectId) {
-      dispatch({ type: "SELECT", id: objectId });
-      const obj = project.objects.find((o) => o.id === objectId);
-      if (obj && !obj.locked) {
+      dispatch({ type: "SELECT", id: objectId, additive: e.shiftKey || e.ctrlKey || e.metaKey });
+      const object = project.objects.find((item) => item.id === objectId);
+      if (object && !object.locked && mode === "select") {
+        const ids = (selectedIds.includes(objectId) ? selectedIds : [objectId]).filter((id) =>
+          project.objects.some((item) => item.id === id && !item.locked),
+        );
         dragRef.current = {
           kind: "move",
-          id: objectId,
-          offsetXMm: pMm.xMm - obj.xMm,
-          offsetYMm: pMm.yMm - obj.yMm,
+          startMm: pMm,
+          startPositions: project.objects.filter((item) => ids.includes(item.id)).map((item) => ({ id: item.id, xMm: item.xMm, yMm: item.yMm })),
         };
       }
       return;
     }
+
+    if (mode === "selectRect") {
+      setMarquee({ startMm: pMm, currentMm: pMm });
+      dragRef.current = { kind: "marquee", startMm: pMm };
+      return;
+    }
     dispatch({ type: "SELECT", id: null });
-    dragRef.current = {
-      kind: "pan",
-      startX: screen.x,
-      startY: screen.y,
-      startPanX: view.panX,
-      startPanY: view.panY,
-    };
+    dragRef.current = { kind: "pan", startX: screen.x, startY: screen.y, startPanX: view.panX, startPanY: view.panY };
   }
 
   function handlePointerMove(e: PointerEvent<SVGSVGElement>) {
     const screen = toScreen(e);
+    pointersRef.current.set(e.pointerId, screen);
     onCursorMm(calibrated ? screenToMm(screen, view) : null);
     const drag = dragRef.current;
     if (!drag) return;
-    if (drag.kind === "pan") {
+    if (drag.kind === "pinch") {
+      const metrics = pointerMetrics(pointersRef.current);
+      if (!metrics) return;
+      const nextZoom = Math.min(2, Math.max(0.005, drag.startView.zoom * metrics.distance / drag.startDistance));
       dispatch({
         type: "SET_VIEW",
         view: {
-          ...view,
-          panX: drag.startPanX + (screen.x - drag.startX),
-          panY: drag.startPanY + (screen.y - drag.startY),
+          zoom: nextZoom,
+          panX: metrics.center.x - drag.anchorMm.xMm * nextZoom,
+          panY: metrics.center.y - drag.anchorMm.yMm * nextZoom,
         },
       });
-    } else {
-      const pMm = screenToMm(screen, view);
-      dispatch({
-        type: "MOVE_OBJECT",
-        id: drag.id,
-        xMm: Math.round(pMm.xMm - drag.offsetXMm),
-        yMm: Math.round(pMm.yMm - drag.offsetYMm),
-      });
+      return;
+    }
+    const pMm = screenToMm(screen, view);
+    if (drag.kind === "pan") {
+      dispatch({ type: "SET_VIEW", view: { ...view, panX: drag.startPanX + screen.x - drag.startX, panY: drag.startPanY + screen.y - drag.startY } });
+    } else if (drag.kind === "move") {
+      const deltaX = pMm.xMm - drag.startMm.xMm;
+      const deltaY = pMm.yMm - drag.startMm.yMm;
+      dispatch({ type: "MOVE_OBJECTS", preview: true, moves: drag.startPositions.map((position) => ({ id: position.id, xMm: position.xMm + deltaX, yMm: position.yMm + deltaY })) });
+    } else if (drag.kind === "rotate") {
+      const angle = (Math.atan2(pMm.yMm - drag.centerMm.yMm, pMm.xMm - drag.centerMm.xMm) * 180) / Math.PI + 90;
+      dispatch({ type: "ROTATE_OBJECT", id: drag.id, rotationDeg: snapRotation(angle), preview: true });
+    } else if (drag.kind === "marquee") {
+      setMarquee({ startMm: drag.startMm, currentMm: pMm });
     }
   }
 
-  function handlePointerUp() {
+  function handlePointerUp(e: PointerEvent<SVGSVGElement>) {
+    pointersRef.current.delete(e.pointerId);
+    const drag = dragRef.current;
+    if (!drag) return;
+    if (drag.kind === "pinch") {
+      if (pointersRef.current.size < 2) dragRef.current = null;
+      return;
+    }
+    if (drag.kind === "move" || drag.kind === "rotate") {
+      dispatch({ type: "COMMIT_TRANSIENT_EDIT" });
+    } else if (drag.kind === "marquee" && marquee) {
+      const minXMm = Math.min(marquee.startMm.xMm, marquee.currentMm.xMm);
+      const maxXMm = Math.max(marquee.startMm.xMm, marquee.currentMm.xMm);
+      const minYMm = Math.min(marquee.startMm.yMm, marquee.currentMm.yMm);
+      const maxYMm = Math.max(marquee.startMm.yMm, marquee.currentMm.yMm);
+      dispatch({ type: "SELECT_RECT", bounds: { minXMm, minYMm, maxXMm, maxYMm }, additive: e.shiftKey || e.ctrlKey || e.metaKey });
+      setMarquee(null);
+    }
     dragRef.current = null;
   }
 
-  const sortedObjects = [...project.objects]
-    .filter((o) => o.visible)
-    .sort((a, b) => a.zIndex - b.zIndex);
+  function handlePointerCancel(e: PointerEvent<SVGSVGElement>) {
+    pointersRef.current.delete(e.pointerId);
+    if (dragRef.current?.kind === "move" || dragRef.current?.kind === "rotate") dispatch({ type: "COMMIT_TRANSIENT_EDIT" });
+    dragRef.current = null;
+    setMarquee(null);
+  }
+
+  const sortedObjects = [...project.objects].filter((object) => object.visible).sort((a, b) => a.zIndex - b.zIndex);
   const [mA, mB] = state.measurePointsMm;
+  const marqueeRect = marquee
+    ? {
+        x: Math.min(marquee.startMm.xMm, marquee.currentMm.xMm),
+        y: Math.min(marquee.startMm.yMm, marquee.currentMm.yMm),
+        width: Math.abs(marquee.currentMm.xMm - marquee.startMm.xMm),
+        height: Math.abs(marquee.currentMm.yMm - marquee.startMm.yMm),
+      }
+    : null;
 
   return (
-    <svg
-      ref={svgRef}
-      className="canvas-stage"
-      onWheel={handleWheel}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerUp}
-      onPointerLeave={() => onCursorMm(null)}
-    >
+    <svg ref={svgRef} className="canvas-stage" onWheel={handleWheel} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerCancel={handlePointerCancel} onPointerLeave={() => onCursorMm(null)}>
       <g transform={`translate(${view.panX} ${view.panY}) scale(${view.zoom})`}>
         {background.imageDataUrl && background.visible && (
-          <g
-            transform={backgroundRotationTransform(background.rotationDeg, cropWidthMm, cropHeightMm)}
-            data-background-size={`${displaySize.widthPx}x${displaySize.heightPx}`}
-          >
-            <svg
-              x={0}
-              y={0}
-              width={cropWidthMm}
-              height={cropHeightMm}
-              viewBox={`${crop.xPx} ${crop.yPx} ${crop.widthPx} ${crop.heightPx}`}
-              preserveAspectRatio="none"
-              overflow="visible"
-              pointerEvents="none"
-            >
-              <image
-                href={background.imageDataUrl}
-                x={0}
-                y={0}
-                width={background.naturalWidthPx}
-                height={background.naturalHeightPx}
-                opacity={background.opacity}
-                preserveAspectRatio="none"
-              />
+          <g transform={backgroundRotationTransform(background.rotationDeg, cropWidthMm, cropHeightMm)} data-background-size={`${displaySize.widthPx}x${displaySize.heightPx}`}>
+            <svg x={0} y={0} width={cropWidthMm} height={cropHeightMm} viewBox={`${crop.xPx} ${crop.yPx} ${crop.widthPx} ${crop.heightPx}`} preserveAspectRatio="none" overflow="visible" pointerEvents="none">
+              <image href={background.imageDataUrl} x={0} y={0} width={background.naturalWidthPx} height={background.naturalHeightPx} opacity={background.opacity} preserveAspectRatio="none" />
             </svg>
           </g>
         )}
 
-        {sortedObjects.map((o) => (
-          <g
-            key={o.id}
-            data-object-id={o.id}
-            className={`scene-object${o.id === selectedId ? " selected" : ""}${o.locked ? " locked" : ""}`}
-            transform={`translate(${o.xMm} ${o.yMm}) rotate(${o.rotationDeg})`}
-          >
-            {o.shape === "circle" ? (
-              <ellipse rx={o.widthMm / 2} ry={o.depthMm / 2} />
-            ) : (
-              <rect
-                x={-o.widthMm / 2}
-                y={-o.depthMm / 2}
-                width={o.widthMm}
-                height={o.depthMm}
-              />
+        {sortedObjects.map((object) => (
+          <g key={object.id} data-object-id={object.id} className={`scene-object${selectedIds.includes(object.id) ? " selected" : ""}${object.locked ? " locked" : ""}`} transform={`translate(${object.xMm} ${object.yMm}) rotate(${object.rotationDeg})`}>
+            {object.shape === "circle" ? <ellipse rx={object.widthMm / 2} ry={object.depthMm / 2} /> : <rect x={-object.widthMm / 2} y={-object.depthMm / 2} width={object.widthMm} height={object.depthMm} />}
+            {(object.type === "chair" || object.type === "musicStand") && <line x1={0} y1={0} x2={0} y2={-object.depthMm / 2} className="facing" />}
+            <text y={object.depthMm / 2 + 320} textAnchor="middle">{object.label || object.name}</text>
+            {selectedIds.includes(object.id) && !object.locked && mode === "select" && (
+              <g className="rotate-handle" data-rotate-handle="true" data-object-id={object.id}>
+                <line x1={0} y1={-object.depthMm / 2} x2={0} y2={-object.depthMm / 2 - 300} />
+                <circle cx={0} cy={-object.depthMm / 2 - 300} r={110} />
+              </g>
             )}
-            {/* 向きあり形状の前方向インジケータ */}
-            {(o.type === "chair" || o.type === "musicStand") && (
-              <line x1={0} y1={0} x2={0} y2={-o.depthMm / 2} className="facing" />
-            )}
-            <text y={o.depthMm / 2 + 320} textAnchor="middle">
-              {o.label || o.name}
-            </text>
           </g>
         ))}
 
-        {/* 校正打点の表示。保存点は元画像px、描画時だけ表示画像pxへ変換する。 */}
-        {state.calibPointsPx.map((p, i) => {
-          const displayed = sourcePxToDisplayedPx(p, background);
-          const pm = imagePxToMm(displayed, mmpp);
-          return (
-            <circle
-              key={i}
-              className="calib-point"
-              cx={pm.xMm}
-              cy={pm.yMm}
-              r={8 / view.zoom}
-            />
-          );
-        })}
-        {state.calibPointsPx.length === 2 &&
-          (() => {
-            const a = imagePxToMm(sourcePxToDisplayedPx(state.calibPointsPx[0], background), mmpp);
-            const b = imagePxToMm(sourcePxToDisplayedPx(state.calibPointsPx[1], background), mmpp);
-            return (
-              <line
-                className="calib-line"
-                x1={a.xMm}
-                y1={a.yMm}
-                x2={b.xMm}
-                y2={b.yMm}
-              />
-            );
-          })()}
+        {marqueeRect && <rect className="selection-marquee" x={marqueeRect.x} y={marqueeRect.y} width={marqueeRect.width} height={marqueeRect.height} />}
 
-        {/* 測定(FR-031) */}
-        {mA && (
-          <circle className="measure-point" cx={mA.xMm} cy={mA.yMm} r={6 / view.zoom} />
-        )}
+        {state.calibPointsPx.map((point, index) => {
+          const displayed = sourcePxToDisplayedPx(point, background);
+          const pm = imagePxToMm(displayed, mmpp);
+          return <circle key={index} className="calib-point" cx={pm.xMm} cy={pm.yMm} r={8 / view.zoom} />;
+        })}
+        {state.calibPointsPx.length === 2 && (() => {
+          const a = imagePxToMm(sourcePxToDisplayedPx(state.calibPointsPx[0], background), mmpp);
+          const b = imagePxToMm(sourcePxToDisplayedPx(state.calibPointsPx[1], background), mmpp);
+          return <line className="calib-line" x1={a.xMm} y1={a.yMm} x2={b.xMm} y2={b.yMm} />;
+        })()}
+        {mA && <circle className="measure-point" cx={mA.xMm} cy={mA.yMm} r={6 / view.zoom} />}
         {mA && mB && (
           <>
-            <line
-              className="measure-line"
-              x1={mA.xMm}
-              y1={mA.yMm}
-              x2={mB.xMm}
-              y2={mB.yMm}
-            />
+            <line className="measure-line" x1={mA.xMm} y1={mA.yMm} x2={mB.xMm} y2={mB.yMm} />
             <circle className="measure-point" cx={mB.xMm} cy={mB.yMm} r={6 / view.zoom} />
-            <text
-              className="measure-text"
-              x={(mA.xMm + mB.xMm) / 2}
-              y={(mA.yMm + mB.yMm) / 2 - 200}
-              textAnchor="middle"
-            >
-              {`${Math.round(mmDistance(mA, mB))} mm`}
-            </text>
+            <text className="measure-text" x={(mA.xMm + mB.xMm) / 2} y={(mA.yMm + mB.yMm) / 2 - 200} textAnchor="middle">{`${Math.round(mmDistance(mA, mB))} mm`}</text>
           </>
         )}
       </g>

@@ -3,6 +3,7 @@
 
 import type { Dispatch } from "react";
 import type { Action, AppState } from "../state/appState";
+import { canPlaceObjects } from "../state/appState";
 import { OBJECT_PRESETS, PRESET_CATEGORIES } from "../core/presets";
 
 interface Props {
@@ -11,37 +12,20 @@ interface Props {
 }
 
 export function LibraryPanel({ state, dispatch }: Props) {
-  const calibrated = state.project.calibration.mmPerPixel !== null;
-
+  const calibrated = canPlaceObjects(state.project);
   return (
     <aside className="library-panel">
       <h2>ライブラリ</h2>
-      {!calibrated && (
-        <p className="hint">
-          未校正のため配置できません。先に背景を読み込み「校正」を実行してください。
-        </p>
-      )}
+      {!calibrated && <p className="hint">未校正のため配置できません。先に背景を読み込み「校正」を実行してください。</p>}
       {PRESET_CATEGORIES.map((category) => (
         <section key={category}>
           <h3>{category}</h3>
           <ul>
-            {OBJECT_PRESETS.filter((p) => p.category === category).map((p) => (
-              <li key={p.id}>
-                <button
-                  type="button"
-                  className={state.pendingPresetId === p.id ? "active" : ""}
-                  disabled={!calibrated}
-                  onClick={() =>
-                    dispatch({
-                      type: "SET_PENDING_PRESET",
-                      presetId: state.pendingPresetId === p.id ? null : p.id,
-                    })
-                  }
-                >
-                  <span>{p.name}</span>
-                  <span className="dims">
-                    {p.widthMm}×{p.depthMm}
-                  </span>
+            {OBJECT_PRESETS.filter((preset) => preset.category === category).map((preset) => (
+              <li key={preset.id}>
+                <button type="button" className={state.pendingPresetId === preset.id ? "active" : ""} disabled={!calibrated} onClick={() => dispatch({ type: "SET_PENDING_PRESET", presetId: state.pendingPresetId === preset.id ? null : preset.id })}>
+                  <span>{preset.name}</span>
+                  <span className="dims">{preset.widthMm}×{preset.depthMm}</span>
                 </button>
               </li>
             ))}
