@@ -32,6 +32,25 @@ export type ToolMode =
   | "annotationRect"
   | "annotationCircle"
   | "annotationDimension";
+
+export const TOOL_MODE_LABELS: Record<ToolMode, string> = {
+  select: "選択・移動",
+  selectRect: "範囲選択",
+  calibrate: "校正",
+  verifyCalibration: "校正確認",
+  measure: "測定",
+  annotationText: "文字注釈",
+  annotationLine: "線注釈",
+  annotationArrow: "矢印注釈",
+  annotationRect: "矩形注釈",
+  annotationCircle: "円注釈",
+  annotationDimension: "寸法線",
+};
+
+export function toolModeLabel(mode: ToolMode): string {
+  return TOOL_MODE_LABELS[mode];
+}
+
 export const PROVISIONAL_MM_PER_PX = 10;
 export const MAX_HISTORY_ENTRIES = 50;
 
@@ -111,6 +130,7 @@ export type Action =
   | { type: "UPDATE_OBJECT"; id: string; patch: Partial<SceneObject> }
   | { type: "MOVE_OBJECT"; id: string; xMm: number; yMm: number }
   | { type: "MOVE_OBJECTS"; moves: ObjectMove[]; preview?: boolean }
+  | { type: "NUDGE_SELECTED"; dxMm: number; dyMm: number }
   | { type: "ROTATE_OBJECT"; id: string; rotationDeg: number; preview?: boolean }
   | { type: "DELETE_OBJECT"; id: string }
   | { type: "DELETE_SELECTED" }
@@ -432,6 +452,15 @@ export function appReducer(state: AppState, action: Action): AppState {
       };
       return action.preview ? previewProject(state, project) : commitProject(state, project);
     }
+    case "NUDGE_SELECTED": {
+      if (!Number.isFinite(action.dxMm) || !Number.isFinite(action.dyMm) || (action.dxMm === 0 && action.dyMm === 0)) return state;
+      const ids = new Set(editableSelectedIds(state));
+      if (ids.size === 0) return state;
+      const moves = state.project.objects
+        .filter((object) => ids.has(object.id))
+        .map((object) => ({ id: object.id, xMm: object.xMm + action.dxMm, yMm: object.yMm + action.dyMm }));
+      return appReducer(state, { type: "MOVE_OBJECTS", moves });
+    }
     case "ROTATE_OBJECT": {
       const object = state.project.objects.find((candidate) => candidate.id === action.id);
       if (!object || !objectIsEditable(state.project, object)) return state;
@@ -521,13 +550,4 @@ export function appReducer(state: AppState, action: Action): AppState {
 }
 
 export { selectionBoundsMm };
-
-
-
-
-
-
-
-
-
 

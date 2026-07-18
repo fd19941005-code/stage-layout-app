@@ -120,10 +120,19 @@ export function ExportDialog({ state, dispatch, onClose, onNotice }: Props) {
           <button type="button" onClick={onClose}>キャンセル</button>
           <button type="button" className="primary" disabled={busy || state.project.calibration.mmPerPixel === null} onClick={handleExport}>{busy ? "出力中…" : `${format === "png" ? "PNG" : "PDF"}を出力`}</button>
         </div>
-        {format === "pdf" && <p className="hint">1:50/1:100はPDF内寸法を固定し、印刷時は倍率100%を指定します。</p>}
+        {format === "pdf" && (
+          <div className="export-scale-hint hint">
+            <p><b>縮尺の意味</b></p>
+            <ul>
+              <li><b>1:50</b>：実寸の50分の1（1820mm → 36.4mm）</li>
+              <li><b>1:100</b>：実寸の100分の1（1820mm → 18.2mm）</li>
+              <li><b>用紙にフィット</b>：用紙に合わせるため、実寸縮尺は保証されません</li>
+            </ul>
+            <p>1:50/1:100で印刷するときは、プリンター側を「倍率100%／実際のサイズ」にしてください。</p>
+          </div>
+        )}
       </div>
     </div>
   );
 }
-
 

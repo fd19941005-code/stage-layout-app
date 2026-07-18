@@ -21,6 +21,9 @@ export function LibraryPanel({ state, dispatch }: Props) {
       {!calibrated && <p className="hint">未校正のため配置できません。先に背景を読み込み「校正」を実行してください。</p>}
       {calibrated && (!activeLayer?.visible || activeLayer.locked) && <p className="hint">選択中のレイヤーが非表示またはロックされています。</p>}
       {calibrated && <p className="hint">配置先: {activeLayer?.name ?? "—"}</p>}
+      {calibrated && <p className="hint">
+        寸法は標準初期値（幅×奥行mm）です。楽器は機種差があるため、実物の仕様に合わせてプロパティで変更してください。
+      </p>}
       <section className="placement-controls" aria-label="配置操作">
         <label className="row placement-mode-toggle">
           <input
@@ -32,12 +35,12 @@ export function LibraryPanel({ state, dispatch }: Props) {
         </label>
         <p className="hint placement-hint">
           {state.placementContinuous
-            ? "同じプリセットを続けて配置します。"
-            : "1個置くと選択モードに戻ります。Shiftを押しながら置くと一時的に連続配置できます。"}
+            ? "同じプリセットを続けて配置します。終了はチェックを外すか「選択」を押します。"
+            : "プリセットを選び、キャンバスをクリック/タップして配置します。通常は1個で選択・移動へ戻ります。Shiftを押している間だけ一時的に連続配置できます。"}
         </p>
         {state.pendingPresetId && (
           <p className="placement-status" role="status">
-            配置待機中：キャンバスをクリックしてください。
+            配置待機中：キャンバスをクリック/タップして配置。取消は同じプリセットをもう一度押すか「選択」。
           </p>
         )}
       </section>
@@ -49,7 +52,7 @@ export function LibraryPanel({ state, dispatch }: Props) {
               <li key={preset.id}>
                 <button type="button" className={state.pendingPresetId === preset.id ? "active" : ""} disabled={!canPlace} onClick={() => dispatch({ type: "SET_PENDING_PRESET", presetId: state.pendingPresetId === preset.id ? null : preset.id })}>
                   <span>{preset.name}</span>
-                  <span className="dims">{preset.widthMm}×{preset.depthMm}</span>
+                  <span className="dims">{preset.widthMm}×{preset.depthMm}mm</span>
                 </button>
               </li>
             ))}
@@ -59,5 +62,4 @@ export function LibraryPanel({ state, dispatch }: Props) {
     </aside>
   );
 }
-
 

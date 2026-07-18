@@ -21,6 +21,16 @@ export const RISER_HEIGHTS_MM = [150, 300, 450, 600] as const;
 /** 校正距離プリセット(FR-021) */
 export const CALIBRATION_DISTANCE_PRESETS_MM = [910, 1820, 900, 1800, 1000] as const;
 
+/**
+ * 校正距離の数値だけでは尺貫法の図面に不慣れな利用者が判断しづらいため、
+ * ホール図面での呼び方を併記する。保存データには影響しない表示用関数。
+ */
+export function calibrationDistanceLabel(distanceMm: number): string {
+  if (distanceMm === 910) return "半間・3尺（910mm）";
+  if (distanceMm === 1820) return "1間（1820mm）";
+  return `${distanceMm}mm`;
+}
+
 export const OBJECT_PRESETS: ObjectPreset[] = [
   // 座席・譜面
   { id: "chair", category: "座席・譜面", name: "椅子", type: "chair", widthMm: 450, depthMm: 450, heightMm: 450, shape: "rect" },
@@ -67,7 +77,4 @@ export function findPreset(id: string): ObjectPreset | undefined {
 export const PRESET_CATEGORIES: string[] = [
   ...new Set(OBJECT_PRESETS.map((p) => p.category)),
 ];
-
-
-
 

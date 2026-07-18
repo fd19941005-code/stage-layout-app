@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { appReducer, createInitialState } from "./appState";
+import { appReducer, createInitialState, toolModeLabel } from "./appState";
 
 describe("背景編集Action (FR-012、FR-013、FR-014)", () => {
   it("90度回転と切り抜きはプロジェクトへ保存可能な状態になる", () => {
@@ -49,5 +49,14 @@ describe("校正確認の状態遷移 (FR-024)", () => {
     expect(state.calibPointsPx).toHaveLength(2);
     state = appReducer(state, { type: "CLEAR_CALIB_POINTS" });
     expect(state.calibPointsPx).toHaveLength(0);
+  });
+});
+
+
+describe("ツールモード表示 (UX-006)", () => {
+  it("編集モードを利用者向けの日本語で識別できる", () => {
+    expect(toolModeLabel("select")).toBe("選択・移動");
+    expect(toolModeLabel("selectRect")).toBe("範囲選択");
+    expect(toolModeLabel("measure")).toBe("測定");
   });
 });

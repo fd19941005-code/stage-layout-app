@@ -55,7 +55,7 @@ export function App() {
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       const target = event.target as HTMLElement | null;
-      if (target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.tagName === "SELECT") return;
+      if (["INPUT", "TEXTAREA", "SELECT", "BUTTON"].includes(target?.tagName ?? "")) return;
       const modifier = event.ctrlKey || event.metaKey;
       if (modifier && event.key.toLowerCase() === "z") {
         event.preventDefault();
@@ -63,6 +63,24 @@ export function App() {
       } else if (modifier && event.key.toLowerCase() === "y") {
         event.preventDefault();
         dispatch({ type: "REDO" });
+      } else if (
+        state.mode === "select"
+        && !state.pendingPresetId
+        && !modifier
+        && !event.altKey
+        && state.selectedIds.length > 0
+        && ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)
+      ) {
+        const stepMm = event.shiftKey ? 100 : 10;
+        const direction = {
+          ArrowLeft: { dxMm: -stepMm, dyMm: 0 },
+          ArrowRight: { dxMm: stepMm, dyMm: 0 },
+          ArrowUp: { dxMm: 0, dyMm: -stepMm },
+          ArrowDown: { dxMm: 0, dyMm: stepMm },
+        }[event.key];
+        if (!direction) return;
+        event.preventDefault();
+        dispatch({ type: "NUDGE_SELECTED", ...direction });
       } else if ((event.key === "Delete" || event.key === "Backspace") && state.selectedIds.length > 0) {
         event.preventDefault();
         dispatch({ type: "DELETE_SELECTED" });
@@ -84,7 +102,7 @@ export function App() {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [state.selectedIds.length, state.pendingPresetId, state.placementContinuous]);
+  }, [state.mode, state.selectedIds.length, state.pendingPresetId, state.placementContinuous]);
 
   const calibrationReady = state.mode === "calibrate" && state.calibPointsPx.length === 2;
   const verificationReady = state.mode === "verifyCalibration" && state.calibPointsPx.length === 2;
@@ -121,9 +139,4 @@ export function App() {
     </div>
   );
 }
-
-
-
-
-
 

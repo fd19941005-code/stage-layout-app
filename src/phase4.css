@@ -194,11 +194,11 @@
   background: #f1f2f4;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 900px) {
   .layer-row button,
   .snap-panel input,
   .arrangement-tools > button {
-    min-height: 36px;
+    min-height: 44px;
   }
 
   .dialog-form-grid {

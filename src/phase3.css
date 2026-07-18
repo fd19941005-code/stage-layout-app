@@ -59,33 +59,100 @@
   margin-bottom: 0;
 }
 
-/* iPad幅ではライブラリを消すと配置操作が完結しないため、
-   キャンバス上部の折り返し領域へ残す。CSSのgridは指での縦スクロールを許可する。 */
-@media (max-width: 700px) {
+/* iPad幅では左右パネルを縦に並べ、配置機能を隠さずタップ可能なサイズで残す。 */
+.toolbar-mode-status {
+  display: flex;
+  align-items: center;
+  flex: 1 1 260px;
+  gap: 6px;
+  min-width: 220px;
+  padding: 4px 8px;
+  border: 1px solid #4a5568;
+  border-radius: 4px;
+  background: #1f2730;
+  color: #dce5ee;
+  line-height: 1.35;
+}
+
+.toolbar-mode-status strong {
+  color: #fff;
+}
+
+.toolbar-mode-status span:last-child {
+  color: #b9c7d5;
+  font-size: 11px;
+}
+
+.continuous-badge {
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: #d98b00;
+  color: #fff !important;
+  font-weight: 700;
+}
+
+.export-scale-hint {
+  margin-top: 12px;
+  padding: 8px 10px;
+  border: 1px solid #d5d8dc;
+  border-radius: 5px;
+  background: #f7f9fb;
+}
+
+.export-scale-hint p {
+  margin: 0 0 5px;
+}
+
+.export-scale-hint ul {
+  margin: 0 0 6px 18px;
+  padding: 0;
+}
+
+.canvas-stage:focus-visible {
+  outline: 3px solid #2f7fd1;
+  outline-offset: -3px;
+}
+
+@media (max-width: 900px) {
   .main-area {
     grid-template-columns: 1fr;
-    grid-template-rows: auto minmax(280px, 1fr) auto;
+    grid-template-rows: auto minmax(320px, 1fr) auto;
   }
 
   .library-panel {
     display: block;
-    max-height: 28vh;
+    max-height: 24vh;
     border-right: 0;
     border-bottom: 1px solid #d5d8dc;
   }
 
   .library-panel li button,
   .property-button-grid button,
-  .object-properties .actions button {
-    min-height: 38px;
+  .object-properties .actions button,
+  .layer-row button,
+  .arrangement-tools > button {
+    min-height: 44px;
   }
 
   .property-panel {
-    max-height: 34vh;
+    max-height: 30vh;
+    border-left: 0;
+    border-top: 1px solid #d5d8dc;
+  }
+
+  .snap-panel input,
+  .object-properties input:not([type="checkbox"]),
+  .object-properties select {
+    min-height: 44px;
   }
 
   .toolbar button {
-    min-height: 36px;
+    min-height: 44px;
+  }
+
+  .toolbar-mode-status {
+    flex-basis: 100%;
+    min-width: 0;
   }
 }
 

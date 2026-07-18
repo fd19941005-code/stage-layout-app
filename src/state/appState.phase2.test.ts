@@ -78,6 +78,26 @@ describe("Undo/Redo (FR-053、AC-008)", () => {
   });
 });
 
+describe("キーボードナッジ (UX-009)", () => {
+  it("選択中の複数オブジェクトをmm単位で移動し、ロック物は変更しない", () => {
+    let state = withObjects([
+      chair("editable", 1000, 2000),
+      { ...chair("locked", 3000, 4000), locked: true },
+    ]);
+    state = appReducer(state, { type: "SELECT_MANY", ids: ["editable", "locked"] });
+    state = appReducer(state, { type: "NUDGE_SELECTED", dxMm: 10, dyMm: -100 });
+
+    expect(state.project.objects.find((object) => object.id === "editable")).toMatchObject({ xMm: 1010, yMm: 1900 });
+    expect(state.project.objects.find((object) => object.id === "locked")).toMatchObject({ xMm: 3000, yMm: 4000 });
+    expect(state.past).toHaveLength(3);
+  });
+
+  it("選択がなければナッジは履歴を増やさない", () => {
+    const state = appReducer(createInitialState(), { type: "NUDGE_SELECTED", dxMm: 10, dyMm: 0 });
+    expect(state.past).toHaveLength(0);
+  });
+});
+
 describe("複数選択・一括編集 (FR-050、FR-052、FR-056)", () => {
   it("複数選択、複製、グループ化、ロック、削除をActionで実行できる", () => {
     let state = withObjects([chair("a"), chair("b", 1000), chair("c", 2000)]);

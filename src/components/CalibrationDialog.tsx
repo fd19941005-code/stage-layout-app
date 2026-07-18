@@ -3,7 +3,7 @@
 
 import { useState, type Dispatch } from "react";
 import type { Action } from "../state/appState";
-import { CALIBRATION_DISTANCE_PRESETS_MM } from "../core/presets";
+import { CALIBRATION_DISTANCE_PRESETS_MM, calibrationDistanceLabel } from "../core/presets";
 import { toMm } from "../core/transform";
 
 interface Props {
@@ -40,12 +40,12 @@ export function CalibrationDialog({ dispatch }: Props) {
             <li>その2点間の実寸を下から選ぶ</li>
             <li>校正後に未知の距離を測るときは、上部の「測定」を使う</li>
           </ol>
-          <p><b>寸法の目安:</b> 1間 = 1820mm、3尺(半間) = 910mmです。図面の線の間隔が1間なら「1820mm」、半間なら「910mm」を選びます。</p>
+          <p><b>寸法の目安:</b> 1間 = 1820mm、3尺(半間) = 910mmです。図面に「1間」「半間」「3尺」などの表記があれば、その区間の実寸に対応するボタンを選びます。</p>
         </div>
         <h3>クリックした2点間の実寸</h3>
         <div className="preset-buttons">
           {CALIBRATION_DISTANCE_PRESETS_MM.map((mm) => (
-            <button key={mm} type="button" onClick={() => apply(mm)}>{mm}mm</button>
+            <button key={mm} type="button" aria-label={`${calibrationDistanceLabel(mm)}を選択`} onClick={() => apply(mm)}>{calibrationDistanceLabel(mm)}</button>
           ))}
         </div>
         <div className="custom-input">
@@ -79,6 +79,4 @@ export function CalibrationDialog({ dispatch }: Props) {
     </div>
   );
 }
-
-
 

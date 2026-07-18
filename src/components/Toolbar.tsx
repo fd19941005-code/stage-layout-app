@@ -2,9 +2,11 @@
 
 import { useRef, useState, type ChangeEvent, type Dispatch } from "react";
 import type { Action, AppState, ToolMode } from "../state/appState";
+import { toolModeLabel } from "../state/appState";
 import { deserializeProject, serializeProject } from "../core/project";
 import { zoomAt } from "../core/transform";
 import { isPdfFile, isSupportedBackgroundFile, renderPdfPages, type PdfPageImage } from "../core/pdf";
+import { findPreset } from "../core/presets";
 
 interface Props {
   state: AppState;
@@ -21,7 +23,7 @@ export function Toolbar({ state, dispatch, onNotice, onExport }: Props) {
   const { project, mode, saveState } = state;
 
   function handleNew() {
-    if (saveState === "dirty" && !window.confirm("未保存の変更があります。新規プロジェクトを作成しますか?")) return;
+    if (saveState === "dirty" && !window.confirm("未保存の変更があります。新規プロジェクトを作成しますか？")) return;
     dispatch({ type: "NEW_PROJECT" });
   }
 
@@ -73,6 +75,11 @@ export function Toolbar({ state, dispatch, onNotice, onExport }: Props) {
     reader.readAsDataURL(file);
   }
 
+  function handleOpen() {
+    if (saveState === "dirty" && !window.confirm("未保存の変更があります。読み込むと現在の変更は破棄されます。続けますか？")) return;
+    projectInputRef.current?.click();
+  }
+
   function handleProjectSelected(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -115,8 +122,18 @@ export function Toolbar({ state, dispatch, onNotice, onExport }: Props) {
     dispatch({ type: "SET_VIEW", view: zoomAt(project.view, { x: 480, y: 320 }, next) });
   }
 
+  const pendingPreset = state.pendingPresetId ? findPreset(state.pendingPresetId) : null;
   const modeButton = (m: ToolMode, label: string, disabled = false) => (
-    <button type="button" className={mode === m ? "active" : ""} disabled={disabled} onClick={() => setMode(m)}>{label}</button>
+    <button
+      type="button"
+      className={mode === m ? "active" : ""}
+      aria-pressed={mode === m}
+      disabled={disabled}
+      title={disabled ? `${label}（校正済みのプロジェクトで使用できます）` : `${toolModeLabel(m)}モード`}
+      onClick={() => setMode(m)}
+    >
+      {label}
+    </button>
   );
 
   return (
@@ -124,7 +141,7 @@ export function Toolbar({ state, dispatch, onNotice, onExport }: Props) {
       <header className="toolbar">
         <input className="project-name" value={project.name} onChange={(e) => dispatch({ type: "SET_PROJECT_NAME", name: e.target.value })} aria-label="プロジェクト名" />
         <button type="button" onClick={handleNew}>新規</button>
-        <button type="button" onClick={() => projectInputRef.current?.click()}>開く</button>
+        <button type="button" onClick={handleOpen}>開く</button>
         <button type="button" onClick={handleSave}>保存(JSON)</button>
         <button type="button" onClick={onExport} disabled={project.calibration.mmPerPixel === null}>出力</button>
         <span className="separator" />
@@ -148,6 +165,13 @@ export function Toolbar({ state, dispatch, onNotice, onExport }: Props) {
         <span className="separator" />
         <button type="button" onClick={() => zoomBy(1.25)}>拡大</button>
         <button type="button" onClick={() => zoomBy(1 / 1.25)}>縮小</button>
+        <div className="toolbar-mode-status" role="status" aria-label={`現在のモード: ${toolModeLabel(mode)}`}>
+          <span>現在のモード</span>
+          <strong>{toolModeLabel(mode)}</strong>
+          {pendingPreset && <span>配置待機中：{pendingPreset.name}（キャンバスをタップ）</span>}
+          {state.placementContinuous && <span className="continuous-badge">連続配置中</span>}
+          {mode === "select" && !pendingPreset && state.selectedIds.length > 0 && <span>矢印キー: 10mm移動（Shift+矢印: 100mm）</span>}
+        </div>
 
         <input ref={imageInputRef} type="file" accept="image/png,image/jpeg,application/pdf,.pdf" hidden onChange={handleImageSelected} />
         <input ref={projectInputRef} type="file" accept=".json,application/json" hidden onChange={handleProjectSelected} />
@@ -172,5 +196,4 @@ export function Toolbar({ state, dispatch, onNotice, onExport }: Props) {
     </>
   );
 }
-
 

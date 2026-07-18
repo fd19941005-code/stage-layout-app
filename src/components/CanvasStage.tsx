@@ -468,7 +468,19 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
   }
 
   return (
-    <svg ref={svgRef} className="canvas-stage" onWheel={handleWheel} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerCancel={handlePointerCancel} onPointerLeave={() => onCursorMm(null)}>
+    <svg
+      ref={svgRef}
+      className="canvas-stage"
+      tabIndex={0}
+      role="application"
+      aria-label="舞台配置キャンバス。選択中は矢印キーで10mm移動、Shift+矢印で100mm移動"
+      onWheel={handleWheel}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerCancel}
+      onPointerLeave={() => onCursorMm(null)}
+    >
       <defs>
         <marker id="canvas-arrow" markerWidth="160" markerHeight="160" refX="120" refY="60" orient="auto">
           <path d="M0,0 L120,60 L0,120 z" fill="#d12f2f" />
@@ -510,12 +522,4 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
     </svg>
   );
 }
-
-
-
-
-
-
-
-
 
