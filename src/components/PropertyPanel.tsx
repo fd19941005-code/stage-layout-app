@@ -1,4 +1,4 @@
-// 右プロパティパネル(10.1): 背景、選択物の座標・寸法・角度・一括編集。
+// 右プロパティパネル(10.1): 背景、レイヤー、スナップ、選択物の編集。
 // 寸法変更は数値入力のみ(FR-042、FR-043)。ドラッグによる拡大縮小は提供しない。
 
 import type { Dispatch } from "react";
@@ -6,10 +6,14 @@ import type { Action, AppState } from "../state/appState";
 import type { SceneObject } from "../types/project";
 import type { Alignment } from "../core/layout";
 import { BackgroundPanel } from "./BackgroundPanel";
+import { LayerPanel } from "./LayerPanel";
+import { SnapPanel } from "./SnapPanel";
 
 interface Props {
   state: AppState;
   dispatch: Dispatch<Action>;
+  onOpenGrid: (sourceId: string) => void;
+  onOpenPultArc: () => void;
 }
 
 type NumericField = "xMm" | "yMm" | "widthMm" | "depthMm" | "heightMm" | "rotationDeg";
@@ -32,9 +36,11 @@ const ALIGN_BUTTONS: { alignment: Alignment; label: string }[] = [
   { alignment: "bottom", label: "下揃え" },
 ];
 
-export function PropertyPanel({ state, dispatch }: Props) {
+export function PropertyPanel({ state, dispatch, onOpenGrid, onOpenPultArc }: Props) {
   const selectedObjects = state.project.objects.filter((object) => state.selectedIds.includes(object.id));
   const selected: SceneObject | undefined = selectedObjects[0] ?? state.project.objects.find((object) => object.id === state.selectedId);
+  const activeLayer = state.project.layers.find((layer) => layer.id === state.activeLayerId);
+  const risers = state.project.objects.filter((object) => object.type === "riser");
 
   function renderMultipleProperties() {
     if (selectedObjects.length < 2) return null;
@@ -67,13 +73,20 @@ export function PropertyPanel({ state, dispatch }: Props) {
   function renderSingleProperties() {
     if (!selected || selectedObjects.length > 1) return null;
     const selectedObject = selected;
+    const objectLayer = state.project.layers.find((layer) => layer.id === selectedObject.layerId);
+    const editable = !selectedObject.locked && !objectLayer?.locked;
     function commit(patch: Partial<SceneObject>) {
       dispatch({ type: "UPDATE_OBJECT", id: selectedObject.id, patch });
     }
     return (
       <>
         <p className="object-name">{selectedObject.name}</p>
-        <label>ラベル<input value={selectedObject.label} onChange={(e) => commit({ label: e.target.value })} /></label>
+        <label>レイヤー
+          <select value={selectedObject.layerId} disabled={!editable} onChange={(e) => commit({ layerId: e.target.value })}>
+            {state.project.layers.map((layer) => <option key={layer.id} value={layer.id}>{layer.name}{layer.locked ? " 🔒" : ""}</option>)}
+          </select>
+        </label>
+        <label>ラベル<input value={selectedObject.label} disabled={!editable} onChange={(e) => commit({ label: e.target.value })} /></label>
         {NUMERIC_FIELDS.map(({ key, label, min }) => (
           <label key={key}>
             {label}
@@ -81,7 +94,7 @@ export function PropertyPanel({ state, dispatch }: Props) {
               type="number"
               value={selectedObject[key]}
               min={min}
-              disabled={selectedObject.locked}
+              disabled={!editable}
               onChange={(e) => {
                 const value = Number(e.target.value);
                 if (!Number.isFinite(value) || (min !== undefined && value < min)) return;
@@ -90,10 +103,25 @@ export function PropertyPanel({ state, dispatch }: Props) {
             />
           </label>
         ))}
-        <label className="row"><input type="checkbox" checked={selectedObject.locked} onChange={(e) => commit({ locked: e.target.checked })} />ロック(FR-055)</label>
+        {(selectedObject.annotationKind === "line" || selectedObject.annotationKind === "arrow" || selectedObject.annotationKind === "dimension") && (
+          <div className="dialog-form-grid">
+            <label>終点X(mm)<input type="number" value={selectedObject.endXMm ?? selectedObject.xMm} disabled={!editable} onChange={(e) => commit({ endXMm: Number(e.target.value) })} /></label>
+            <label>終点Y(mm)<input type="number" value={selectedObject.endYMm ?? selectedObject.yMm} disabled={!editable} onChange={(e) => commit({ endYMm: Number(e.target.value) })} /></label>
+          </div>
+        )}
+        {selectedObject.type !== "riser" && (
+          <label>載っている山台
+            <select value={selectedObject.onRiserId ?? ""} disabled={!editable} onChange={(e) => commit({ onRiserId: e.target.value || null })}>
+              <option value="">なし</option>
+              {risers.filter((riser) => riser.id !== selectedObject.id).map((riser) => <option key={riser.id} value={riser.id}>{riser.label || riser.name} ({Math.round(riser.xMm)}, {Math.round(riser.yMm)})</option>)}
+            </select>
+          </label>
+        )}
+        <label className="row"><input type="checkbox" checked={selectedObject.locked} disabled={Boolean(objectLayer?.locked)} onChange={(e) => commit({ locked: e.target.checked })} />ロック(FR-055)</label>
         <div className="actions">
-          <button type="button" onClick={() => dispatch({ type: "DUPLICATE_OBJECT", id: selectedObject.id })}>複製</button>
-          <button type="button" className="danger" disabled={selectedObject.locked} onClick={() => dispatch({ type: "DELETE_OBJECT", id: selectedObject.id })}>削除</button>
+          <button type="button" disabled={Boolean(objectLayer?.locked)} onClick={() => onOpenGrid(selectedObject.id)}>行列配置</button>
+          <button type="button" disabled={selectedObject.locked || Boolean(objectLayer?.locked)} onClick={() => dispatch({ type: "DUPLICATE_OBJECT", id: selectedObject.id })}>複製</button>
+          <button type="button" className="danger" disabled={!editable} onClick={() => dispatch({ type: "DELETE_OBJECT", id: selectedObject.id })}>削除</button>
         </div>
       </>
     );
@@ -102,6 +130,13 @@ export function PropertyPanel({ state, dispatch }: Props) {
   return (
     <aside className="property-panel">
       <BackgroundPanel state={state} dispatch={dispatch} />
+      <LayerPanel state={state} dispatch={dispatch} />
+      <SnapPanel state={state} dispatch={dispatch} />
+      <section className="arrangement-tools">
+        <h2>一括配置</h2>
+        <button type="button" disabled={!activeLayer || activeLayer.locked || !activeLayer.visible} onClick={onOpenPultArc}>プルトを弧状配置</button>
+        <p className="hint">選択物が1つのとき「行列配置」を使えます。</p>
+      </section>
       <section className="object-properties">
         <h2>プロパティ</h2>
         {selectedObjects.length === 0 && <p className="hint">オブジェクトを選択すると座標・寸法・角度を編集できます。</p>}
@@ -111,3 +146,4 @@ export function PropertyPanel({ state, dispatch }: Props) {
     </aside>
   );
 }
+

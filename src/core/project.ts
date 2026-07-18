@@ -56,6 +56,7 @@ export function createEmptyProject(name: string): Project {
     walls: [],
     stageFront: null,
     exportSettings: { paper: "A3", orientation: "landscape", scale: "1:100" },
+    snapSettings: { grid: false, objects: false, stageCenter: false, gridIntervalMm: 910, thresholdMm: 60 },
     updatedAt: new Date().toISOString(),
   };
 }
@@ -98,6 +99,12 @@ function parseLayers(raw: unknown, fallback: Layer[]): Layer[] {
 
 function parseSourceType(value: unknown): BackgroundSourceType {
   return value === "pdf" ? "pdf" : "image";
+}
+
+function parseAnnotationKind(value: unknown): SceneObject["annotationKind"] {
+  return value === "text" || value === "line" || value === "arrow" || value === "rect" || value === "circle" || value === "dimension"
+    ? value
+    : null;
 }
 
 /**
@@ -144,6 +151,9 @@ export function deserializeProject(json: string): Project {
         layerId: str(o.layerId, DEFAULT_LAYER_ID),
         zIndex: num(o.zIndex, i),
         shape: o.shape === "circle" ? "circle" : "rect",
+        annotationKind: parseAnnotationKind(o.annotationKind),
+        endXMm: typeof o.endXMm === "number" && Number.isFinite(o.endXMm) ? o.endXMm : null,
+        endYMm: typeof o.endYMm === "number" && Number.isFinite(o.endYMm) ? o.endYMm : null,
       }))
     : [];
 
@@ -166,6 +176,7 @@ export function deserializeProject(json: string): Project {
   const view = isRecord(raw.view) ? raw.view : {};
   const meta = isRecord(raw.metadata) ? raw.metadata : {};
   const exp = isRecord(raw.exportSettings) ? raw.exportSettings : {};
+  const snap = isRecord(raw.snapSettings) ? raw.snapSettings : {};
   const naturalWidthPx = Math.max(0, num(bg.naturalWidthPx, 0));
   const naturalHeightPx = Math.max(0, num(bg.naturalHeightPx, 0));
   const rotationValue = bg.rotationDeg;
@@ -248,6 +259,15 @@ export function deserializeProject(json: string): Project {
       orientation: exp.orientation === "portrait" ? "portrait" : "landscape",
       scale: exp.scale === "1:50" || exp.scale === "fit" ? exp.scale : "1:100",
     },
+    snapSettings: {
+      grid: bool(snap.grid, base.snapSettings.grid),
+      objects: bool(snap.objects, base.snapSettings.objects),
+      stageCenter: bool(snap.stageCenter, base.snapSettings.stageCenter),
+      gridIntervalMm: Math.max(1, num(snap.gridIntervalMm, base.snapSettings.gridIntervalMm)),
+      thresholdMm: Math.max(0, num(snap.thresholdMm, base.snapSettings.thresholdMm)),
+    },
     updatedAt: str(raw.updatedAt, base.updatedAt),
   };
 }
+
+

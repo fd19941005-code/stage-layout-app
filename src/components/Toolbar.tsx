@@ -139,6 +139,13 @@ export function Toolbar({ state, dispatch, onNotice, onExport }: Props) {
         {modeButton("verifyCalibration", "校正確認", project.calibration.mmPerPixel === null)}
         {modeButton("measure", "測定")}
         <span className="separator" />
+        {modeButton("annotationText", "文字")}
+        {modeButton("annotationLine", "線")}
+        {modeButton("annotationArrow", "矢印")}
+        {modeButton("annotationRect", "矩形注釈")}
+        {modeButton("annotationCircle", "円注釈")}
+        {modeButton("annotationDimension", "寸法線")}
+        <span className="separator" />
         <button type="button" onClick={() => zoomBy(1.25)}>拡大</button>
         <button type="button" onClick={() => zoomBy(1 / 1.25)}>縮小</button>
 
@@ -165,3 +172,5 @@ export function Toolbar({ state, dispatch, onNotice, onExport }: Props) {
     </>
   );
 }
+
+

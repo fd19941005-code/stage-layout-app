@@ -1,7 +1,7 @@
 // 要件定義書 第9章「データ要件」に基づくプロジェクトモデル定義。
 // 最重要設計原則: 配置物の正本は常にmm単位。px値は保存しない。
 
-export const SCHEMA_VERSION = "1.1.0";
+export const SCHEMA_VERSION = "1.2.0";
 
 /** 実寸座標系(mm)上の点 */
 export interface PointMm {
@@ -25,6 +25,7 @@ export type ObjectType =
   | "text";
 
 export type ShapeKind = "rect" | "circle";
+export type AnnotationKind = "text" | "line" | "arrow" | "rect" | "circle" | "dimension";
 export type BackgroundSourceType = "image" | "pdf";
 
 export interface CropPx {
@@ -64,6 +65,15 @@ export interface Calibration {
   /** 入力された実距離(mm正規化済み。FR-022) */
   realDistanceMm: number | null;
   calibratedAt: string | null;
+}
+
+/** Phase 4の吸着設定。値は実寸mmで保持し、ズームには依存しない。 */
+export interface SnapSettings {
+  grid: boolean;
+  objects: boolean;
+  stageCenter: boolean;
+  gridIntervalMm: number;
+  thresholdMm: number;
 }
 
 /** 画面表示状態。実寸データへ影響させない(9.4) */
@@ -108,6 +118,11 @@ export interface SceneObject {
   layerId: string;
   zIndex: number;
   shape: ShapeKind;
+  /** Phase 4注釈。通常の配置物ではnullまたは未指定。 */
+  annotationKind?: AnnotationKind | null;
+  /** 線・矢印・寸法線の終点。pxではなくmmで保持する。 */
+  endXMm?: number | null;
+  endYMm?: number | null;
 }
 
 /** 壁トレース(9.3)。Phase 5で使用、Phase 0で型定義のみ */
@@ -150,5 +165,8 @@ export interface Project {
   /** 舞台前端。Phase 5の客席視点に使用 */
   stageFront: { yMm: number } | null;
   exportSettings: ExportSettings;
+  snapSettings: SnapSettings;
   updatedAt: string;
 }
+
+

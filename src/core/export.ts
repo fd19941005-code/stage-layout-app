@@ -4,7 +4,7 @@
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import type { Background, Project, SceneObject } from "../types/project";
 import { effectiveMmPerPixel } from "../state/appState";
-import { getBackgroundDisplaySizePx, getEffectiveCrop, rotatedBoundsMm } from "./transform";
+import { getBackgroundDisplaySizePx, getEffectiveCrop, sceneObjectBoundsMm } from "./transform";
 
 export const PDF_POINTS_PER_INCH = 72;
 export const MM_PER_INCH = 25.4;
@@ -15,6 +15,8 @@ export interface ExportLayerOptions {
   objects: boolean;
   labels: boolean;
   grid: boolean;
+  /** 注釈レイヤー。旧呼び出し元との互換性のため省略時は表示する。 */
+  annotations?: boolean;
 }
 
 export const DEFAULT_EXPORT_LAYERS: ExportLayerOptions = {
@@ -22,6 +24,7 @@ export const DEFAULT_EXPORT_LAYERS: ExportLayerOptions = {
   objects: true,
   labels: true,
   grid: false,
+  annotations: true,
 };
 
 export interface ExportBounds {
@@ -70,16 +73,22 @@ function layerIsVisible(project: Project, layerId: string): boolean {
   return layer ? layer.visible : true;
 }
 
+function isAnnotationObject(object: SceneObject): boolean {
+  return object.annotationKind !== null && object.annotationKind !== undefined;
+}
+
 /** 出力対象レイヤーの選択ロジック(11.4) */
 export function selectExportObjects(project: Project, layers: ExportLayerOptions): SceneObject[] {
-  if (!layers.objects) return [];
-  return project.objects.filter((object) => object.visible && layerIsVisible(project, object.layerId));
+  return project.objects.filter((object) => {
+    if (!object.visible || !layerIsVisible(project, object.layerId)) return false;
+    return isAnnotationObject(object) ? layers.annotations !== false : layers.objects;
+  });
 }
 
 export function exportBoundsMm(project: Project, layers: ExportLayerOptions): ExportBounds {
   const mmPerPixel = effectiveMmPerPixel(project);
   const points: { xMm: number; yMm: number }[] = [];
-  if (layers.background && project.background.visible && project.background.imageDataUrl) {
+  if (layers.background && project.background.visible && layerIsVisible(project, "layer-background") && project.background.imageDataUrl) {
     const size = getBackgroundDisplaySizePx(project.background);
     points.push(
       { xMm: 0, yMm: 0 },
@@ -87,7 +96,7 @@ export function exportBoundsMm(project: Project, layers: ExportLayerOptions): Ex
     );
   }
   for (const object of selectExportObjects(project, layers)) {
-    const bounds = rotatedBoundsMm(object);
+    const bounds = sceneObjectBoundsMm(object);
     points.push(
       { xMm: bounds.minXMm, yMm: bounds.minYMm },
       { xMm: bounds.maxXMm, yMm: bounds.maxYMm },
@@ -136,7 +145,7 @@ function backgroundRotationTransform(background: Background, mmPerPixel: number)
 
 function renderBackgroundSvg(project: Project, layers: ExportLayerOptions, mmPerPixel: number): string {
   const background = project.background;
-  if (!layers.background || !background.imageDataUrl || !background.visible) return "";
+  if (!layers.background || !background.imageDataUrl || !background.visible || !layerIsVisible(project, "layer-background")) return "";
   const crop = getEffectiveCrop(background);
   const cropWidthMm = crop.widthPx * mmPerPixel;
   const cropHeightMm = crop.heightPx * mmPerPixel;
@@ -154,11 +163,27 @@ function renderGridSvg(bounds: ExportBounds, intervalMm = 910): string {
 
 function renderObjectsSvg(objects: readonly SceneObject[], layers: ExportLayerOptions): string {
   return objects.map((object) => {
-    const shape = object.shape === "circle"
+    const annotation = object.annotationKind;
+    const labelText = escapeXml(object.label || object.name);
+    if (annotation === "text") {
+      return layers.labels
+        ? `<text x="${object.xMm}" y="${object.yMm}" class="annotation-text">${labelText}</text>`
+        : "";
+    }
+    if (annotation === "line" || annotation === "arrow" || annotation === "dimension") {
+      const endX = typeof object.endXMm === "number" && Number.isFinite(object.endXMm) ? object.endXMm : object.xMm + object.widthMm;
+      const endY = typeof object.endYMm === "number" && Number.isFinite(object.endYMm) ? object.endYMm : object.yMm;
+      const marker = annotation === "arrow" ? ' marker-end="url(#annotation-arrow)"' : "";
+      const dimensionLabel = annotation === "dimension" && layers.labels
+        ? `<text x="${(object.xMm + endX) / 2}" y="${(object.yMm + endY) / 2 - 120}" text-anchor="middle">${labelText || Math.round(Math.hypot(endX - object.xMm, endY - object.yMm)) + " mm"}</text>`
+        : "";
+      return `<g class="annotation-segment" fill="none" stroke="#d12f2f" stroke-width="18"><line x1="${object.xMm}" y1="${object.yMm}" x2="${endX}" y2="${endY}"${marker} />${dimensionLabel}</g>`;
+    }
+    const shape = object.annotationKind === "circle" || object.shape === "circle"
       ? `<ellipse rx="${object.widthMm / 2}" ry="${object.depthMm / 2}" />`
       : `<rect x="${-object.widthMm / 2}" y="${-object.depthMm / 2}" width="${object.widthMm}" height="${object.depthMm}" />`;
-    const label = layers.labels
-      ? `<text y="${object.depthMm / 2 + 260}" text-anchor="middle">${escapeXml(object.label || object.name)}</text>`
+    const label = layers.labels && labelText
+      ? `<text y="${object.depthMm / 2 + 260}" text-anchor="middle">${labelText}</text>`
       : "";
     return `<g transform="translate(${object.xMm} ${object.yMm}) rotate(${object.rotationDeg})" fill="rgba(47,127,209,0.18)" stroke="#2f7fd1" stroke-width="18">${shape}${label}</g>`;
   }).join("");
@@ -177,7 +202,7 @@ export function renderProjectToSvg(
   const heightPx = outputHeightPx ?? Math.max(1, Math.round(bounds.heightMm));
   const grid = layers.grid ? renderGridSvg(bounds) : "";
   const objects = renderObjectsSvg(selectExportObjects(project, layers), layers);
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${widthPx}" height="${heightPx}" viewBox="${bounds.minXMm} ${bounds.minYMm} ${bounds.widthMm} ${bounds.heightMm}"><rect x="${bounds.minXMm}" y="${bounds.minYMm}" width="${bounds.widthMm}" height="${bounds.heightMm}" fill="#ffffff" />${renderBackgroundSvg(project, layers, mmPerPixel)}${grid}${objects}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${widthPx}" height="${heightPx}" viewBox="${bounds.minXMm} ${bounds.minYMm} ${bounds.widthMm} ${bounds.heightMm}"><defs><marker id="annotation-arrow" markerWidth="16" markerHeight="16" refX="12" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#d12f2f" /></marker></defs><rect x="${bounds.minXMm}" y="${bounds.minYMm}" width="${bounds.widthMm}" height="${bounds.heightMm}" fill="#ffffff" />${renderBackgroundSvg(project, layers, mmPerPixel)}${grid}${objects}</svg>`;
 }
 
 function clampLongSide(value: number): number {
@@ -322,3 +347,9 @@ export async function createProjectPdf(project: Project, options: PdfExportOptio
   // pdf-libのUint8ArrayはArrayBufferLikeを保持するため、BlobのDOM型へ明示的に変換する。
   return new Blob([bytes.buffer as ArrayBuffer], { type: "application/pdf" });
 }
+
+
+
+
+
+

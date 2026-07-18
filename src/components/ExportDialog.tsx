@@ -106,6 +106,7 @@ export function ExportDialog({ state, dispatch, onClose, onNotice }: Props) {
           <label className="row"><input type="checkbox" checked={layers.objects} onChange={(e) => setLayer("objects", e.target.checked)} />配置物</label>
           <label className="row"><input type="checkbox" checked={layers.labels} onChange={(e) => setLayer("labels", e.target.checked)} />ラベル</label>
           <label className="row"><input type="checkbox" checked={layers.grid} onChange={(e) => setLayer("grid", e.target.checked)} />910mmグリッド</label>
+          <label className="row"><input type="checkbox" checked={layers.annotations !== false} onChange={(e) => setLayer("annotations", e.target.checked)} />注釈</label>
         </div>
 
         <h3>出力情報欄</h3>
@@ -124,3 +125,5 @@ export function ExportDialog({ state, dispatch, onClose, onNotice }: Props) {
     </div>
   );
 }
+
+

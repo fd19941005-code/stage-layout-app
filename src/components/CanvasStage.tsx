@@ -3,7 +3,7 @@
 // 2本指のパン/ピンチを同じイベント列から判定する(iPad Safari対応)。
 
 import { useRef, useState, type Dispatch, type PointerEvent, type WheelEvent } from "react";
-import type { PointMm, SceneObject, ViewState } from "../types/project";
+import type { AnnotationKind, PointMm, SceneObject } from "../types/project";
 import {
   displayedPxToSourcePx,
   getBackgroundDisplaySizePx,
@@ -18,7 +18,8 @@ import {
 } from "../core/transform";
 import { effectiveMmPerPixel, type Action, type AppState, type ObjectMove } from "../state/appState";
 import { findPreset } from "../core/presets";
-import { generateId, DEFAULT_LAYER_ID } from "../core/project";
+import { snapPointMm } from "../core/snap";
+import { generateId } from "../core/project";
 
 interface Props {
   state: AppState;
@@ -32,9 +33,11 @@ type DragState =
   | { kind: "move"; startMm: PointMm; startPositions: ObjectMove[] }
   | { kind: "rotate"; id: string; centerMm: PointMm }
   | { kind: "marquee"; startMm: PointMm }
-  | { kind: "pinch"; startDistance: number; startCenter: ScreenPoint; anchorMm: PointMm; startView: ViewState };
+  | { kind: "annotation"; annotationKind: AnnotationKind; startMm: PointMm }
+  | { kind: "pinch"; startDistance: number; startCenter: ScreenPoint; anchorMm: PointMm; startView: { zoom: number; panX: number; panY: number } };
 
-interface MarqueeMm {
+interface AnnotationPreview {
+  annotationKind: AnnotationKind;
   startMm: PointMm;
   currentMm: PointMm;
 }
@@ -71,11 +74,35 @@ function snapRotation(deg: number): number {
   return Math.round(deg / 15) * 15;
 }
 
+function annotationKindForMode(mode: AppState["mode"]): AnnotationKind | null {
+  switch (mode) {
+    case "annotationText": return "text";
+    case "annotationLine": return "line";
+    case "annotationArrow": return "arrow";
+    case "annotationRect": return "rect";
+    case "annotationCircle": return "circle";
+    case "annotationDimension": return "dimension";
+    default: return null;
+  }
+}
+
+function annotationName(kind: AnnotationKind): string {
+  switch (kind) {
+    case "text": return "文字注釈";
+    case "line": return "線";
+    case "arrow": return "矢印";
+    case "rect": return "矩形注釈";
+    case "circle": return "円注釈";
+    case "dimension": return "寸法線";
+  }
+}
+
 export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const dragRef = useRef<DragState | null>(null);
   const pointersRef = useRef(new Map<number, ScreenPoint>());
-  const [marquee, setMarquee] = useState<MarqueeMm | null>(null);
+  const [marquee, setMarquee] = useState<{ startMm: PointMm; currentMm: PointMm } | null>(null);
+  const [annotationPreview, setAnnotationPreview] = useState<AnnotationPreview | null>(null);
 
   const { project, mode, selectedIds, pendingPresetId } = state;
   const { view, background, calibration } = project;
@@ -85,10 +112,27 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
   const displaySize = getBackgroundDisplaySizePx(background);
   const cropWidthMm = crop.widthPx * mmpp;
   const cropHeightMm = crop.heightPx * mmpp;
+  const stageWidthMm = displaySize.widthPx * mmpp;
 
   function toScreen(e: PointerEvent | WheelEvent): ScreenPoint {
     const rect = svgRef.current!.getBoundingClientRect();
     return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  }
+
+  function visibleObjects(excludeIds: readonly string[] = []): SceneObject[] {
+    const excluded = new Set(excludeIds);
+    return project.objects.filter((object) => {
+      const layer = project.layers.find((candidate) => candidate.id === object.layerId);
+      return object.visible && (layer?.visible ?? true) && !excluded.has(object.id);
+    });
+  }
+
+  function snapPoint(point: PointMm, excludeIds: readonly string[] = []): PointMm {
+    return snapPointMm(point, {
+      settings: project.snapSettings,
+      otherObjects: visibleObjects(excludeIds),
+      stageWidthMm,
+    });
   }
 
   function handleWheel(e: WheelEvent<SVGSVGElement>) {
@@ -104,15 +148,21 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
       onNotice("未校正のため配置できません。先に「校正」で2点と実距離を指定してください。");
       return;
     }
+    const layer = project.layers.find((candidate) => candidate.id === state.activeLayerId);
+    if (!layer || layer.locked || !layer.visible) {
+      onNotice("配置先レイヤーが非表示またはロックされています。");
+      return;
+    }
     const preset = findPreset(pendingPresetId);
     if (!preset) return;
+    const snapped = snapPoint(pMm);
     const object: SceneObject = {
       id: generateId("obj"),
       type: preset.type,
       presetId: preset.id,
       name: preset.name,
-      xMm: Math.round(pMm.xMm),
-      yMm: Math.round(pMm.yMm),
+      xMm: Math.round(snapped.xMm),
+      yMm: Math.round(snapped.yMm),
       widthMm: preset.widthMm,
       depthMm: preset.depthMm,
       heightMm: preset.heightMm,
@@ -123,9 +173,46 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
       locked: false,
       visible: true,
       groupId: null,
-      layerId: DEFAULT_LAYER_ID,
+      layerId: state.activeLayerId,
       zIndex: project.objects.length,
       shape: preset.shape,
+    };
+    dispatch({ type: "ADD_OBJECT", object });
+  }
+
+  function createAnnotation(annotationKind: AnnotationKind, start: PointMm, current: PointMm) {
+    const startMm = snapPoint(start);
+    const endMm = snapPoint(current);
+    const deltaX = endMm.xMm - startMm.xMm;
+    const deltaY = endMm.yMm - startMm.yMm;
+    const isSegment = annotationKind === "line" || annotationKind === "arrow" || annotationKind === "dimension";
+    const isText = annotationKind === "text";
+    const annotationLayer = project.layers.find((layer) => layer.id === "layer-annotations")
+      ?? project.layers.find((layer) => layer.id === state.activeLayerId);
+    if (!annotationLayer) return;
+    const object: SceneObject = {
+      id: generateId("annotation"),
+      type: isText ? "text" : "shape",
+      presetId: null,
+      name: annotationName(annotationKind),
+      xMm: isSegment ? Math.round(startMm.xMm) : Math.round((startMm.xMm + endMm.xMm) / 2),
+      yMm: isSegment ? Math.round(startMm.yMm) : Math.round((startMm.yMm + endMm.yMm) / 2),
+      widthMm: isSegment ? 1 : isText ? 1000 : Math.max(1, Math.round(Math.abs(deltaX))),
+      depthMm: isSegment ? 1 : isText ? 300 : Math.max(1, Math.round(Math.abs(deltaY))),
+      heightMm: 0,
+      rotationDeg: 0,
+      label: annotationKind === "dimension" ? `${Math.round(mmDistance(startMm, endMm))} mm` : isText ? "注釈" : "",
+      onRiserId: null,
+      avatar: null,
+      locked: false,
+      visible: true,
+      groupId: null,
+      layerId: annotationLayer.id,
+      zIndex: project.objects.length,
+      shape: annotationKind === "circle" ? "circle" : "rect",
+      annotationKind,
+      endXMm: isSegment ? Math.round(endMm.xMm) : null,
+      endYMm: isSegment ? Math.round(endMm.yMm) : null,
     };
     dispatch({ type: "ADD_OBJECT", object });
   }
@@ -141,6 +228,7 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
       startView: view,
     };
     setMarquee(null);
+    setAnnotationPreview(null);
   }
 
   function handlePointerDown(e: PointerEvent<SVGSVGElement>) {
@@ -167,6 +255,26 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
       dispatch({ type: "ADD_MEASURE_POINT", point: pMm });
       return;
     }
+
+    const annotationKind = annotationKindForMode(mode);
+    if (annotationKind) {
+      const annotationLayer = project.layers.find((candidate) => candidate.id === "layer-annotations")
+        ?? project.layers.find((candidate) => candidate.id === state.activeLayerId);
+      if (!annotationLayer || annotationLayer.locked || !annotationLayer.visible) {
+        onNotice("注釈レイヤーが非表示またはロックされています。");
+        return;
+      }
+      if (annotationKind === "text") {
+        createAnnotation(annotationKind, pMm, pMm);
+        dragRef.current = null;
+        return;
+      }
+      const startMm = snapPoint(pMm);
+      dragRef.current = { kind: "annotation", annotationKind, startMm };
+      setAnnotationPreview({ annotationKind, startMm, currentMm: startMm });
+      return;
+    }
+
     if (pendingPresetId) {
       placePreset(pMm);
       return;
@@ -177,7 +285,8 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
     if (rotateTarget) {
       const id = rotateTarget.getAttribute("data-object-id");
       const object = project.objects.find((item) => item.id === id);
-      if (object && !object.locked) {
+      const layer = object && project.layers.find((candidate) => candidate.id === object.layerId);
+      if (object && !object.locked && !layer?.locked) {
         dispatch({ type: "SELECT", id });
         dragRef.current = { kind: "rotate", id: object.id, centerMm: { xMm: object.xMm, yMm: object.yMm } };
       }
@@ -187,9 +296,13 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
     if (objectId) {
       dispatch({ type: "SELECT", id: objectId, additive: e.shiftKey || e.ctrlKey || e.metaKey });
       const object = project.objects.find((item) => item.id === objectId);
-      if (object && !object.locked && mode === "select") {
+      const layer = object && project.layers.find((candidate) => candidate.id === object.layerId);
+      if (object && !object.locked && !layer?.locked && mode === "select") {
         const ids = (selectedIds.includes(objectId) ? selectedIds : [objectId]).filter((id) =>
-          project.objects.some((item) => item.id === id && !item.locked),
+          project.objects.some((item) => {
+            const itemLayer = project.layers.find((candidate) => candidate.id === item.layerId);
+            return item.id === id && !item.locked && !itemLayer?.locked;
+          }),
         );
         dragRef.current = {
           kind: "move",
@@ -233,14 +346,25 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
     if (drag.kind === "pan") {
       dispatch({ type: "SET_VIEW", view: { ...view, panX: drag.startPanX + screen.x - drag.startX, panY: drag.startPanY + screen.y - drag.startY } });
     } else if (drag.kind === "move") {
+      const primary = drag.startPositions[0];
+      if (!primary) return;
       const deltaX = pMm.xMm - drag.startMm.xMm;
       const deltaY = pMm.yMm - drag.startMm.yMm;
-      dispatch({ type: "MOVE_OBJECTS", preview: true, moves: drag.startPositions.map((position) => ({ id: position.id, xMm: position.xMm + deltaX, yMm: position.yMm + deltaY })) });
+      const snapped = snapPoint(
+        { xMm: primary.xMm + deltaX, yMm: primary.yMm + deltaY },
+        drag.startPositions.map((position) => position.id),
+      );
+      const snappedDeltaX = snapped.xMm - primary.xMm;
+      const snappedDeltaY = snapped.yMm - primary.yMm;
+      dispatch({ type: "MOVE_OBJECTS", preview: true, moves: drag.startPositions.map((position) => ({ id: position.id, xMm: position.xMm + snappedDeltaX, yMm: position.yMm + snappedDeltaY })) });
     } else if (drag.kind === "rotate") {
       const angle = (Math.atan2(pMm.yMm - drag.centerMm.yMm, pMm.xMm - drag.centerMm.xMm) * 180) / Math.PI + 90;
       dispatch({ type: "ROTATE_OBJECT", id: drag.id, rotationDeg: snapRotation(angle), preview: true });
     } else if (drag.kind === "marquee") {
       setMarquee({ startMm: drag.startMm, currentMm: pMm });
+    } else if (drag.kind === "annotation") {
+      const currentMm = snapPoint(pMm);
+      setAnnotationPreview({ annotationKind: drag.annotationKind, startMm: drag.startMm, currentMm });
     }
   }
 
@@ -254,6 +378,9 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
     }
     if (drag.kind === "move" || drag.kind === "rotate") {
       dispatch({ type: "COMMIT_TRANSIENT_EDIT" });
+    } else if (drag.kind === "annotation" && annotationPreview) {
+      createAnnotation(drag.annotationKind, annotationPreview.startMm, annotationPreview.currentMm);
+      setAnnotationPreview(null);
     } else if (drag.kind === "marquee" && marquee) {
       const minXMm = Math.min(marquee.startMm.xMm, marquee.currentMm.xMm);
       const maxXMm = Math.max(marquee.startMm.xMm, marquee.currentMm.xMm);
@@ -270,23 +397,85 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
     if (dragRef.current?.kind === "move" || dragRef.current?.kind === "rotate") dispatch({ type: "COMMIT_TRANSIENT_EDIT" });
     dragRef.current = null;
     setMarquee(null);
+    setAnnotationPreview(null);
   }
 
-  const sortedObjects = [...project.objects].filter((object) => object.visible).sort((a, b) => a.zIndex - b.zIndex);
+  const sortedObjects = visibleObjects().sort((a, b) => a.zIndex - b.zIndex);
   const [mA, mB] = state.measurePointsMm;
   const marqueeRect = marquee
     ? {
         x: Math.min(marquee.startMm.xMm, marquee.currentMm.xMm),
         y: Math.min(marquee.startMm.yMm, marquee.currentMm.yMm),
         width: Math.abs(marquee.currentMm.xMm - marquee.startMm.xMm),
-        height: Math.abs(marquee.currentMm.yMm - marquee.startMm.yMm),
+        height: Math.abs(marquee.currentMm.yMm - marquee.currentMm.yMm),
       }
     : null;
 
+  function renderAnnotation(object: SceneObject) {
+    const kind = object.annotationKind;
+    if (kind === "text") return <text className="annotation-text" x={0} y={0}>{object.label || "注釈"}</text>;
+    if (kind === "line" || kind === "arrow" || kind === "dimension") {
+      const endX = (object.endXMm ?? object.xMm + object.widthMm) - object.xMm;
+      const endY = (object.endYMm ?? object.yMm) - object.yMm;
+      return (
+        <>
+          <line className={`annotation-line ${kind}`} x1={0} y1={0} x2={endX} y2={endY} markerEnd={kind === "arrow" ? "url(#canvas-arrow)" : undefined} />
+          {kind === "dimension" && <text className="annotation-dimension-label" x={endX / 2} y={endY / 2 - 120} textAnchor="middle">{object.label || `${Math.round(Math.hypot(endX, endY))} mm`}</text>}
+        </>
+      );
+    }
+    return object.shape === "circle"
+      ? <ellipse className={`annotation-shape ${kind}`} rx={object.widthMm / 2} ry={object.depthMm / 2} />
+      : <rect className={`annotation-shape ${kind}`} x={-object.widthMm / 2} y={-object.depthMm / 2} width={object.widthMm} height={object.depthMm} />;
+  }
+
+  function renderObject(object: SceneObject) {
+    const layer = project.layers.find((candidate) => candidate.id === object.layerId);
+    const editable = !object.locked && !layer?.locked;
+    const isAnnotation = object.annotationKind !== null && object.annotationKind !== undefined;
+    return (
+      <g key={object.id} data-object-id={object.id} className={`scene-object${isAnnotation ? " annotation-object" : ""}${selectedIds.includes(object.id) ? " selected" : ""}${object.locked || layer?.locked ? " locked" : ""}`} transform={`translate(${object.xMm} ${object.yMm}) rotate(${object.rotationDeg})`}>
+        {isAnnotation ? renderAnnotation(object) : (
+          <>
+            {object.shape === "circle" ? <ellipse rx={object.widthMm / 2} ry={object.depthMm / 2} /> : <rect x={-object.widthMm / 2} y={-object.depthMm / 2} width={object.widthMm} height={object.depthMm} />}
+            {(object.type === "chair" || object.type === "musicStand") && <line x1={0} y1={0} x2={0} y2={-object.depthMm / 2} className="facing" />}
+            <text y={object.depthMm / 2 + 320} textAnchor="middle">{object.label || object.name}</text>
+          </>
+        )}
+        {selectedIds.includes(object.id) && editable && !isAnnotation && mode === "select" && (
+          <g className="rotate-handle" data-rotate-handle="true" data-object-id={object.id}>
+            <line x1={0} y1={-object.depthMm / 2} x2={0} y2={-object.depthMm / 2 - 300} />
+            <circle cx={0} cy={-object.depthMm / 2 - 300} r={110} />
+          </g>
+        )}
+      </g>
+    );
+  }
+
+  function renderAnnotationPreview() {
+    if (!annotationPreview) return null;
+    const { annotationKind, startMm, currentMm } = annotationPreview;
+    if (annotationKind === "line" || annotationKind === "arrow" || annotationKind === "dimension") {
+      return <line className="annotation-preview" x1={startMm.xMm} y1={startMm.yMm} x2={currentMm.xMm} y2={currentMm.yMm} markerEnd={annotationKind === "arrow" ? "url(#canvas-arrow)" : undefined} />;
+    }
+    const x = Math.min(startMm.xMm, currentMm.xMm);
+    const y = Math.min(startMm.yMm, currentMm.yMm);
+    const width = Math.max(1, Math.abs(currentMm.xMm - startMm.xMm));
+    const height = Math.max(1, Math.abs(currentMm.yMm - startMm.yMm));
+    return annotationKind === "circle"
+      ? <ellipse className="annotation-preview" cx={(startMm.xMm + currentMm.xMm) / 2} cy={(startMm.yMm + currentMm.yMm) / 2} rx={width / 2} ry={height / 2} />
+      : <rect className="annotation-preview" x={x} y={y} width={width} height={height} />;
+  }
+
   return (
     <svg ref={svgRef} className="canvas-stage" onWheel={handleWheel} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerCancel={handlePointerCancel} onPointerLeave={() => onCursorMm(null)}>
+      <defs>
+        <marker id="canvas-arrow" markerWidth="160" markerHeight="160" refX="120" refY="60" orient="auto">
+          <path d="M0,0 L120,60 L0,120 z" fill="#d12f2f" />
+        </marker>
+      </defs>
       <g transform={`translate(${view.panX} ${view.panY}) scale(${view.zoom})`}>
-        {background.imageDataUrl && background.visible && (
+        {background.imageDataUrl && background.visible && project.layers.find((layer) => layer.id === "layer-background")?.visible !== false && (
           <g transform={backgroundRotationTransform(background.rotationDeg, cropWidthMm, cropHeightMm)} data-background-size={`${displaySize.widthPx}x${displaySize.heightPx}`}>
             <svg x={0} y={0} width={cropWidthMm} height={cropHeightMm} viewBox={`${crop.xPx} ${crop.yPx} ${crop.widthPx} ${crop.heightPx}`} preserveAspectRatio="none" overflow="visible" pointerEvents="none">
               <image href={background.imageDataUrl} x={0} y={0} width={background.naturalWidthPx} height={background.naturalHeightPx} opacity={background.opacity} preserveAspectRatio="none" />
@@ -294,19 +483,8 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
           </g>
         )}
 
-        {sortedObjects.map((object) => (
-          <g key={object.id} data-object-id={object.id} className={`scene-object${selectedIds.includes(object.id) ? " selected" : ""}${object.locked ? " locked" : ""}`} transform={`translate(${object.xMm} ${object.yMm}) rotate(${object.rotationDeg})`}>
-            {object.shape === "circle" ? <ellipse rx={object.widthMm / 2} ry={object.depthMm / 2} /> : <rect x={-object.widthMm / 2} y={-object.depthMm / 2} width={object.widthMm} height={object.depthMm} />}
-            {(object.type === "chair" || object.type === "musicStand") && <line x1={0} y1={0} x2={0} y2={-object.depthMm / 2} className="facing" />}
-            <text y={object.depthMm / 2 + 320} textAnchor="middle">{object.label || object.name}</text>
-            {selectedIds.includes(object.id) && !object.locked && mode === "select" && (
-              <g className="rotate-handle" data-rotate-handle="true" data-object-id={object.id}>
-                <line x1={0} y1={-object.depthMm / 2} x2={0} y2={-object.depthMm / 2 - 300} />
-                <circle cx={0} cy={-object.depthMm / 2 - 300} r={110} />
-              </g>
-            )}
-          </g>
-        ))}
+        {sortedObjects.map(renderObject)}
+        {renderAnnotationPreview()}
 
         {marqueeRect && <rect className="selection-marquee" x={marqueeRect.x} y={marqueeRect.y} width={marqueeRect.width} height={marqueeRect.height} />}
 
@@ -332,3 +510,12 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
     </svg>
   );
 }
+
+
+
+
+
+
+
+
+

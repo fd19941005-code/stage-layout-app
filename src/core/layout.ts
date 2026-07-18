@@ -2,7 +2,7 @@
 // mm座標だけを操作する純粋関数として分離し、Undo/Redoからも一操作として扱う。
 
 import type { SceneObject } from "../types/project";
-import { rotatedBoundsMm } from "./transform";
+import { sceneObjectBoundsMm } from "./transform";
 
 export type Alignment = "left" | "centerX" | "right" | "top" | "centerY" | "bottom";
 export type DistributionAxis = "x" | "y";
@@ -25,7 +25,7 @@ function replaceObjects(
 export function selectionBoundsMm(objects: readonly SceneObject[], ids: readonly string[]) {
   const selected = selectedObjects(objects, ids);
   if (selected.length === 0) return null;
-  const bounds = selected.map(rotatedBoundsMm);
+  const bounds = selected.map(sceneObjectBoundsMm);
   return {
     minXMm: Math.min(...bounds.map((bound) => bound.minXMm)),
     minYMm: Math.min(...bounds.map((bound) => bound.minYMm)),
@@ -42,7 +42,7 @@ export function alignObjects(
 ): SceneObject[] {
   const selected = selectedObjects(objects, ids);
   if (selected.length < 2) return [...objects];
-  const bounds = selected.map((object) => ({ object, bounds: rotatedBoundsMm(object) }));
+  const bounds = selected.map((object) => ({ object, bounds: sceneObjectBoundsMm(object) }));
   const target = (() => {
     switch (alignment) {
       case "left":
@@ -95,3 +95,5 @@ export function distributeObjects(
   });
   return replaceObjects(objects, updates);
 }
+
+

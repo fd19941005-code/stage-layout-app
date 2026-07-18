@@ -13,11 +13,15 @@ import { StatusBar } from "./components/StatusBar";
 import { CalibrationDialog } from "./components/CalibrationDialog";
 import { CalibrationVerificationDialog } from "./components/CalibrationVerificationDialog";
 import { ExportDialog } from "./components/ExportDialog";
+import { ArrangementDialog } from "./components/ArrangementDialog";
+import { PultArcDialog } from "./components/PultArcDialog";
 
 export function App() {
   const [state, dispatch] = useReducer(appReducer, undefined, () => createInitialState());
   const [storageReady, setStorageReady] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [gridSourceId, setGridSourceId] = useState<string | null>(null);
+  const [pultArcOpen, setPultArcOpen] = useState(false);
   const [cursorMm, setCursorMm] = useState<PointMm | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const noticeTimer = useRef<number | undefined>(undefined);
@@ -86,17 +90,22 @@ export function App() {
       )}
       {state.mode === "selectRect" && <div className="banner info">範囲選択モード: キャンバス上をドラッグして複数のオブジェクトを選択してください</div>}
       {state.mode === "measure" && <div className="banner info">測定モード: 2点をクリックすると距離を表示します</div>}
+      {state.mode.startsWith("annotation") && <div className="banner info">注釈モード: キャンバスをクリックまたはドラッグして注釈を作成します。作成後にラベルや寸法を編集できます。</div>}
       {notice && <div className="banner notice">{notice}</div>}
 
       <main className="main-area">
         <LibraryPanel state={state} dispatch={dispatch} />
         <CanvasStage state={state} dispatch={dispatch} onCursorMm={setCursorMm} onNotice={showNotice} />
-        <PropertyPanel state={state} dispatch={dispatch} />
+        <PropertyPanel state={state} dispatch={dispatch} onOpenGrid={setGridSourceId} onOpenPultArc={() => setPultArcOpen(true)} />
       </main>
       <StatusBar state={state} cursorMm={cursorMm} />
       {calibrationReady && <CalibrationDialog dispatch={dispatch} />}
       {verificationReady && <CalibrationVerificationDialog state={state} dispatch={dispatch} />}
       {exportOpen && <ExportDialog state={state} dispatch={dispatch} onClose={() => setExportOpen(false)} onNotice={showNotice} />}
+      {gridSourceId && <ArrangementDialog state={state} dispatch={dispatch} sourceId={gridSourceId} onClose={() => setGridSourceId(null)} />}
+      {pultArcOpen && <PultArcDialog state={state} dispatch={dispatch} onClose={() => setPultArcOpen(false)} />}
     </div>
   );
 }
+
+

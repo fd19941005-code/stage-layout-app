@@ -1,7 +1,7 @@
 // 座標変換の純粋関数群(9.4 座標変換の原則、12.1 実装上の制約)。
 // UIコンポーネントへ散在させず、ここに集約する。自動テスト必須領域(11.4)。
 
-import type { Background, CropPx, PointMm, PointPx, ViewState } from "../types/project";
+import type { Background, CropPx, PointMm, PointPx, SceneObject, ViewState } from "../types/project";
 
 /** 画面上の点(px)。保存対象にしてはならない */
 export interface ScreenPoint {
@@ -215,3 +215,17 @@ export function zoomAt(
     panY: screenCenter.y - anchor.yMm * nextZoom,
   };
 }
+/** 線分系注釈を含むオブジェクトの実寸外接矩形。選択・出力の共通基盤。 */
+export function sceneObjectBoundsMm(obj: SceneObject): { minXMm: number; minYMm: number; maxXMm: number; maxYMm: number } {
+  const isSegment = obj.annotationKind === "line" || obj.annotationKind === "arrow" || obj.annotationKind === "dimension";
+  if (isSegment && Number.isFinite(obj.endXMm) && Number.isFinite(obj.endYMm)) {
+    return {
+      minXMm: Math.min(obj.xMm, obj.endXMm as number),
+      minYMm: Math.min(obj.yMm, obj.endYMm as number),
+      maxXMm: Math.max(obj.xMm, obj.endXMm as number),
+      maxYMm: Math.max(obj.yMm, obj.endYMm as number),
+    };
+  }
+  return rotatedBoundsMm(obj);
+}
+
