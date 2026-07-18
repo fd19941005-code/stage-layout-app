@@ -61,6 +61,38 @@ describe("プロジェクト保存・復元 (FR-003、AC-009)", () => {
     expect(o.label).toBe("Vn1-1");
   });
 
+  it("背景のPDFページ、回転、切り抜きを保存・復元できる(AC-004)", () => {
+    const project = createEmptyProject("背景編集");
+    project.background = {
+      ...project.background,
+      imageDataUrl: "data:image/png;base64,background",
+      naturalWidthPx: 1200,
+      naturalHeightPx: 800,
+      sourceType: "pdf",
+      sourcePage: 2,
+      rotationDeg: 90,
+      crop: { xPx: 100, yPx: 50, widthPx: 900, heightPx: 600 },
+    };
+    const restored = deserializeProject(serializeProject(project));
+    expect(restored.background.sourceType).toBe("pdf");
+    expect(restored.background.sourcePage).toBe(2);
+    expect(restored.background.rotationDeg).toBe(90);
+    expect(restored.background.crop).toEqual({ xPx: 100, yPx: 50, widthPx: 900, heightPx: 600 });
+  });
+
+  it("1.0.0のJSONは追加フィールドの既定値で復元できる", () => {
+    const project = createEmptyProject("旧形式");
+    const raw = JSON.parse(serializeProject(project)) as Record<string, unknown>;
+    raw.schemaVersion = "1.0.0";
+    const background = raw.background as Record<string, unknown>;
+    delete background.sourceType;
+    delete background.sourcePage;
+    const restored = deserializeProject(JSON.stringify(raw));
+    expect(restored.schemaVersion).toBe(SCHEMA_VERSION);
+    expect(restored.background.sourceType).toBe("image");
+    expect(restored.background.sourcePage).toBeNull();
+  });
+
   it("wallsフィールドを保存・復元できる(6.3 Phase 0から予約)", () => {
     const project = createEmptyProject("壁テスト");
     project.walls.push({
@@ -95,9 +127,7 @@ describe("プロジェクト保存・復元 (FR-003、AC-009)", () => {
   });
 
   it("schemaVersionのない入力を拒否する", () => {
-    expect(() => deserializeProject(JSON.stringify({ name: "x" }))).toThrow(
-      /schemaVersion/,
-    );
+    expect(() => deserializeProject(JSON.stringify({ name: "x" }))).toThrow(/schemaVersion/);
   });
 
   it("不正な寸法値は安全な値へ補正する", () => {

@@ -1,9 +1,15 @@
-// 上部ツールバー(10.1): 新規、開く、保存、背景読込、モード切替、ズーム
+// 上部ツールバー(10.1): 新規、開く、保存、背景読込、校正、測定、ズーム
 
-import { useRef, type ChangeEvent, type Dispatch } from "react";
+import { useRef, useState, type ChangeEvent, type Dispatch } from "react";
 import type { Action, AppState, ToolMode } from "../state/appState";
 import { deserializeProject, serializeProject } from "../core/project";
 import { zoomAt } from "../core/transform";
+import {
+  isPdfFile,
+  isSupportedBackgroundFile,
+  renderPdfPages,
+  type PdfPageImage,
+} from "../core/pdf";
 
 interface Props {
   state: AppState;
@@ -14,6 +20,8 @@ interface Props {
 export function Toolbar({ state, dispatch, onNotice }: Props) {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const projectInputRef = useRef<HTMLInputElement>(null);
+  const [pdfPages, setPdfPages] = useState<PdfPageImage[]>([]);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const { project, mode, saveState } = state;
 
   function handleNew() {
@@ -26,15 +34,51 @@ export function Toolbar({ state, dispatch, onNotice }: Props) {
     dispatch({ type: "NEW_PROJECT" });
   }
 
+  function applyBackground(page: PdfPageImage, sourceType: "image" | "pdf") {
+    dispatch({
+      type: "SET_BACKGROUND",
+      imageDataUrl: page.imageDataUrl,
+      naturalWidthPx: page.naturalWidthPx,
+      naturalHeightPx: page.naturalHeightPx,
+      sourceType,
+      sourcePage: sourceType === "pdf" ? page.pageNumber : null,
+    });
+    setPdfPages([]);
+    onNotice(
+      sourceType === "pdf"
+        ? `PDF ${page.pageNumber}ページを背景として読み込みました。`
+        : "背景を読み込みました。「校正」で2点と実距離を指定してください。",
+    );
+  }
+
   function handleImageSelected(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    if (!/^image\/(png|jpeg)$/.test(file.type)) {
-      // PDF読み込み(FR-011)はPhase 1でPDF.jsにより対応する
-      onNotice("PNGまたはJPEG画像を選択してください(PDF対応はPhase 1で実装予定)");
+    if (!isSupportedBackgroundFile(file)) {
+      onNotice("対応形式はPNG、JPEG、PDFです。ファイル形式を確認してください。");
       return;
     }
+    if (isPdfFile(file)) {
+      setPdfLoading(true);
+      renderPdfPages(file)
+        .then((pages) => {
+          if (pages.length === 0) {
+            onNotice("PDFに読み込めるページがありません");
+          } else if (pages.length === 1) {
+            applyBackground(pages[0], "pdf");
+          } else {
+            setPdfPages(pages);
+            onNotice(`${pages.length}ページのPDFです。背景にするページを選択してください。`);
+          }
+        })
+        .catch((error: unknown) => {
+          onNotice(error instanceof Error ? error.message : "PDFを読み込めません");
+        })
+        .finally(() => setPdfLoading(false));
+      return;
+    }
+
     const reader = new FileReader();
     reader.onerror = () => onNotice("画像の読み込みに失敗しました");
     reader.onload = () => {
@@ -42,13 +86,15 @@ export function Toolbar({ state, dispatch, onNotice }: Props) {
       const img = new Image();
       img.onerror = () => onNotice("画像を解析できません。別のファイルを試してください");
       img.onload = () => {
-        dispatch({
-          type: "SET_BACKGROUND",
-          imageDataUrl: dataUrl,
-          naturalWidthPx: img.naturalWidth,
-          naturalHeightPx: img.naturalHeight,
-        });
-        onNotice("背景を読み込みました。「校正」で2点と実距離を指定してください。");
+        applyBackground(
+          {
+            pageNumber: 1,
+            imageDataUrl: dataUrl,
+            naturalWidthPx: img.naturalWidth,
+            naturalHeightPx: img.naturalHeight,
+          },
+          "image",
+        );
       };
       img.src = dataUrl;
     };
@@ -66,9 +112,9 @@ export function Toolbar({ state, dispatch, onNotice }: Props) {
         const loaded = deserializeProject(reader.result as string);
         dispatch({ type: "LOAD_PROJECT", project: loaded });
         onNotice(`プロジェクト「${loaded.name}」を開きました`);
-      } catch (err) {
+      } catch (error) {
         // 破損ファイルでもクラッシュさせない(NFR-013、AC-014)
-        onNotice(err instanceof Error ? err.message : "プロジェクトを開けません");
+        onNotice(error instanceof Error ? error.message : "プロジェクトを開けません");
       }
     };
     reader.readAsText(file);
@@ -87,6 +133,10 @@ export function Toolbar({ state, dispatch, onNotice }: Props) {
   }
 
   function setMode(next: ToolMode) {
+    if (next === "verifyCalibration" && project.calibration.mmPerPixel === null) {
+      onNotice("校正済みのプロジェクトで校正確認を実行してください");
+      return;
+    }
     dispatch({ type: "SET_MODE", mode: mode === next ? "select" : next });
   }
 
@@ -98,10 +148,11 @@ export function Toolbar({ state, dispatch, onNotice }: Props) {
     });
   }
 
-  const modeButton = (m: ToolMode, label: string) => (
+  const modeButton = (m: ToolMode, label: string, disabled = false) => (
     <button
       type="button"
       className={mode === m ? "active" : ""}
+      disabled={disabled}
       onClick={() => setMode(m)}
     >
       {label}
@@ -109,39 +160,66 @@ export function Toolbar({ state, dispatch, onNotice }: Props) {
   );
 
   return (
-    <header className="toolbar">
-      <input
-        className="project-name"
-        value={project.name}
-        onChange={(e) => dispatch({ type: "SET_PROJECT_NAME", name: e.target.value })}
-        aria-label="プロジェクト名"
-      />
-      <button type="button" onClick={handleNew}>新規</button>
-      <button type="button" onClick={() => projectInputRef.current?.click()}>開く</button>
-      <button type="button" onClick={handleSave}>保存(JSON)</button>
-      <span className="separator" />
-      <button type="button" onClick={() => imageInputRef.current?.click()}>背景読込</button>
-      <span className="separator" />
-      {modeButton("calibrate", "校正")}
-      {modeButton("measure", "測定")}
-      <span className="separator" />
-      <button type="button" onClick={() => zoomBy(1.25)}>拡大</button>
-      <button type="button" onClick={() => zoomBy(1 / 1.25)}>縮小</button>
+    <>
+      <header className="toolbar">
+        <input
+          className="project-name"
+          value={project.name}
+          onChange={(e) => dispatch({ type: "SET_PROJECT_NAME", name: e.target.value })}
+          aria-label="プロジェクト名"
+        />
+        <button type="button" onClick={handleNew}>新規</button>
+        <button type="button" onClick={() => projectInputRef.current?.click()}>開く</button>
+        <button type="button" onClick={handleSave}>保存(JSON)</button>
+        <span className="separator" />
+        <button type="button" onClick={() => imageInputRef.current?.click()} disabled={pdfLoading}>
+          {pdfLoading ? "PDF読込中…" : "背景読込"}
+        </button>
+        <span className="separator" />
+        {modeButton("calibrate", "校正")}
+        {modeButton("verifyCalibration", "校正確認", project.calibration.mmPerPixel === null)}
+        {modeButton("measure", "測定")}
+        <span className="separator" />
+        <button type="button" onClick={() => zoomBy(1.25)}>拡大</button>
+        <button type="button" onClick={() => zoomBy(1 / 1.25)}>縮小</button>
 
-      <input
-        ref={imageInputRef}
-        type="file"
-        accept="image/png,image/jpeg"
-        hidden
-        onChange={handleImageSelected}
-      />
-      <input
-        ref={projectInputRef}
-        type="file"
-        accept=".json,application/json"
-        hidden
-        onChange={handleProjectSelected}
-      />
-    </header>
+        <input
+          ref={imageInputRef}
+          type="file"
+          accept="image/png,image/jpeg,application/pdf,.pdf"
+          hidden
+          onChange={handleImageSelected}
+        />
+        <input
+          ref={projectInputRef}
+          type="file"
+          accept=".json,application/json"
+          hidden
+          onChange={handleProjectSelected}
+        />
+      </header>
+
+      {pdfPages.length > 0 && (
+        <div className="dialog-backdrop">
+          <div className="dialog pdf-page-dialog" role="dialog" aria-label="PDFページ選択">
+            <h2>背景にするPDFページを選択</h2>
+            <div className="pdf-page-grid">
+              {pdfPages.map((page) => (
+                <button
+                  type="button"
+                  className="pdf-page"
+                  key={page.pageNumber}
+                  onClick={() => applyBackground(page, "pdf")}
+                >
+                  <img src={page.imageDataUrl} alt={`${page.pageNumber}ページのプレビュー`} />
+                  <span>{page.pageNumber}ページ</span>
+                </button>
+              ))}
+            </div>
+            <button type="button" className="cancel" onClick={() => setPdfPages([])}>キャンセル</button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

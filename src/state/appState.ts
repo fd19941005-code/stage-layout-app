@@ -1,18 +1,20 @@
 // アプリケーション状態とreducer。
-// 編集操作を単一のAction経由に統一し、将来のUndo/Redo(FR-053)を
-// コマンド履歴として実装できる構造にしておく(12.1)。
+// 編集操作を単一のAction経由に統一し、Undo/Redo(FR-053)の履歴対象を
+// 後から一貫して包める構造にしておく(12.1)。
 
 import type {
+  BackgroundSourceType,
+  CropPx,
   PointMm,
   PointPx,
   Project,
   SceneObject,
   ViewState,
 } from "../types/project";
-import { computeMmPerPixel, normalizeDeg } from "../core/transform";
+import { clampCrop, computeMmPerPixel, normalizeDeg } from "../core/transform";
 import { createEmptyProject, generateId } from "../core/project";
 
-export type ToolMode = "select" | "calibrate" | "measure";
+export type ToolMode = "select" | "calibrate" | "verifyCalibration" | "measure";
 
 /** 未校正時に背景表示のみに使う暫定スケール。実寸配置には使用しない */
 export const PROVISIONAL_MM_PER_PX = 10;
@@ -23,9 +25,9 @@ export interface AppState {
   /** ライブラリで選択中の配置待ちプリセット */
   pendingPresetId: string | null;
   mode: ToolMode;
-  /** 校正モードで打点した点(背景画像px座標) */
+  /** 校正/校正確認モードで打点した元画像px座標 */
   calibPointsPx: PointPx[];
-  /** 測定モードで打点した点(実寸mm) */
+  /** 測定モードで打点した実寸mm */
   measurePointsMm: PointMm[];
   saveState: "saved" | "dirty";
 }
@@ -56,7 +58,14 @@ export type Action =
       imageDataUrl: string;
       naturalWidthPx: number;
       naturalHeightPx: number;
+      sourceType: BackgroundSourceType;
+      sourcePage: number | null;
     }
+  | { type: "SET_BACKGROUND_CROP"; crop: CropPx | null }
+  | { type: "ROTATE_BACKGROUND"; delta: 90 | -90 }
+  | { type: "SET_BACKGROUND_OPACITY"; opacity: number }
+  | { type: "SET_BACKGROUND_VISIBLE"; visible: boolean }
+  | { type: "SET_BACKGROUND_LOCKED"; locked: boolean }
   | { type: "SET_VIEW"; view: ViewState }
   | { type: "SET_MODE"; mode: ToolMode }
   | { type: "SET_PENDING_PRESET"; presetId: string | null }
@@ -67,6 +76,7 @@ export type Action =
   | { type: "DUPLICATE_OBJECT"; id: string }
   | { type: "SELECT"; id: string | null }
   | { type: "ADD_CALIB_POINT"; point: PointPx }
+  | { type: "CLEAR_CALIB_POINTS" }
   | { type: "APPLY_CALIBRATION"; realDistanceMm: number }
   | { type: "CANCEL_CALIBRATION" }
   | { type: "ADD_MEASURE_POINT"; point: PointMm }
@@ -79,6 +89,11 @@ function touch(state: AppState, project: Project): AppState {
     project: { ...project, updatedAt: new Date().toISOString() },
     saveState: "dirty",
   };
+}
+
+function normalizedBackgroundRotation(value: number): 0 | 90 | 180 | 270 {
+  const normalized = ((value % 360) + 360) % 360;
+  return normalized as 0 | 90 | 180 | 270;
 }
 
 export function appReducer(state: AppState, action: Action): AppState {
@@ -100,9 +115,67 @@ export function appReducer(state: AppState, action: Action): AppState {
           imageDataUrl: action.imageDataUrl,
           naturalWidthPx: action.naturalWidthPx,
           naturalHeightPx: action.naturalHeightPx,
+          sourceType: action.sourceType,
+          sourcePage: action.sourcePage,
           crop: null,
           rotationDeg: 0,
         },
+        // 背景が変わったら以前の校正を再利用しない。オブジェクトは保持して
+        // 再校正後に続きから編集できるが、未校正警告と配置禁止を有効にする。
+        calibration: {
+          mmPerPixel: null,
+          pointA: null,
+          pointB: null,
+          realDistanceMm: null,
+          calibratedAt: null,
+        },
+      });
+
+    case "SET_BACKGROUND_CROP":
+      return touch(state, {
+        ...state.project,
+        background: {
+          ...state.project.background,
+          crop: action.crop
+            ? clampCrop(
+                action.crop,
+                state.project.background.naturalWidthPx,
+                state.project.background.naturalHeightPx,
+              )
+            : null,
+        },
+      });
+
+    case "ROTATE_BACKGROUND":
+      return touch(state, {
+        ...state.project,
+        background: {
+          ...state.project.background,
+          rotationDeg: normalizedBackgroundRotation(
+            state.project.background.rotationDeg + action.delta,
+          ),
+        },
+      });
+
+    case "SET_BACKGROUND_OPACITY":
+      return touch(state, {
+        ...state.project,
+        background: {
+          ...state.project.background,
+          opacity: Math.min(1, Math.max(0, action.opacity)),
+        },
+      });
+
+    case "SET_BACKGROUND_VISIBLE":
+      return touch(state, {
+        ...state.project,
+        background: { ...state.project.background, visible: action.visible },
+      });
+
+    case "SET_BACKGROUND_LOCKED":
+      return touch(state, {
+        ...state.project,
+        background: { ...state.project.background, locked: action.locked },
       });
 
     case "SET_VIEW":
@@ -194,6 +267,9 @@ export function appReducer(state: AppState, action: Action): AppState {
     case "ADD_CALIB_POINT":
       if (state.calibPointsPx.length >= 2) return state;
       return { ...state, calibPointsPx: [...state.calibPointsPx, action.point] };
+
+    case "CLEAR_CALIB_POINTS":
+      return { ...state, calibPointsPx: [] };
 
     case "APPLY_CALIBRATION": {
       const [a, b] = state.calibPointsPx;

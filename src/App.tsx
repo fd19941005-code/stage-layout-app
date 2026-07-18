@@ -11,8 +11,9 @@ import { CanvasStage } from "./components/CanvasStage";
 import { PropertyPanel } from "./components/PropertyPanel";
 import { StatusBar } from "./components/StatusBar";
 import { CalibrationDialog } from "./components/CalibrationDialog";
+import { CalibrationVerificationDialog } from "./components/CalibrationVerificationDialog";
 
-// MVPの保存先はIndexedDBが推奨(第12章)。ひな型ではlocalStorageで代替する
+// Phase 3でIndexedDBへ移行するまでの互換保存キー。JSON形式は引き続き入出力できる。
 const AUTOSAVE_KEY = "stageLayout.autosave.v1";
 
 function loadAutosave() {
@@ -53,8 +54,9 @@ export function App() {
     return () => window.clearTimeout(timer);
   }, [state.project, state.saveState]);
 
-  const calibrationReady =
-    state.mode === "calibrate" && state.calibPointsPx.length === 2;
+  const calibrationReady = state.mode === "calibrate" && state.calibPointsPx.length === 2;
+  const verificationReady =
+    state.mode === "verifyCalibration" && state.calibPointsPx.length === 2;
 
   return (
     <div className="app-layout">
@@ -68,6 +70,11 @@ export function App() {
       {state.mode === "calibrate" && state.calibPointsPx.length < 2 && (
         <div className="banner info">
           校正モード: 図面上の既知距離の{state.calibPointsPx.length === 0 ? "始点" : "終点"}をクリックしてください({state.calibPointsPx.length}/2)
+        </div>
+      )}
+      {state.mode === "verifyCalibration" && state.calibPointsPx.length < 2 && (
+        <div className="banner info">
+          校正確認: 保存済みの基準距離と同じ2点をクリックしてください({state.calibPointsPx.length}/2)
         </div>
       )}
       {state.mode === "measure" && (
@@ -89,6 +96,7 @@ export function App() {
       <StatusBar state={state} cursorMm={cursorMm} />
 
       {calibrationReady && <CalibrationDialog dispatch={dispatch} />}
+      {verificationReady && <CalibrationVerificationDialog state={state} dispatch={dispatch} />}
     </div>
   );
 }

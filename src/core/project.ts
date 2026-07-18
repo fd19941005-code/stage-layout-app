@@ -3,10 +3,13 @@
 
 import {
   SCHEMA_VERSION,
+  type BackgroundSourceType,
+  type Layer,
   type Project,
   type SceneObject,
   type Wall,
 } from "../types/project";
+import { clampCrop } from "./transform";
 
 let idCounter = 0;
 
@@ -28,6 +31,8 @@ export function createEmptyProject(name: string): Project {
       imageDataUrl: null,
       naturalWidthPx: 0,
       naturalHeightPx: 0,
+      sourceType: "image",
+      sourcePage: null,
       rotationDeg: 0,
       crop: null,
       opacity: 1,
@@ -58,7 +63,7 @@ export function createEmptyProject(name: string): Project {
 /** プロジェクトを単一JSON文字列へ書き出す(FR-003) */
 export function serializeProject(project: Project): string {
   return JSON.stringify(
-    { ...project, updatedAt: new Date().toISOString() },
+    { ...project, schemaVersion: SCHEMA_VERSION, updatedAt: new Date().toISOString() },
     null,
     2,
   );
@@ -80,10 +85,25 @@ function bool(v: unknown, fallback: boolean): boolean {
   return typeof v === "boolean" ? v : fallback;
 }
 
+function parseLayers(raw: unknown, fallback: Layer[]): Layer[] {
+  if (!Array.isArray(raw)) return fallback;
+  const layers = raw.filter(isRecord).map((layer, index) => ({
+    id: str(layer.id, `layer-${index}`),
+    name: str(layer.name, "レイヤー"),
+    visible: bool(layer.visible, true),
+    locked: bool(layer.locked, false),
+  }));
+  return layers.length > 0 ? layers : fallback;
+}
+
+function parseSourceType(value: unknown): BackgroundSourceType {
+  return value === "pdf" ? "pdf" : "image";
+}
+
 /**
  * JSONからプロジェクトを復元する。
+ * 1.0.0では背景のsourceType/sourcePageが存在しなかったため既定値を補う。
  * 未知のフィールドは無視し、既知フィールドを復元する(6.3)。
- * 不正な形式の場合は原因を示すErrorを投げる(NFR-013)。
  */
 export function deserializeProject(json: string): Project {
   let raw: unknown;
@@ -98,14 +118,15 @@ export function deserializeProject(json: string): Project {
   if (typeof raw.schemaVersion !== "string") {
     throw new Error("schemaVersionがありません。プロジェクトファイルではない可能性があります");
   }
-  // 将来: schemaVersionに応じたマイグレーションをここで行う(12.1)
+  // 1.0.0からのマイグレーションは、追加フィールドの既定値を適用する非破壊移行。
+  // 将来の破壊的変更もここで版ごとに吸収し、既存JSONを読めなくしない。
 
   const base = createEmptyProject(str(raw.name, "無題のプロジェクト"));
 
   const objects: SceneObject[] = Array.isArray(raw.objects)
     ? raw.objects.filter(isRecord).map((o, i): SceneObject => ({
         id: str(o.id, generateId("obj")),
-        type: (str(o.type, "shape") as SceneObject["type"]),
+        type: str(o.type, "shape") as SceneObject["type"],
         presetId: typeof o.presetId === "string" ? o.presetId : null,
         name: str(o.name, "オブジェクト"),
         xMm: num(o.xMm, 0),
@@ -135,7 +156,7 @@ export function deserializeProject(json: string): Project {
               yMm: num(p.yMm, 0),
             }))
           : [],
-        heightMm: num(w.heightMm, 6000),
+        heightMm: Math.max(0, num(w.heightMm, 6000)),
         closed: bool(w.closed, false),
       }))
     : [];
@@ -145,6 +166,26 @@ export function deserializeProject(json: string): Project {
   const view = isRecord(raw.view) ? raw.view : {};
   const meta = isRecord(raw.metadata) ? raw.metadata : {};
   const exp = isRecord(raw.exportSettings) ? raw.exportSettings : {};
+  const naturalWidthPx = Math.max(0, num(bg.naturalWidthPx, 0));
+  const naturalHeightPx = Math.max(0, num(bg.naturalHeightPx, 0));
+  const rotationValue = bg.rotationDeg;
+  const rotationDeg = ([0, 90, 180, 270] as const).includes(
+    rotationValue as 0 | 90 | 180 | 270,
+  )
+    ? (rotationValue as 0 | 90 | 180 | 270)
+    : 0;
+  const crop = isRecord(bg.crop) && naturalWidthPx > 0 && naturalHeightPx > 0
+    ? clampCrop(
+        {
+          xPx: num(bg.crop.xPx, 0),
+          yPx: num(bg.crop.yPx, 0),
+          widthPx: num(bg.crop.widthPx, naturalWidthPx),
+          heightPx: num(bg.crop.heightPx, naturalHeightPx),
+        },
+        naturalWidthPx,
+        naturalHeightPx,
+      )
+    : null;
   const stageFront = isRecord(raw.stageFront)
     ? { yMm: num(raw.stageFront.yMm, 0) }
     : null;
@@ -163,22 +204,16 @@ export function deserializeProject(json: string): Project {
     },
     background: {
       imageDataUrl: typeof bg.imageDataUrl === "string" ? bg.imageDataUrl : null,
-      naturalWidthPx: num(bg.naturalWidthPx, 0),
-      naturalHeightPx: num(bg.naturalHeightPx, 0),
-      rotationDeg: ([0, 90, 180, 270] as const).includes(
-        bg.rotationDeg as 0 | 90 | 180 | 270,
-      )
-        ? (bg.rotationDeg as 0 | 90 | 180 | 270)
-        : 0,
-      crop: isRecord(bg.crop)
-        ? {
-            xPx: num(bg.crop.xPx, 0),
-            yPx: num(bg.crop.yPx, 0),
-            widthPx: num(bg.crop.widthPx, 0),
-            heightPx: num(bg.crop.heightPx, 0),
-          }
-        : null,
-      opacity: num(bg.opacity, 1),
+      naturalWidthPx,
+      naturalHeightPx,
+      sourceType: parseSourceType(bg.sourceType),
+      sourcePage:
+        typeof bg.sourcePage === "number" && Number.isInteger(bg.sourcePage) && bg.sourcePage > 0
+          ? bg.sourcePage
+          : null,
+      rotationDeg,
+      crop,
+      opacity: Math.min(1, Math.max(0, num(bg.opacity, 1))),
       visible: bool(bg.visible, true),
       locked: bool(bg.locked, true),
     },
@@ -200,10 +235,11 @@ export function deserializeProject(json: string): Project {
       calibratedAt: typeof calib.calibratedAt === "string" ? calib.calibratedAt : null,
     },
     view: {
-      zoom: num(view.zoom, base.view.zoom),
+      zoom: Math.max(0.0001, num(view.zoom, base.view.zoom)),
       panX: num(view.panX, base.view.panX),
       panY: num(view.panY, base.view.panY),
     },
+    layers: parseLayers(raw.layers, base.layers),
     objects,
     walls,
     stageFront,

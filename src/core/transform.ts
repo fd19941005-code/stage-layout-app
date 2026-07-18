@@ -1,7 +1,7 @@
 // 座標変換の純粋関数群(9.4 座標変換の原則、12.1 実装上の制約)。
 // UIコンポーネントへ散在させず、ここに集約する。自動テスト必須領域(11.4)。
 
-import type { PointMm, PointPx, ViewState } from "../types/project";
+import type { Background, CropPx, PointMm, PointPx, ViewState } from "../types/project";
 
 /** 画面上の点(px)。保存対象にしてはならない */
 export interface ScreenPoint {
@@ -50,12 +50,100 @@ export function toMm(value: number, unit: "mm" | "cm" | "m"): number {
   }
 }
 
-/** 背景画像px座標 → 実寸mm座標 */
+/**
+ * 背景の切り抜き範囲を画像内に収める。元画像の破壊を避けるため、
+ * UI入力とJSON復元の両方からこの関数を通す。
+ */
+export function clampCrop(crop: CropPx, sourceWidthPx: number, sourceHeightPx: number): CropPx {
+  const width = Math.max(1, Math.floor(Number.isFinite(sourceWidthPx) ? sourceWidthPx : 1));
+  const height = Math.max(1, Math.floor(Number.isFinite(sourceHeightPx) ? sourceHeightPx : 1));
+  const x = Math.min(Math.max(0, Math.round(Number.isFinite(crop.xPx) ? crop.xPx : 0)), width - 1);
+  const y = Math.min(Math.max(0, Math.round(Number.isFinite(crop.yPx) ? crop.yPx : 0)), height - 1);
+  const cropWidth = Math.min(
+    Math.max(1, Math.round(Number.isFinite(crop.widthPx) ? crop.widthPx : width)),
+    width - x,
+  );
+  const cropHeight = Math.min(
+    Math.max(1, Math.round(Number.isFinite(crop.heightPx) ? crop.heightPx : height)),
+    height - y,
+  );
+  return { xPx: x, yPx: y, widthPx: cropWidth, heightPx: cropHeight };
+}
+
+/** nullのcropを全画像範囲へ展開する */
+export function getEffectiveCrop(background: Pick<Background, "naturalWidthPx" | "naturalHeightPx" | "crop">): CropPx {
+  const width = Math.max(1, Math.floor(background.naturalWidthPx || 1));
+  const height = Math.max(1, Math.floor(background.naturalHeightPx || 1));
+  return background.crop
+    ? clampCrop(background.crop, width, height)
+    : { xPx: 0, yPx: 0, widthPx: width, heightPx: height };
+}
+
+/** 回転後に画面へ表示する画像のpx寸法 */
+export function getBackgroundDisplaySizePx(
+  background: Pick<Background, "naturalWidthPx" | "naturalHeightPx" | "crop" | "rotationDeg">,
+): { widthPx: number; heightPx: number } {
+  const crop = getEffectiveCrop(background);
+  return background.rotationDeg === 90 || background.rotationDeg === 270
+    ? { widthPx: crop.heightPx, heightPx: crop.widthPx }
+    : { widthPx: crop.widthPx, heightPx: crop.heightPx };
+}
+
+/** 元画像px → 切り抜き・回転後の表示画像px */
+export function sourcePxToDisplayedPx(
+  point: PointPx,
+  background: Pick<Background, "naturalWidthPx" | "naturalHeightPx" | "crop" | "rotationDeg">,
+): PointPx {
+  const crop = getEffectiveCrop(background);
+  const localX = point.xPx - crop.xPx;
+  const localY = point.yPx - crop.yPx;
+  switch (background.rotationDeg) {
+    case 90:
+      return { xPx: crop.heightPx - localY, yPx: localX };
+    case 180:
+      return { xPx: crop.widthPx - localX, yPx: crop.heightPx - localY };
+    case 270:
+      return { xPx: localY, yPx: crop.widthPx - localX };
+    default:
+      return { xPx: localX, yPx: localY };
+  }
+}
+
+/** 切り抜き・回転後の表示画像px → 元画像px */
+export function displayedPxToSourcePx(
+  point: PointPx,
+  background: Pick<Background, "naturalWidthPx" | "naturalHeightPx" | "crop" | "rotationDeg">,
+): PointPx {
+  const crop = getEffectiveCrop(background);
+  let localX: number;
+  let localY: number;
+  switch (background.rotationDeg) {
+    case 90:
+      localX = point.yPx;
+      localY = crop.heightPx - point.xPx;
+      break;
+    case 180:
+      localX = crop.widthPx - point.xPx;
+      localY = crop.heightPx - point.yPx;
+      break;
+    case 270:
+      localX = crop.widthPx - point.yPx;
+      localY = point.xPx;
+      break;
+    default:
+      localX = point.xPx;
+      localY = point.yPx;
+      break;
+  }
+  return { xPx: localX + crop.xPx, yPx: localY + crop.yPx };
+}
+
+/** 背景表示px → 実寸mm座標 */
 export function imagePxToMm(p: PointPx, mmPerPixel: number): PointMm {
   return { xMm: p.xPx * mmPerPixel, yMm: p.yPx * mmPerPixel };
 }
 
-/** 実寸mm座標 → 背景画像px座標 */
+/** 実寸mm座標 → 背景表示px */
 export function mmToImagePx(p: PointMm, mmPerPixel: number): PointPx {
   return { xPx: p.xMm / mmPerPixel, yPx: p.yMm / mmPerPixel };
 }
@@ -74,6 +162,11 @@ export function screenToMm(p: ScreenPoint, view: ViewState): PointMm {
     xMm: (p.x - view.panX) / view.zoom,
     yMm: (p.y - view.panY) / view.zoom,
   };
+}
+
+/** 校正基準線の再測定値(mm)。FR-024の表示とテストで共用する */
+export function measuredCalibrationDistanceMm(pointA: PointPx, pointB: PointPx, mmPerPixel: number): number {
+  return pxDistance(pointA, pointB) * mmPerPixel;
 }
 
 /** 角度を0〜360度へ正規化(9.2) */

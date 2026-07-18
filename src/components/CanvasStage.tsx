@@ -5,18 +5,18 @@
 import { useRef, type Dispatch, type PointerEvent, type WheelEvent } from "react";
 import type { PointMm, SceneObject } from "../types/project";
 import {
-  mmDistance,
+  displayedPxToSourcePx,
+  getBackgroundDisplaySizePx,
+  getEffectiveCrop,
   imagePxToMm,
+  mmDistance,
   mmToImagePx,
   screenToMm,
+  sourcePxToDisplayedPx,
   zoomAt,
   type ScreenPoint,
 } from "../core/transform";
-import {
-  effectiveMmPerPixel,
-  type Action,
-  type AppState,
-} from "../state/appState";
+import { effectiveMmPerPixel, type Action, type AppState } from "../state/appState";
 import { findPreset } from "../core/presets";
 import { generateId, DEFAULT_LAYER_ID } from "../core/project";
 
@@ -31,6 +31,23 @@ type DragState =
   | { kind: "pan"; startX: number; startY: number; startPanX: number; startPanY: number }
   | { kind: "move"; id: string; offsetXMm: number; offsetYMm: number };
 
+function backgroundRotationTransform(
+  rotationDeg: 0 | 90 | 180 | 270,
+  cropWidthMm: number,
+  cropHeightMm: number,
+): string {
+  switch (rotationDeg) {
+    case 90:
+      return `translate(${cropHeightMm} 0) rotate(90)`;
+    case 180:
+      return `translate(${cropWidthMm} ${cropHeightMm}) rotate(180)`;
+    case 270:
+      return `translate(0 ${cropWidthMm}) rotate(270)`;
+    default:
+      return "";
+  }
+}
+
 export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const dragRef = useRef<DragState | null>(null);
@@ -39,6 +56,10 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
   const { view, background, calibration } = project;
   const mmpp = effectiveMmPerPixel(project);
   const calibrated = calibration.mmPerPixel !== null;
+  const crop = getEffectiveCrop(background);
+  const displaySize = getBackgroundDisplaySizePx(background);
+  const cropWidthMm = crop.widthPx * mmpp;
+  const cropHeightMm = crop.heightPx * mmpp;
 
   function toScreen(e: PointerEvent | WheelEvent): ScreenPoint {
     const rect = svgRef.current!.getBoundingClientRect();
@@ -46,6 +67,7 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
   }
 
   function handleWheel(e: WheelEvent<SVGSVGElement>) {
+    e.preventDefault();
     const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
     const nextZoom = Math.min(2, Math.max(0.005, view.zoom * factor));
     dispatch({ type: "SET_VIEW", view: zoomAt(view, toScreen(e), nextZoom) });
@@ -93,8 +115,13 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
       // 既に解放済みのポインター等では失敗しうるが、操作自体は続行できる
     }
 
-    if (mode === "calibrate") {
-      dispatch({ type: "ADD_CALIB_POINT", point: mmToImagePx(pMm, mmpp) });
+    if (mode === "calibrate" || mode === "verifyCalibration") {
+      const displayedPx = mmToImagePx(pMm, mmpp);
+      // 校正点は元画像pxで保存し、切り抜き・90度回転後も同一点を再利用する。
+      dispatch({
+        type: "ADD_CALIB_POINT",
+        point: displayedPxToSourcePx(displayedPx, background),
+      });
       return;
     }
     if (mode === "measure") {
@@ -160,8 +187,6 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
     dragRef.current = null;
   }
 
-  const bgWidthMm = background.naturalWidthPx * mmpp;
-  const bgHeightMm = background.naturalHeightPx * mmpp;
   const sortedObjects = [...project.objects]
     .filter((o) => o.visible)
     .sort((a, b) => a.zIndex - b.zIndex);
@@ -175,19 +200,36 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
       onPointerLeave={() => onCursorMm(null)}
     >
       <g transform={`translate(${view.panX} ${view.panY}) scale(${view.zoom})`}>
         {background.imageDataUrl && background.visible && (
-          <image
-            href={background.imageDataUrl}
-            x={0}
-            y={0}
-            width={bgWidthMm}
-            height={bgHeightMm}
-            opacity={background.opacity}
-            preserveAspectRatio="none"
-          />
+          <g
+            transform={backgroundRotationTransform(background.rotationDeg, cropWidthMm, cropHeightMm)}
+            data-background-size={`${displaySize.widthPx}x${displaySize.heightPx}`}
+          >
+            <svg
+              x={0}
+              y={0}
+              width={cropWidthMm}
+              height={cropHeightMm}
+              viewBox={`${crop.xPx} ${crop.yPx} ${crop.widthPx} ${crop.heightPx}`}
+              preserveAspectRatio="none"
+              overflow="visible"
+              pointerEvents="none"
+            >
+              <image
+                href={background.imageDataUrl}
+                x={0}
+                y={0}
+                width={background.naturalWidthPx}
+                height={background.naturalHeightPx}
+                opacity={background.opacity}
+                preserveAspectRatio="none"
+              />
+            </svg>
+          </g>
         )}
 
         {sortedObjects.map((o) => (
@@ -217,9 +259,10 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
           </g>
         ))}
 
-        {/* 校正打点の表示 */}
+        {/* 校正打点の表示。保存点は元画像px、描画時だけ表示画像pxへ変換する。 */}
         {state.calibPointsPx.map((p, i) => {
-          const pm = imagePxToMm(p, mmpp);
+          const displayed = sourcePxToDisplayedPx(p, background);
+          const pm = imagePxToMm(displayed, mmpp);
           return (
             <circle
               key={i}
@@ -232,8 +275,8 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
         })}
         {state.calibPointsPx.length === 2 &&
           (() => {
-            const a = imagePxToMm(state.calibPointsPx[0], mmpp);
-            const b = imagePxToMm(state.calibPointsPx[1], mmpp);
+            const a = imagePxToMm(sourcePxToDisplayedPx(state.calibPointsPx[0], background), mmpp);
+            const b = imagePxToMm(sourcePxToDisplayedPx(state.calibPointsPx[1], background), mmpp);
             return (
               <line
                 className="calib-line"

@@ -3,43 +3,40 @@
 import { describe, expect, it } from "vitest";
 import {
   computeMmPerPixel,
+  displayedPxToSourcePx,
+  getBackgroundDisplaySizePx,
   imagePxToMm,
+  measuredCalibrationDistanceMm,
   mmDistance,
   mmToImagePx,
   mmToScreen,
   normalizeDeg,
   rotatedBoundsMm,
   screenToMm,
+  sourcePxToDisplayedPx,
   toMm,
   zoomAt,
 } from "./transform";
-import type { ViewState } from "../types/project";
+import type { Background, ViewState } from "../types/project";
 
 describe("computeMmPerPixel (FR-020 2点校正)", () => {
   it("2点距離と実距離からmm/pxを算出する", () => {
-    // 100px離れた2点に910mmを対応付ける → 9.1mm/px
     const mmpp = computeMmPerPixel({ xPx: 0, yPx: 0 }, { xPx: 100, yPx: 0 }, 910);
     expect(mmpp).toBeCloseTo(9.1);
   });
 
   it("斜め方向の2点でも正しく計算する", () => {
     const mmpp = computeMmPerPixel({ xPx: 0, yPx: 0 }, { xPx: 30, yPx: 40 }, 1000);
-    expect(mmpp).toBeCloseTo(20); // 距離50px
+    expect(mmpp).toBeCloseTo(20);
   });
 
   it("実距離が0以下なら拒否する(6.1)", () => {
-    expect(() =>
-      computeMmPerPixel({ xPx: 0, yPx: 0 }, { xPx: 100, yPx: 0 }, 0),
-    ).toThrow();
-    expect(() =>
-      computeMmPerPixel({ xPx: 0, yPx: 0 }, { xPx: 100, yPx: 0 }, -910),
-    ).toThrow();
+    expect(() => computeMmPerPixel({ xPx: 0, yPx: 0 }, { xPx: 100, yPx: 0 }, 0)).toThrow();
+    expect(() => computeMmPerPixel({ xPx: 0, yPx: 0 }, { xPx: 100, yPx: 0 }, -910)).toThrow();
   });
 
   it("同一2点なら拒否する", () => {
-    expect(() =>
-      computeMmPerPixel({ xPx: 5, yPx: 5 }, { xPx: 5, yPx: 5 }, 910),
-    ).toThrow();
+    expect(() => computeMmPerPixel({ xPx: 5, yPx: 5 }, { xPx: 5, yPx: 5 }, 910)).toThrow();
   });
 });
 
@@ -71,13 +68,46 @@ describe("px⇔mm 双方向座標変換 (11.4)", () => {
   it("ズーム変更しても実寸座標は変化しない(AC-003)", () => {
     const view1: ViewState = { zoom: 0.25, panX: 0, panY: 0 };
     const pMm = { xMm: 5000, yMm: 3000 };
-    // 表示倍率を変えて描画→逆変換しても同じmm値
     const view2: ViewState = { zoom: 4, panX: 120, panY: -80 };
     const roundTrip = screenToMm(mmToScreen(pMm, view1), view1);
     const roundTrip2 = screenToMm(mmToScreen(pMm, view2), view2);
     expect(roundTrip.xMm).toBeCloseTo(pMm.xMm);
     expect(roundTrip2.xMm).toBeCloseTo(pMm.xMm);
     expect(roundTrip2.yMm).toBeCloseTo(pMm.yMm);
+  });
+});
+
+describe("背景の切り抜き・回転変換 (FR-012、FR-013)", () => {
+  const background: Background = {
+    imageDataUrl: "data:image/png;base64,x",
+    naturalWidthPx: 1000,
+    naturalHeightPx: 600,
+    sourceType: "image",
+    sourcePage: null,
+    rotationDeg: 90,
+    crop: { xPx: 100, yPx: 50, widthPx: 800, heightPx: 400 },
+    opacity: 1,
+    visible: true,
+    locked: true,
+  };
+
+  it("回転後の表示寸法は切り抜き寸法を入れ替える", () => {
+    expect(getBackgroundDisplaySizePx(background)).toEqual({ widthPx: 400, heightPx: 800 });
+  });
+
+  it("元画像pxと表示pxの往復が90度回転・切り抜き後も成立する", () => {
+    const source = { xPx: 300, yPx: 200 };
+    const displayed = sourcePxToDisplayedPx(source, background);
+    const back = displayedPxToSourcePx(displayed, background);
+    expect(back.xPx).toBeCloseTo(source.xPx);
+    expect(back.yPx).toBeCloseTo(source.yPx);
+  });
+
+  it("校正確認の再測定値は元の基準線距離と一致する", () => {
+    const a = { xPx: 100, yPx: 100 };
+    const b = { xPx: 200, yPx: 100 };
+    const mmpp = computeMmPerPixel(a, b, 10000);
+    expect(measuredCalibrationDistanceMm(a, b, mmpp)).toBeCloseTo(10000);
   });
 });
 

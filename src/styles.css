@@ -18,6 +18,21 @@ body {
   background: #f0f1f3;
 }
 
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .app-layout {
   display: flex;
   flex-direction: column;
@@ -41,10 +56,9 @@ body {
   border-radius: 4px;
   background: #3a4552;
   color: #fff;
-  cursor: pointer;
 }
 
-.toolbar button:hover {
+.toolbar button:hover:not(:disabled) {
   background: #4a5768;
 }
 
@@ -94,7 +108,7 @@ body {
 /* メイン領域 */
 .main-area {
   display: grid;
-  grid-template-columns: 230px 1fr 250px;
+  grid-template-columns: 230px 1fr 280px;
   flex: 1;
   min-height: 0;
 }
@@ -113,7 +127,8 @@ body {
   margin: 0 0 8px;
 }
 
-.library-panel h3 {
+.library-panel h3,
+.background-panel h3 {
   font-size: 12px;
   color: #666;
   margin: 12px 0 4px;
@@ -134,7 +149,6 @@ body {
   border: 1px solid #d5d8dc;
   border-radius: 4px;
   background: #fafbfc;
-  cursor: pointer;
 }
 
 .library-panel li button:hover:not(:disabled) {
@@ -145,11 +159,6 @@ body {
   background: #2f7fd1;
   border-color: #2f7fd1;
   color: #fff;
-}
-
-.library-panel li button:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
 }
 
 .library-panel .dims {
@@ -173,6 +182,11 @@ body {
   background: #e8eaed;
   touch-action: none; /* ブラウザ既定のスクロール・ズームと競合させない(NFR-002) */
   cursor: crosshair;
+  user-select: none;
+}
+
+.canvas-stage image {
+  pointer-events: none;
 }
 
 .scene-object rect,
@@ -238,19 +252,29 @@ body {
   padding: 10px;
 }
 
-.property-panel label {
+.background-panel,
+.object-properties {
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #e1e4e8;
+}
+
+.background-panel label,
+.object-properties label {
   display: block;
   margin-bottom: 8px;
   color: #555;
 }
 
-.property-panel label.row {
+.background-panel label.row,
+.object-properties label.row {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.property-panel input:not([type="checkbox"]) {
+.background-panel input:not([type="checkbox"]),
+.object-properties input:not([type="checkbox"]) {
   display: block;
   width: 100%;
   padding: 5px 8px;
@@ -259,27 +283,74 @@ body {
   border-radius: 4px;
 }
 
-.property-panel .object-name {
-  font-weight: 700;
+.background-panel input[type="range"] {
+  width: calc(100% - 42px);
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.range-value {
+  display: inline-block;
+  width: 38px;
+  text-align: right;
+  font-size: 11px;
+}
+
+.source-label {
   margin: 0 0 8px;
+  color: #555;
+  font-size: 11px;
 }
 
-.property-panel .actions {
+.background-actions,
+.dialog-buttons {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 6px;
-  margin-top: 12px;
+  margin-top: 8px;
 }
 
-.property-panel .actions button {
+.background-actions button,
+.dialog-buttons button {
   flex: 1;
   padding: 6px;
   border: 1px solid #ccc;
   border-radius: 4px;
   background: #fafbfc;
-  cursor: pointer;
 }
 
-.property-panel .actions button.danger {
+.background-actions strong {
+  min-width: 38px;
+  text-align: center;
+}
+
+.crop-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 6px;
+}
+
+.object-properties .object-name {
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.object-properties .actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.object-properties .actions button {
+  flex: 1;
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fafbfc;
+}
+
+.object-properties .actions button.danger {
   color: #b02020;
   border-color: #d9a0a0;
 }
@@ -292,6 +363,7 @@ body {
   background: #2b3440;
   color: #cfd6dd;
   font-size: 12px;
+  flex-wrap: wrap;
 }
 
 .status-bar .warning {
@@ -308,6 +380,7 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 100;
+  padding: 16px;
 }
 
 .dialog {
@@ -315,6 +388,8 @@ body {
   border-radius: 8px;
   padding: 18px;
   width: 340px;
+  max-height: 90vh;
+  overflow: auto;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
 }
 
@@ -336,7 +411,6 @@ body {
   border-radius: 4px;
   background: #eef4fb;
   color: #114d80;
-  cursor: pointer;
   font-weight: 700;
 }
 
@@ -352,9 +426,10 @@ body {
   border-radius: 4px;
 }
 
-.dialog .error {
+.dialog .error,
+.error-message,
+.error-value {
   color: #b02020;
-  margin: 8px 0 0;
 }
 
 .dialog .cancel {
@@ -364,5 +439,93 @@ body {
   border: 1px solid #ccc;
   border-radius: 4px;
   background: #fafbfc;
-  cursor: pointer;
+}
+
+.pdf-page-dialog {
+  width: min(760px, 95vw);
+}
+
+.pdf-page-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.pdf-page {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 6px;
+  border: 1px solid #ccd3db;
+  border-radius: 5px;
+  background: #fafbfc;
+}
+
+.pdf-page:hover {
+  border-color: #2f7fd1;
+  background: #eef4fb;
+}
+
+.pdf-page img {
+  display: block;
+  width: 100%;
+  height: 130px;
+  object-fit: contain;
+  background: #e8eaed;
+}
+
+.calibration-result {
+  margin: 0;
+}
+
+.calibration-result > div {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #e1e4e8;
+  padding: 6px 0;
+}
+
+.calibration-result dt,
+.calibration-result dd {
+  margin: 0;
+}
+
+.calibration-result .ok,
+.success-message {
+  color: #1e6a32;
+}
+
+@media (max-width: 900px) {
+  .main-area {
+    grid-template-columns: 190px 1fr 230px;
+  }
+
+  .toolbar .project-name {
+    width: 140px;
+  }
+}
+
+@media (max-width: 700px) {
+  .main-area {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+
+  .library-panel {
+    display: none;
+  }
+
+  .property-panel {
+    max-height: 38vh;
+    border-left: 0;
+    border-top: 1px solid #d5d8dc;
+  }
+
+  .toolbar {
+    padding: 5px;
+  }
+
+  .toolbar .project-name {
+    flex: 1 1 120px;
+  }
 }

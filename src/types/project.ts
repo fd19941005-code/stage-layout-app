@@ -1,7 +1,7 @@
 // 要件定義書 第9章「データ要件」に基づくプロジェクトモデル定義。
 // 最重要設計原則: 配置物の正本は常にmm単位。px値は保存しない。
 
-export const SCHEMA_VERSION = "1.0.0";
+export const SCHEMA_VERSION = "1.1.0";
 
 /** 実寸座標系(mm)上の点 */
 export interface PointMm {
@@ -9,7 +9,7 @@ export interface PointMm {
   yMm: number;
 }
 
-/** 背景画像のピクセル座標系上の点(校正基準点の保存に使用) */
+/** 背景画像の元データpx座標。校正基準点の保存に使用する */
 export interface PointPx {
   xPx: number;
   yPx: number;
@@ -25,6 +25,14 @@ export type ObjectType =
   | "text";
 
 export type ShapeKind = "rect" | "circle";
+export type BackgroundSourceType = "image" | "pdf";
+
+export interface CropPx {
+  xPx: number;
+  yPx: number;
+  widthPx: number;
+  heightPx: number;
+}
 
 /** 背景図面(5.1 Background) */
 export interface Background {
@@ -32,10 +40,14 @@ export interface Background {
   imageDataUrl: string | null;
   naturalWidthPx: number;
   naturalHeightPx: number;
-  /** 90度単位の回転(FR-012)。微回転(FR-015)はPhase 1以降 */
+  /** 読み込んだ元データの種類。PDFは選択ページをPNGへ描画して保存する */
+  sourceType: BackgroundSourceType;
+  /** PDFを選択したページ番号。画像の場合はnull */
+  sourcePage: number | null;
+  /** 90度単位の回転(FR-012) */
   rotationDeg: 0 | 90 | 180 | 270;
-  /** 切り抜き(FR-013)。元画像は破壊しない。nullは切り抜きなし */
-  crop: { xPx: number; yPx: number; widthPx: number; heightPx: number } | null;
+  /** 元画像px上の切り抜き範囲。元画像は破壊しない。nullは全体 */
+  crop: CropPx | null;
   opacity: number;
   visible: boolean;
   /** 背景は初期状態でロック(10.3) */
@@ -46,7 +58,7 @@ export interface Background {
 export interface Calibration {
   /** 校正結果。未校正時はnull。等方スケール前提(6.1) */
   mmPerPixel: number | null;
-  /** 校正基準点(背景画像px座標で保持。再校正時に再利用) */
+  /** 校正基準点(元画像px座標で保持。再校正時に再利用) */
   pointA: PointPx | null;
   pointB: PointPx | null;
   /** 入力された実距離(mm正規化済み。FR-022) */
