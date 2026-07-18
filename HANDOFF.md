@@ -28,7 +28,7 @@ Phase 5実装コミット: 本Phaseの最終コミット
 | AC-201 | テストで検証済み | scene3d.test.tsで壁線分・閉じた壁・全オブジェクト・アバター・背景の校正済みmm寸法を確認。ブラウザでも遅延読み込み後の3Dキャンバス表示を確認。実図面の壁・背景位置は人間確認待ち。 |
 | AC-202 | テストで検証済み | scene3d.test.tsで椅子の座奏目線1200mm、回転方向、山台上の視点高さを確認。選択席→3D→「この席から見る」の導線をブラウザで確認。 |
 | AC-203 | テストで検証済み | scene3d.test.tsで段高300mmを椅子アバターのbaseHeightMmと目線高さへ反映することを確認。 |
-| AC-204 | 実装済みだが人間の確認待ち | 一人称視点の回転量テスト、canvas直下のtouch-action:none、Pointer Capture、ミニマップ移動を実装。実機iPad Safariで回転・移動・30fpsを確認する。 |
+| AC-204 | 実装済みだが人間の確認待ち | 一人称視点の回転量テスト、Three.js canvasへ直接登録したPointer Events、canvas直下のtouch-action:none、Pointer Capture、ミニマップ移動を実装。実機iPad Safariで回転・移動・30fpsを確認する。 |
 
 ## UX監査の実施内容
 
@@ -74,7 +74,7 @@ Phase 5実装コミット: 本Phaseの最終コミット
 | UX-PHASE5-002 | P1 | 閉じた壁を登録しても、3D押し出しが最後の点から始点へ戻らなかった。 | 修正済み。closed=trueのポリラインは閉じる線分も生成し、テストを追加。 |
 | UX-PHASE5-003 | P2 | 一人称視点を任意位置へ置く操作がキーボード中心で、タッチ利用者に分かりにくかった。 | 修正済み。3Dミニマップを追加し、タップ位置へ一人称視点を移動できるようにした。 |
 | UX-PHASE5-004 | P2 | 視点高さプリセットを変更しても、一人称カメラへ反映されるのが席視点実行後だった。 | 修正済み。プリセット／任意値の変更を現在の一人称カメラへ即時反映。山台の段高も維持する。 |
-| UX-PHASE5-005 | P1 | ミニマップで視点位置を移動した後、タッチブラウザのジェスチャー処理により中央3D画面の視線回転が不安定になる余地があった。 | 修正済み。Three.js canvasにもtouch-action:noneを設定し、Pointer Captureと回転処理を明示。 |
+| UX-PHASE5-005 | P1 | ミニマップで視点位置を移動した後、タッチブラウザのジェスチャー処理により中央3D画面の視線回転が不安定になる余地があった。 | 修正済み。Three.js canvasへPointer Eventsを直接登録し、touch-action:noneとPointer Captureを併用して、マウス／タッチのドラッグ回転を確実に受け取る。 |
 
 ## Phase 5の実装内容
 
@@ -82,7 +82,7 @@ Phase 5実装コミット: 本Phaseの最終コミット
 - src/components/CanvasStage.tsx、src/components/Toolbar.tsx: 背景上のPointer Eventsによる壁トレース、2点以上で確定、高さ6000mm初期値、トレース中の頂点数・確定・やり直し表示。
 - src/components/PropertyPanel.tsx: 壁の高さ、閉じる設定、各頂点のX/Y、頂点追加／削除、壁削除、舞台前端Yの編集。
 - src/core/scene3d.ts: mm正本から壁・オブジェクト・山台上の配置・アバター・背景平面・一人称初期値を生成。Three.jsに依存しない純粋ロジック。
-- src/components/Viewer3D.tsx: React.lazyで遅延読み込みするThree.js表示。俯瞰OrbitControls、一人称、席視点、目線高さ、床表示、背景テクスチャ、ミニマップ、Pointer Events、WASD／矢印移動。
+- src/components/Viewer3D.tsx: React.lazyで遅延読み込みするThree.js表示。俯瞰OrbitControls、一人称、席視点、目線高さ、床表示、背景テクスチャ、ミニマップ、Three.js canvasへのPointer Events、WASD／矢印移動。
 - src/phase5.css: 壁編集UI、3D画面、ミニマップ、iPad相当幅のレスポンシブ／タッチ領域。
 - three / @types/three: 壁・箱・円柱・カメラ・OrbitControlsを実装するため追加。代替の自前WebGLは保守・テスト範囲が大きくなるため採用しなかった。Three.jsはViewer3Dの遅延チャンクへ分離。
 
@@ -111,7 +111,7 @@ Phase 5実装コミット: 本Phaseの最終コミット
 
 - src/core/scene3d.test.ts: AC-201（壁・背景・可視性・舞台前端）、AC-202（席視点）、AC-203（山台高さ）、AC-204（視線回転角）。
 - src/state/appState.phase5.test.ts: 壁トレースのAction、頂点編集／削除、既定高さ、Undo履歴、入力正規化。
-- ブラウザ: 3Dビュー、俯瞰／一人称、視点高さ変更、選択席視点、壁トレース2点入力、ミニマップ移動後の中央画面ドラッグ回転を確認。Phase 5操作中の新規console errorは0件。
+- ブラウザ: 3Dビュー、俯瞰／一人称、視点高さ変更、選択席視点、壁トレース2点入力、ミニマップ移動後の中央画面ドラッグ回転を確認。Three.js canvasのドラッグ後にタップ移動方向が変わることを確認し、Phase 5操作中の新規console errorは0件。
 
 ## 自動検証結果
 

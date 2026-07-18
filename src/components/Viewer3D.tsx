@@ -255,6 +255,8 @@ export function Viewer3D({ state, onClose, onNotice }: Props) {
   const [customEyeHeightMm, setCustomEyeHeightMm] = useState(1200);
   const model = useMemo(() => buildScene3D(state.project, { showAvatars }), [state.project, showAvatars]);
   const [pose, setPose] = useState<FirstPersonPose>(() => defaultFirstPersonPose(model));
+  const poseRef = useRef<FirstPersonPose>(pose);
+  poseRef.current = pose;
   const selectedChairId = state.project.objects.find((object) =>
     (state.selectedIds.includes(object.id) || state.selectedId === object.id) && object.type === "chair",
   )?.id ?? null;
@@ -315,6 +317,68 @@ export function Viewer3D({ state, onClose, onNotice }: Props) {
     controlsRef.current = controls;
     setOrbitCamera(camera, controls, model);
 
+    function handleCanvasPointerDown(event: PointerEvent) {
+      if (cameraModeRef.current !== "firstPerson") return;
+      event.preventDefault();
+      mount?.focus();
+      try {
+        renderer.domElement.setPointerCapture(event.pointerId);
+      } catch {
+        // canvasの再描画直後など、捕捉対象が消えた場合も視点操作を止めない
+      }
+      pointerRef.current = {
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        startPose: poseRef.current,
+      };
+    }
+
+    function handleCanvasPointerMove(event: PointerEvent) {
+      const pointer = pointerRef.current;
+      if (!pointer || pointer.pointerId !== event.pointerId || cameraModeRef.current !== "firstPerson") return;
+      event.preventDefault();
+      setPose(rotateFirstPersonPose(
+        pointer.startPose,
+        event.clientX - pointer.startX,
+        event.clientY - pointer.startY,
+      ));
+    }
+
+    function handleCanvasPointerUp(event: PointerEvent) {
+      const pointer = pointerRef.current;
+      if (!pointer || pointer.pointerId !== event.pointerId) return;
+      event.preventDefault();
+      const distance = Math.hypot(event.clientX - pointer.startX, event.clientY - pointer.startY);
+      pointerRef.current = null;
+      try {
+        renderer.domElement.releasePointerCapture(event.pointerId);
+      } catch {
+        // pointer captureが既に解除されていても操作結果は確定できる
+      }
+      if (distance < 8) {
+        setPose((current) => {
+          const yaw = (current.yawDeg * Math.PI) / 180;
+          return {
+            ...current,
+            xMm: current.xMm + Math.sin(yaw) * 500,
+            yMm: current.yMm - Math.cos(yaw) * 500,
+          };
+        });
+      }
+    }
+
+    function handleCanvasPointerCancel(event: PointerEvent) {
+      if (pointerRef.current?.pointerId === event.pointerId) {
+        pointerRef.current = null;
+      }
+    }
+
+    renderer.domElement.addEventListener("pointerdown", handleCanvasPointerDown);
+    renderer.domElement.addEventListener("pointermove", handleCanvasPointerMove);
+    renderer.domElement.addEventListener("pointerup", handleCanvasPointerUp);
+    renderer.domElement.addEventListener("pointercancel", handleCanvasPointerCancel);
+
     function resize() {
       if (!viewportRef.current) return;
       const width = Math.max(1, viewportRef.current.clientWidth);
@@ -334,6 +398,10 @@ export function Viewer3D({ state, onClose, onNotice }: Props) {
     return () => {
       window.cancelAnimationFrame(frame);
       window.removeEventListener("resize", resize);
+      renderer.domElement.removeEventListener("pointerdown", handleCanvasPointerDown);
+      renderer.domElement.removeEventListener("pointermove", handleCanvasPointerMove);
+      renderer.domElement.removeEventListener("pointerup", handleCanvasPointerUp);
+      renderer.domElement.removeEventListener("pointercancel", handleCanvasPointerCancel);
       controls.dispose();
       renderer.dispose();
       if (renderer.domElement.parentElement === mount) mount.removeChild(renderer.domElement);
@@ -386,49 +454,6 @@ export function Viewer3D({ state, onClose, onNotice }: Props) {
         yMm: current.yMm - Math.cos(yaw) * forwardMm + Math.sin(yaw) * sideMm,
       };
     });
-  }
-
-  function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
-    if (cameraMode !== "firstPerson") return;
-    event.preventDefault();
-    event.currentTarget.focus();
-    try {
-      event.currentTarget.setPointerCapture(event.pointerId);
-    } catch {
-      // canvasの再描画直後など、捕捉対象が消えた場合も視点操作を止めない
-    }
-    pointerRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, startPose: pose };
-  }
-
-  function handlePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
-    const pointer = pointerRef.current;
-    if (!pointer || pointer.pointerId !== event.pointerId || cameraMode !== "firstPerson") return;
-    event.preventDefault();
-    setPose(rotateFirstPersonPose(
-      pointer.startPose,
-      event.clientX - pointer.startX,
-      event.clientY - pointer.startY,
-    ));
-  }
-
-  function handlePointerUp(event: ReactPointerEvent<HTMLDivElement>) {
-    const pointer = pointerRef.current;
-    if (!pointer || pointer.pointerId !== event.pointerId) return;
-    event.preventDefault();
-    const distance = Math.hypot(event.clientX - pointer.startX, event.clientY - pointer.startY);
-    pointerRef.current = null;
-    try {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    } catch {
-      // pointer captureが既に解除されていても操作結果は確定できる
-    }
-    if (distance < 8) moveFirstPerson(500);
-  }
-
-  function handlePointerCancel(event: ReactPointerEvent<HTMLDivElement>) {
-    if (pointerRef.current?.pointerId === event.pointerId) {
-      pointerRef.current = null;
-    }
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
@@ -509,10 +534,6 @@ export function Viewer3D({ state, onClose, onNotice }: Props) {
           tabIndex={0}
           role="application"
           aria-label={cameraMode === "firstPerson" ? "一人称3D視点。ドラッグで回転、WASDまたは矢印キーで移動、タップで前進" : "3D俯瞰ビュー。ドラッグで回転、ピンチまたはホイールで拡大縮小"}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerCancel}
           onKeyDown={handleKeyDown}
         />
         <aside className="viewer3d-help">
