@@ -171,4 +171,41 @@
     grid-template-columns: 1fr;
   }
 }
+.calibration-dialog {
+  width: min(520px, 95vw);
+}
+
+.calibration-lead {
+  margin: 0 0 10px;
+  line-height: 1.6;
+  font-weight: 700;
+}
+
+.calibration-guide {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid #b9d5ed;
+  border-radius: 6px;
+  background: #f1f8ff;
+  color: #214b70;
+  line-height: 1.5;
+}
+
+.calibration-guide strong {
+  color: #114d80;
+}
+
+.calibration-guide ol {
+  margin: 5px 0 7px 20px;
+  padding: 0;
+}
+
+.calibration-guide p {
+  margin: 0;
+}
+
+.calibration-dialog h3 {
+  margin: 12px 0 6px;
+  font-size: 13px;
+}
 
