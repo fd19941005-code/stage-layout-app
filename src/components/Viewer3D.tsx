@@ -10,6 +10,7 @@ import {
   defaultFirstPersonPose,
   firstPersonPoseForObject,
   objectBaseElevationMm,
+  rotateFirstPersonPose,
   type FirstPersonPose,
   type Scene3DModel,
   type Scene3DPrimitive,
@@ -295,6 +296,9 @@ export function Viewer3D({ state, onClose, onNotice }: Props) {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setSize(Math.max(1, mount.clientWidth), Math.max(1, mount.clientHeight));
     renderer.domElement.setAttribute("aria-label", "3D舞台ビュー");
+    renderer.domElement.style.touchAction = "none";
+    renderer.domElement.style.userSelect = "none";
+    renderer.domElement.style.display = "block";
     mount.appendChild(renderer.domElement);
     const ambient = new THREE.HemisphereLight(0xdbeafe, 0x1f2937, 1.8);
     const directional = new THREE.DirectionalLight(0xffffff, 2.2);
@@ -386,28 +390,45 @@ export function Viewer3D({ state, onClose, onNotice }: Props) {
 
   function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
     if (cameraMode !== "firstPerson") return;
+    event.preventDefault();
     event.currentTarget.focus();
-    event.currentTarget.setPointerCapture(event.pointerId);
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      // canvasの再描画直後など、捕捉対象が消えた場合も視点操作を止めない
+    }
     pointerRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, startPose: pose };
   }
 
   function handlePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
     const pointer = pointerRef.current;
     if (!pointer || pointer.pointerId !== event.pointerId || cameraMode !== "firstPerson") return;
-    const nextPose = {
-      ...pointer.startPose,
-      yawDeg: pointer.startPose.yawDeg + (event.clientX - pointer.startX) * 0.25,
-      pitchDeg: Math.max(-75, Math.min(75, pointer.startPose.pitchDeg - (event.clientY - pointer.startY) * 0.2)),
-    };
-    setPose(nextPose);
+    event.preventDefault();
+    setPose(rotateFirstPersonPose(
+      pointer.startPose,
+      event.clientX - pointer.startX,
+      event.clientY - pointer.startY,
+    ));
   }
 
   function handlePointerUp(event: ReactPointerEvent<HTMLDivElement>) {
     const pointer = pointerRef.current;
     if (!pointer || pointer.pointerId !== event.pointerId) return;
+    event.preventDefault();
     const distance = Math.hypot(event.clientX - pointer.startX, event.clientY - pointer.startY);
     pointerRef.current = null;
+    try {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    } catch {
+      // pointer captureが既に解除されていても操作結果は確定できる
+    }
     if (distance < 8) moveFirstPerson(500);
+  }
+
+  function handlePointerCancel(event: ReactPointerEvent<HTMLDivElement>) {
+    if (pointerRef.current?.pointerId === event.pointerId) {
+      pointerRef.current = null;
+    }
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
@@ -491,13 +512,13 @@ export function Viewer3D({ state, onClose, onNotice }: Props) {
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
-          onPointerCancel={() => { pointerRef.current = null; }}
+          onPointerCancel={handlePointerCancel}
           onKeyDown={handleKeyDown}
         />
         <aside className="viewer3d-help">
           <MiniMap model={model} pose={pose} onMove={moveToMiniMap} />
           <h2>3D確認</h2>
-          <p>{cameraMode === "firstPerson" ? "ドラッグで視線を回転。WASD／矢印キーで移動。iPadはタップで前進します。" : "ドラッグで俯瞰回転。ホイール／ピンチでズームします。"}</p>
+          <p>{cameraMode === "firstPerson" ? "ミニマップで位置を決めた後、中央の3D画面をドラッグして視線を回転。WASD／矢印キーで移動。iPadはタップで前進します。" : "ドラッグで俯瞰回転。ホイール／ピンチでズームします。"}</p>
           <p>ミニマップをタップすると、その位置から一人称視点を確認できます。</p>
           <p>3Dは閲覧専用です。位置・寸法・壁の編集は2Dへ戻って行います。</p>
           {selectedChairId ? <p className="success-message">選択中の椅子から見ることができます。</p> : <p className="hint">椅子を選択すると席視点ボタンが有効になります。</p>}

@@ -57,6 +57,14 @@ export interface FirstPersonPose {
   pitchDeg: number;
 }
 
+export function rotateFirstPersonPose(pose: FirstPersonPose, deltaX: number, deltaY: number): FirstPersonPose {
+  return {
+    ...pose,
+    yawDeg: pose.yawDeg + deltaX * 0.25,
+    pitchDeg: Math.max(-75, Math.min(75, pose.pitchDeg - deltaY * 0.2)),
+  };
+}
+
 const DEFAULT_WALL_THICKNESS_MM = 100;
 const DEFAULT_FLOOR_HALF_SIZE_MM = 6000;
 const FLOOR_MARGIN_MM = 1000;

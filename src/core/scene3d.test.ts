@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildScene3D, firstPersonPoseForObject, objectBaseElevationMm } from "./scene3d";
+import { buildScene3D, firstPersonPoseForObject, objectBaseElevationMm, rotateFirstPersonPose } from "./scene3d";
 import { createEmptyProject } from "./project";
 import type { SceneObject } from "../types/project";
 
@@ -120,5 +120,13 @@ describe("Phase 5 3Dシーン計算", () => {
     const model = buildScene3D(project, { showAvatars: false });
 
     expect(model.bounds.minYMm).toBeLessThanOrEqual(-9000);
+  });
+
+  it("AC-204: 一人称視点のドラッグ量を視線回転へ変換し上下角を制限する", () => {
+    const pose = { xMm: 1000, yMm: 2000, eyeHeightMm: 1200, yawDeg: 10, pitchDeg: 0 };
+    const rotated = rotateFirstPersonPose(pose, 40, -20);
+    const clamped = rotateFirstPersonPose(pose, 0, 1000);
+    expect(rotated).toMatchObject({ yawDeg: 20, pitchDeg: 4 });
+    expect(clamped.pitchDeg).toBe(-75);
   });
 });

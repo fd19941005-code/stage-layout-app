@@ -213,6 +213,14 @@
   user-select: none;
 }
 
+.viewer3d-viewport canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: grab;
+}
+
 .viewer3d-viewport:focus-visible {
   box-shadow: inset 0 0 0 2px #65a9e8;
 }
