@@ -3,7 +3,7 @@
 
 import type { Dispatch } from "react";
 import type { Action, AppState } from "../state/appState";
-import type { SceneObject } from "../types/project";
+import type { SceneObject, Wall } from "../types/project";
 import type { Alignment } from "../core/layout";
 import { BackgroundPanel } from "./BackgroundPanel";
 import { LayerPanel } from "./LayerPanel";
@@ -35,6 +35,66 @@ const ALIGN_BUTTONS: { alignment: Alignment; label: string }[] = [
   { alignment: "centerY", label: "上下中央" },
   { alignment: "bottom", label: "下揃え" },
 ];
+
+interface WallPanelProps {
+  state: AppState;
+  dispatch: Dispatch<Action>;
+}
+
+function WallPanel({ state, dispatch }: WallPanelProps) {
+  const walls = state.project.walls;
+  return (
+    <section className="wall-panel">
+      <h2>3D用の壁・舞台前端</h2>
+      <p className="hint">「壁トレース」で背景上をクリックして折れ線を作成します。高さはmmで保存されます。</p>
+      {walls.length === 0 && <p className="hint">登録された壁はありません。</p>}
+      {walls.map((wall: Wall, wallIndex) => (
+        <details key={wall.id} className="wall-editor" open>
+          <summary>壁{wallIndex + 1}（{wall.points.length}点）</summary>
+          <label>壁の高さ(mm)
+            <input type="number" min={1} value={wall.heightMm} onChange={(e) => {
+              const value = Number(e.target.value);
+              if (Number.isFinite(value) && value > 0) dispatch({ type: "UPDATE_WALL", id: wall.id, patch: { heightMm: value } });
+            }} />
+          </label>
+          <label className="row"><input type="checkbox" checked={wall.closed} onChange={(e) => dispatch({ type: "UPDATE_WALL", id: wall.id, patch: { closed: e.target.checked } })} />閉じた壁として扱う</label>
+          <div className="wall-points">
+            {wall.points.map((point, pointIndex) => (
+              <div className="wall-point-row" key={wall.id + "-point-" + pointIndex}>
+                <span>{pointIndex + 1}</span>
+                <input aria-label={"壁" + (wallIndex + 1) + "の点" + (pointIndex + 1) + " X"} type="number" value={point.xMm} onChange={(e) => {
+                  const value = Number(e.target.value);
+                  if (Number.isFinite(value)) dispatch({ type: "UPDATE_WALL_POINT", wallId: wall.id, index: pointIndex, point: { xMm: value, yMm: point.yMm } });
+                }} />
+                <input aria-label={"壁" + (wallIndex + 1) + "の点" + (pointIndex + 1) + " Y"} type="number" value={point.yMm} onChange={(e) => {
+                  const value = Number(e.target.value);
+                  if (Number.isFinite(value)) dispatch({ type: "UPDATE_WALL_POINT", wallId: wall.id, index: pointIndex, point: { xMm: point.xMm, yMm: value } });
+                }} />
+                <button type="button" disabled={wall.points.length <= 2} onClick={() => dispatch({ type: "DELETE_WALL_POINT", wallId: wall.id, index: pointIndex })} aria-label={"壁" + (wallIndex + 1) + "の点" + (pointIndex + 1) + "を削除"}>×</button>
+              </div>
+            ))}
+          </div>
+          <div className="actions">
+            <button type="button" onClick={() => {
+              const last = wall.points[wall.points.length - 1] ?? { xMm: 0, yMm: 0 };
+              dispatch({ type: "ADD_WALL_POINT", wallId: wall.id, point: { xMm: last.xMm + 500, yMm: last.yMm } });
+            }}>頂点追加</button>
+            <button type="button" className="danger" onClick={() => dispatch({ type: "DELETE_WALL", id: wall.id })}>壁を削除</button>
+          </div>
+        </details>
+      ))}
+      <label>舞台前端Y (mm)
+        <input type="number" value={state.project.stageFront?.yMm ?? ""} placeholder="未設定" onChange={(e) => {
+          if (e.target.value.trim() === "") dispatch({ type: "SET_STAGE_FRONT", yMm: null });
+          else {
+            const value = Number(e.target.value);
+            if (Number.isFinite(value)) dispatch({ type: "SET_STAGE_FRONT", yMm: value });
+          }
+        }} />
+      </label>
+    </section>
+  );
+}
 
 export function PropertyPanel({ state, dispatch, onOpenGrid, onOpenPultArc }: Props) {
   const selectedObjects = state.project.objects.filter((object) => state.selectedIds.includes(object.id));
@@ -132,6 +192,7 @@ export function PropertyPanel({ state, dispatch, onOpenGrid, onOpenPultArc }: Pr
       <BackgroundPanel state={state} dispatch={dispatch} />
       <LayerPanel state={state} dispatch={dispatch} />
       <SnapPanel state={state} dispatch={dispatch} />
+      <WallPanel state={state} dispatch={dispatch} />
       <section className="arrangement-tools">
         <h2>一括配置</h2>
         <button type="button" disabled={!activeLayer || activeLayer.locked || !activeLayer.visible} onClick={onOpenPultArc}>プルトを弧状配置</button>

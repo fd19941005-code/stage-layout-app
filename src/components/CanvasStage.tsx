@@ -3,7 +3,7 @@
 // 2本指のパン/ピンチを同じイベント列から判定する(iPad Safari対応)。
 
 import { useRef, useState, type Dispatch, type PointerEvent, type WheelEvent } from "react";
-import type { AnnotationKind, PointMm, SceneObject } from "../types/project";
+import type { AnnotationKind, PointMm, SceneObject, Wall } from "../types/project";
 import {
   displayedPxToSourcePx,
   getBackgroundDisplaySizePx,
@@ -26,6 +26,8 @@ interface Props {
   dispatch: Dispatch<Action>;
   onCursorMm: (p: PointMm | null) => void;
   onNotice: (message: string) => void;
+  wallDraft: PointMm[];
+  onWallDraftChange: (points: PointMm[]) => void;
 }
 
 type DragState =
@@ -97,7 +99,7 @@ function annotationName(kind: AnnotationKind): string {
   }
 }
 
-export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
+export function CanvasStage({ state, dispatch, onCursorMm, onNotice, wallDraft, onWallDraftChange }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const dragRef = useRef<DragState | null>(null);
   const pointersRef = useRef(new Map<number, ScreenPoint>());
@@ -246,6 +248,14 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
     }
 
     const pMm = screenToMm(screen, view);
+    if (mode === "traceWall") {
+      if (!calibrated) {
+        onNotice("未校正のため壁トレースできません。先に校正してください。");
+        return;
+      }
+      onWallDraftChange([...wallDraft, snapPoint(pMm)]);
+      return;
+    }
     if (mode === "calibrate" || mode === "verifyCalibration") {
       const displayedPx = mmToImagePx(pMm, mmpp);
       dispatch({ type: "ADD_CALIB_POINT", point: displayedPxToSourcePx(displayedPx, background) });
@@ -411,6 +421,28 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
       }
     : null;
 
+  function renderWall(wall: Wall) {
+    const pointString = wall.points.map((point) => String(point.xMm) + "," + String(point.yMm)).join(" ");
+    return (
+      <g key={wall.id} className="wall-trace" pointerEvents="none">
+        <polyline points={pointString} />
+        {wall.closed && wall.points[0] && <line x1={wall.points[wall.points.length - 1].xMm} y1={wall.points[wall.points.length - 1].yMm} x2={wall.points[0].xMm} y2={wall.points[0].yMm} />}
+        {wall.points.map((point, index) => <circle key={wall.id + "-" + index} cx={point.xMm} cy={point.yMm} r={55} />)}
+      </g>
+    );
+  }
+
+  function renderWallDraft() {
+    if (wallDraft.length === 0) return null;
+    const pointString = wallDraft.map((point) => String(point.xMm) + "," + String(point.yMm)).join(" ");
+    return (
+      <g className="wall-trace draft" pointerEvents="none">
+        <polyline points={pointString} />
+        {wallDraft.map((point, index) => <circle key={"draft-" + index} cx={point.xMm} cy={point.yMm} r={70} />)}
+      </g>
+    );
+  }
+
   function renderAnnotation(object: SceneObject) {
     const kind = object.annotationKind;
     if (kind === "text") return <text className="annotation-text" x={0} y={0}>{object.label || "注釈"}</text>;
@@ -496,6 +528,8 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice }: Props) {
         )}
 
         {sortedObjects.map(renderObject)}
+        {project.walls.map(renderWall)}
+        {renderWallDraft()}
         {renderAnnotationPreview()}
 
         {marqueeRect && <rect className="selection-marquee" x={marqueeRect.x} y={marqueeRect.y} width={marqueeRect.width} height={marqueeRect.height} />}

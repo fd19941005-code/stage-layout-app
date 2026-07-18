@@ -12,6 +12,7 @@ import type {
   SceneObject,
   SnapSettings,
   ViewState,
+  Wall,
 } from "../types/project";
 import { clampCrop, computeMmPerPixel, normalizeDeg, sceneObjectBoundsMm } from "../core/transform";
 import { alignObjects, distributeObjects, selectionBoundsMm, type Alignment, type DistributionAxis } from "../core/layout";
@@ -23,6 +24,7 @@ import { findPreset } from "../core/presets";
 export type ToolMode =
   | "select"
   | "selectRect"
+  | "traceWall"
   | "calibrate"
   | "verifyCalibration"
   | "measure"
@@ -36,6 +38,7 @@ export type ToolMode =
 export const TOOL_MODE_LABELS: Record<ToolMode, string> = {
   select: "選択・移動",
   selectRect: "範囲選択",
+  traceWall: "壁トレース",
   calibrate: "校正",
   verifyCalibration: "校正確認",
   measure: "測定",
@@ -127,6 +130,13 @@ export type Action =
   | { type: "SET_PLACEMENT_CONTINUOUS"; continuous: boolean }
   | { type: "SET_PENDING_PRESET"; presetId: string | null }
   | { type: "ADD_OBJECT"; object: SceneObject; keepPending?: boolean }
+  | { type: "ADD_WALL"; wall: Wall }
+  | { type: "UPDATE_WALL"; id: string; patch: Partial<Wall> }
+  | { type: "ADD_WALL_POINT"; wallId: string; point: PointMm }
+  | { type: "UPDATE_WALL_POINT"; wallId: string; index: number; point: PointMm }
+  | { type: "DELETE_WALL_POINT"; wallId: string; index: number }
+  | { type: "DELETE_WALL"; id: string }
+  | { type: "SET_STAGE_FRONT"; yMm: number | null }
   | { type: "UPDATE_OBJECT"; id: string; patch: Partial<SceneObject> }
   | { type: "MOVE_OBJECT"; id: string; xMm: number; yMm: number }
   | { type: "MOVE_OBJECTS"; moves: ObjectMove[]; preview?: boolean }
@@ -331,6 +341,57 @@ function updateObject(state: AppState, id: string, patch: Partial<SceneObject>):
   });
 }
 
+function normalizeWallPoint(point: PointMm): PointMm {
+  return {
+    xMm: Number.isFinite(point.xMm) ? point.xMm : 0,
+    yMm: Number.isFinite(point.yMm) ? point.yMm : 0,
+  };
+}
+
+function normalizeWall(wall: Wall): Wall {
+  return {
+    ...wall,
+    points: wall.points.map(normalizeWallPoint),
+    heightMm: Math.max(1, Number.isFinite(wall.heightMm) ? wall.heightMm : 6000),
+    closed: Boolean(wall.closed),
+  };
+}
+
+function updateWall(state: AppState, id: string, patch: Partial<Wall>): AppState {
+  const current = state.project.walls.find((wall) => wall.id === id);
+  if (!current) return state;
+  const nextWall = normalizeWall({ ...current, ...patch });
+  if (nextWall.points.length < 2) return state;
+  return commitProject(state, {
+    ...state.project,
+    walls: state.project.walls.map((wall) => wall.id === id ? nextWall : wall),
+  });
+}
+
+function updateWallPoint(state: AppState, wallId: string, index: number, point: PointMm): AppState {
+  const wall = state.project.walls.find((candidate) => candidate.id === wallId);
+  if (!wall || index < 0 || index >= wall.points.length) return state;
+  const points = wall.points.map((candidate, pointIndex) => pointIndex === index ? normalizeWallPoint(point) : candidate);
+  return updateWall(state, wallId, { points });
+}
+
+function deleteWallPoint(state: AppState, wallId: string, index: number): AppState {
+  const wall = state.project.walls.find((candidate) => candidate.id === wallId);
+  if (!wall || wall.points.length <= 2 || index < 0 || index >= wall.points.length) return state;
+  return updateWall(state, wallId, { points: wall.points.filter((_, pointIndex) => pointIndex !== index) });
+}
+
+function deleteWall(state: AppState, id: string): AppState {
+  if (!state.project.walls.some((wall) => wall.id === id)) return state;
+  return commitProject(state, { ...state.project, walls: state.project.walls.filter((wall) => wall.id !== id) });
+}
+
+function addWall(state: AppState, wall: Wall): AppState {
+  const nextWall = normalizeWall(wall);
+  if (nextWall.points.length < 2 || state.project.walls.some((candidate) => candidate.id === nextWall.id)) return state;
+  return { ...commitProject(state, { ...state.project, walls: [...state.project.walls, nextWall] }), mode: "select" };
+}
+
 function undoState(state: AppState): AppState {
   const committed = commitTransientEdit(state);
   const previous = committed.past[committed.past.length - 1];
@@ -413,6 +474,16 @@ export function appReducer(state: AppState, action: Action): AppState {
       const next = commitProject(state, { ...state.project, objects: [...state.project.objects, action.object] });
       return setSelection({ ...next, pendingPresetId: action.keepPending ? next.pendingPresetId : null }, [action.object.id]);
     }
+    case "ADD_WALL": return addWall(state, action.wall);
+    case "UPDATE_WALL": return updateWall(state, action.id, action.patch);
+    case "ADD_WALL_POINT": {
+      const wall = state.project.walls.find((candidate) => candidate.id === action.wallId);
+      return wall ? updateWall(state, action.wallId, { points: [...wall.points, normalizeWallPoint(action.point)] }) : state;
+    }
+    case "UPDATE_WALL_POINT": return updateWallPoint(state, action.wallId, action.index, action.point);
+    case "DELETE_WALL_POINT": return deleteWallPoint(state, action.wallId, action.index);
+    case "DELETE_WALL": return deleteWall(state, action.id);
+    case "SET_STAGE_FRONT": return commitProject(state, { ...state.project, stageFront: action.yMm === null || !Number.isFinite(action.yMm) ? null : { yMm: action.yMm } });
     case "UPDATE_OBJECT": return updateObject(state, action.id, action.patch);
     case "MOVE_OBJECT": {
       const object = state.project.objects.find((candidate) => candidate.id === action.id);

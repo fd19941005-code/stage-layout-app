@@ -1,6 +1,7 @@
 // 上部ツールバー(10.1): 新規、開く、保存、背景読込、編集履歴、選択、校正、測定、出力、ズーム
 
 import { useRef, useState, type ChangeEvent, type Dispatch } from "react";
+import type { PointMm } from "../types/project";
 import type { Action, AppState, ToolMode } from "../state/appState";
 import { toolModeLabel } from "../state/appState";
 import { deserializeProject, serializeProject } from "../core/project";
@@ -13,14 +14,20 @@ interface Props {
   dispatch: Dispatch<Action>;
   onNotice: (message: string) => void;
   onExport: () => void;
+  onToggle3d: () => void;
+  is3dOpen: boolean;
+  wallDraft: PointMm[];
+  onFinishWall: (heightMm: number) => void;
+  onClearWallDraft: () => void;
 }
 
-export function Toolbar({ state, dispatch, onNotice, onExport }: Props) {
+export function Toolbar({ state, dispatch, onNotice, onExport, onToggle3d, is3dOpen, wallDraft, onFinishWall, onClearWallDraft }: Props) {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const projectInputRef = useRef<HTMLInputElement>(null);
   const [pdfPages, setPdfPages] = useState<PdfPageImage[]>([]);
   const [pdfLoading, setPdfLoading] = useState(false);
   const { project, mode, saveState } = state;
+  const [wallHeightMm, setWallHeightMm] = useState(6000);
 
   function handleNew() {
     if (saveState === "dirty" && !window.confirm("未保存の変更があります。新規プロジェクトを作成しますか？")) return;
@@ -114,7 +121,9 @@ export function Toolbar({ state, dispatch, onNotice, onExport }: Props) {
       onNotice("校正済みのプロジェクトで校正確認を実行してください");
       return;
     }
-    dispatch({ type: "SET_MODE", mode: mode === next ? "select" : next });
+    const nextMode = mode === next ? "select" : next;
+    if (nextMode !== "traceWall") onClearWallDraft();
+    dispatch({ type: "SET_MODE", mode: nextMode });
   }
 
   function zoomBy(factor: number) {
@@ -147,6 +156,7 @@ export function Toolbar({ state, dispatch, onNotice, onExport }: Props) {
         <span className="separator" />
         <button type="button" onClick={() => dispatch({ type: "UNDO" })} disabled={state.past.length === 0} title="Ctrl/Cmd+Z">↶ Undo</button>
         <button type="button" onClick={() => dispatch({ type: "REDO" })} disabled={state.future.length === 0} title="Ctrl/Cmd+Shift+Z">↷ Redo</button>
+        <button type="button" onClick={onToggle3d} disabled={!is3dOpen && project.calibration.mmPerPixel === null} title="2Dのmm配置を3Dで確認します">{is3dOpen ? "2D編集へ" : "3Dビュー"}</button>
         <span className="separator" />
         <button type="button" onClick={() => imageInputRef.current?.click()} disabled={pdfLoading}>{pdfLoading ? "PDF読込中…" : "背景読込"}</button>
         <span className="separator" />
@@ -155,6 +165,7 @@ export function Toolbar({ state, dispatch, onNotice, onExport }: Props) {
         {modeButton("calibrate", "校正")}
         {modeButton("verifyCalibration", "校正確認", project.calibration.mmPerPixel === null)}
         {modeButton("measure", "測定")}
+        {modeButton("traceWall", "壁トレース", project.calibration.mmPerPixel === null)}
         <span className="separator" />
         {modeButton("annotationText", "文字")}
         {modeButton("annotationLine", "線")}
@@ -174,6 +185,14 @@ export function Toolbar({ state, dispatch, onNotice, onExport }: Props) {
         </div>
 
         <input ref={imageInputRef} type="file" accept="image/png,image/jpeg,application/pdf,.pdf" hidden onChange={handleImageSelected} />
+        {mode === "traceWall" && (
+          <div className="wall-trace-toolbar">
+            <span>頂点: {wallDraft.length}点</span>
+            <label>壁高(mm)<input type="number" min={1} value={wallHeightMm} onChange={(e) => setWallHeightMm(Math.max(1, Number(e.target.value) || 1))} /></label>
+            <button type="button" disabled={wallDraft.length < 2} onClick={() => onFinishWall(wallHeightMm)}>壁を確定</button>
+            <button type="button" disabled={wallDraft.length === 0} onClick={onClearWallDraft}>やり直し</button>
+          </div>
+        )}
         <input ref={projectInputRef} type="file" accept=".json,application/json" hidden onChange={handleProjectSelected} />
       </header>
 

@@ -1,9 +1,10 @@
 // アプリ全体の画面構成(10.1)とデータフロー。
 // 自動保存(FR-002): IndexedDBへ最終操作から1.5秒後にデバウンスして実行する。
 
-import { useEffect, useReducer, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useReducer, useRef, useState } from "react";
 import type { PointMm } from "./types/project";
 import { appReducer, createInitialState } from "./state/appState";
+import { generateId } from "./core/project";
 import { loadAutosavedProject, saveAutosavedProject } from "./core/storage";
 import { Toolbar } from "./components/Toolbar";
 import { LibraryPanel } from "./components/LibraryPanel";
@@ -16,11 +17,15 @@ import { ExportDialog } from "./components/ExportDialog";
 import { ArrangementDialog } from "./components/ArrangementDialog";
 import { PultArcDialog } from "./components/PultArcDialog";
 
+const Viewer3D = lazy(() => import("./components/Viewer3D").then((module) => ({ default: module.Viewer3D })));
+
 export function App() {
   const [state, dispatch] = useReducer(appReducer, undefined, () => createInitialState());
   const [storageReady, setStorageReady] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [gridSourceId, setGridSourceId] = useState<string | null>(null);
+  const [viewer3dOpen, setViewer3dOpen] = useState(false);
+  const [wallDraft, setWallDraft] = useState<PointMm[]>([]);
   const [pultArcOpen, setPultArcOpen] = useState(false);
   const [cursorMm, setCursorMm] = useState<PointMm | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -33,6 +38,24 @@ export function App() {
     noticeTimer.current = window.setTimeout(() => setNotice(null), 5000);
   }
 
+  function toggleViewer3D() {
+    if (viewer3dOpen) {
+      setViewer3dOpen(false);
+      return;
+    }
+    if (state.project.calibration.mmPerPixel === null) {
+      showNotice("3Dビューには校正済みのプロジェクトが必要です。");
+      return;
+    }
+    setViewer3dOpen(true);
+  }
+
+  function finishWallTrace(heightMm: number) {
+    if (wallDraft.length < 2) return;
+    dispatch({ type: "ADD_WALL", wall: { id: generateId("wall"), points: wallDraft, heightMm, closed: false } });
+    setWallDraft([]);
+  }
+
   useEffect(() => {
     if (storageLoadStarted.current) return;
     storageLoadStarted.current = true;
@@ -43,6 +66,12 @@ export function App() {
       .catch(() => showNotice("自動保存データを読み込めませんでした。新規プロジェクトを表示します。"))
       .finally(() => setStorageReady(true));
   }, []);
+
+  useEffect(() => {
+    if (state.mode !== "traceWall" && wallDraft.length > 0) {
+      setWallDraft([]);
+    }
+  }, [state.mode, wallDraft.length]);
 
   useEffect(() => {
     if (!storageReady || state.saveState !== "dirty") return;
@@ -109,8 +138,9 @@ export function App() {
 
   return (
     <div className="app-layout">
-      <Toolbar state={state} dispatch={dispatch} onNotice={showNotice} onExport={() => setExportOpen(true)} />
+      <Toolbar state={state} dispatch={dispatch} onNotice={showNotice} onExport={() => setExportOpen(true)} onToggle3d={toggleViewer3D} is3dOpen={viewer3dOpen} wallDraft={wallDraft} onFinishWall={finishWallTrace} onClearWallDraft={() => setWallDraft([])} />
       {!storageReady && <div className="banner info">ローカル保存データを確認中…</div>}
+      {state.mode === "traceWall" && <div className="banner info">壁トレースモード: 背景上を順にクリックして壁の頂点を追加します。2点以上で「壁を確定」、高さはmmで指定してください({wallDraft.length}点)</div>}
       {state.project.calibration.mmPerPixel === null && (
         <div className="banner warning">未校正です。背景読込 → 校正で既知の2点をクリック → その2点間の実寸を選択、の順で始めてください(1間=1820mm、半間=910mm)。</div>
       )}
@@ -125,12 +155,20 @@ export function App() {
       {state.mode.startsWith("annotation") && <div className="banner info">注釈モード: キャンバスをクリックまたはドラッグして注釈を作成します。作成後にラベルや寸法を編集できます。</div>}
       {notice && <div className="banner notice">{notice}</div>}
 
-      <main className="main-area">
-        <LibraryPanel state={state} dispatch={dispatch} />
-        <CanvasStage state={state} dispatch={dispatch} onCursorMm={setCursorMm} onNotice={showNotice} />
-        <PropertyPanel state={state} dispatch={dispatch} onOpenGrid={setGridSourceId} onOpenPultArc={() => setPultArcOpen(true)} />
-      </main>
-      <StatusBar state={state} cursorMm={cursorMm} />
+      {viewer3dOpen ? (
+        <Suspense fallback={<div className="viewer3d-loading">3Dビューを読み込んでいます…</div>}>
+          <Viewer3D state={state} onClose={() => setViewer3dOpen(false)} onNotice={showNotice} />
+        </Suspense>
+      ) : (
+        <>
+          <main className="main-area">
+            <LibraryPanel state={state} dispatch={dispatch} />
+            <CanvasStage state={state} dispatch={dispatch} onCursorMm={setCursorMm} onNotice={showNotice} wallDraft={wallDraft} onWallDraftChange={setWallDraft} />
+            <PropertyPanel state={state} dispatch={dispatch} onOpenGrid={setGridSourceId} onOpenPultArc={() => setPultArcOpen(true)} />
+          </main>
+          <StatusBar state={state} cursorMm={cursorMm} />
+        </>
+      )}
       {calibrationReady && <CalibrationDialog dispatch={dispatch} />}
       {verificationReady && <CalibrationVerificationDialog state={state} dispatch={dispatch} />}
       {exportOpen && <ExportDialog state={state} dispatch={dispatch} onClose={() => setExportOpen(false)} onNotice={showNotice} />}
