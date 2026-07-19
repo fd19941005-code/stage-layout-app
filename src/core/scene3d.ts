@@ -67,6 +67,11 @@ export function rotateFirstPersonPose(pose: FirstPersonPose, deltaX: number, del
   };
 }
 
+/** 一人称中はOrbitControlsがカメラ姿勢を上書きしないよう更新を止める。 */
+export function shouldUpdateOrbitControls(cameraMode: "orbit" | "firstPerson"): boolean {
+  return cameraMode !== "firstPerson";
+}
+
 const DEFAULT_WALL_THICKNESS_MM = 100;
 const DEFAULT_FLOOR_HALF_SIZE_MM = 6000;
 const FLOOR_MARGIN_MM = 1000;

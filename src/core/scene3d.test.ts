@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { buildScene3D, firstPersonPoseForObject, objectBaseElevationMm, rotateFirstPersonPose } from "./scene3d";
+import {
+  buildScene3D,
+  firstPersonPoseForObject,
+  objectBaseElevationMm,
+  rotateFirstPersonPose,
+  shouldUpdateOrbitControls,
+} from "./scene3d";
 import { createEmptyProject } from "./project";
 import type { SceneObject } from "../types/project";
 
@@ -160,5 +166,10 @@ describe("Phase 5 3Dシーン計算", () => {
     const clamped = rotateFirstPersonPose(pose, 0, 1000);
     expect(rotated).toMatchObject({ yawDeg: 20, pitchDeg: 4 });
     expect(clamped.pitchDeg).toBe(-75);
+  });
+
+  it("AC-204: 一人称中はOrbitControls更新を止めて視線姿勢を維持する", () => {
+    expect(shouldUpdateOrbitControls("firstPerson")).toBe(false);
+    expect(shouldUpdateOrbitControls("orbit")).toBe(true);
   });
 });

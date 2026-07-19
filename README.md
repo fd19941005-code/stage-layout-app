@@ -40,6 +40,12 @@ npm run build      # 静的ビルド
 
 開発サーバーの既定URLは http://127.0.0.1:5173/ です。
 
+### 外出先からの確認
+
+.github/workflows/deploy-pages.yml により、mainへ反映するとGitHub Pagesへ静的ビルドを配信します。公開URLは https://fd19941005-code.github.io/stage-layout-app/ です。
+
+これはアプリ本体だけを配信する公開ページです。プロジェクトデータはサーバーへ送信せず、開いた端末のIndexedDBに保存されます。別の端末で続きから使う場合はJSONを保存して持ち運び、読み込んでください。
+
 ## 設計原則
 
 - 配置物の正本はxMm/yMm/widthMm/depthMm/heightMm/rotationDeg。画面pxや描画ライブラリ固有値は保存しません。

@@ -152,3 +152,28 @@ Phase 5実装コミット: 本Phaseの最終コミット
 11. 実図面の切り抜き・90度／270度回転・背景レイヤー非表示を使い、2D背景と3D床の向き・範囲・実寸が一致することを目視確認する。
 12. iPad Safari実機で、ドラッグ中の指追加・指離し・画面外離脱・回転／ピンチ後の再操作を確認する。
 13. 3Dの開閉を複数回繰り返し、多数オブジェクトを表示して、キャンバスの重複・メモリ増加・30fps以上を確認する。
+## 2026-07-19 一人称カメラ回転修正・GitHub Pages公開
+
+| ID | 優先度 | 問題 | 対応状況 |
+|---|---:|---|---|
+| UX-PHASE5-011 | P1 | ミニマップの矢印だけが回転し、実際の3D画面の視線が回転しなかった。描画ループのOrbitControls更新が一人称カメラのlookAtを上書きしていた。 | 修正済み。firstPerson中はOrbitControls更新を止め、poseRefを正本として一人称カメラ姿勢を毎フレーム再適用。ブラウザで一人称ドラッグとconsole error/warn 0件を確認。 |
+
+### 変更内容
+
+- src/core/scene3d.ts: 一人称中にOrbitControlsを更新しないルールを純粋関数化。
+- src/components/Viewer3D.tsx: 一人称描画時のカメラ姿勢上書きを防止。
+- src/core/scene3d.test.ts: 一人称カメラ回転ルールの回帰テストを追加。
+- .github/workflows/deploy-pages.yml: mainへのpushでGitHub Pagesへ静的ビルドを配信。
+- README.md: 外出先確認用URLと端末内保存／JSON持ち運びの注意を追加。
+
+### 外出先確認用URL
+
+- https://fd19941005-code.github.io/stage-layout-app/
+- 初回公開または更新直後はGitHub Actionsの完了まで待つ。アプリは認証なし公開で、URLを知る人は閲覧できる。
+- 配置データはGitHubへアップロードされず、端末ごとのIndexedDBに保存される。別端末へ移す場合はJSON保存／復元を使う。
+
+### 今回の自動検証
+
+- npm test: 21ファイル、87テスト通過。
+- npm run typecheck: 通過。
+- npm run build: 通過。

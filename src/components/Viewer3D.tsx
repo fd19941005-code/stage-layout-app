@@ -11,6 +11,7 @@ import {
   firstPersonPoseForObject,
   objectBaseElevationMm,
   rotateFirstPersonPose,
+  shouldUpdateOrbitControls,
   type FirstPersonPose,
   type Scene3DBackgroundPlane,
   type Scene3DModel,
@@ -466,7 +467,13 @@ export function Viewer3D({ state, onClose, onNotice }: Props) {
     const render = () => {
       if (renderErrorHandled) return;
       try {
-        controls.update();
+        if (shouldUpdateOrbitControls(cameraModeRef.current)) {
+          controls.update();
+        } else {
+          // OrbitControlsのtarget更新で一人称カメラのlookAtが毎フレーム上書きされないよう、
+          // 一人称中はposeを正本としてカメラ姿勢を再適用する。
+          applyFirstPersonCamera(camera, poseRef.current);
+        }
         renderer.render(scene, camera);
       } catch {
         handleRendererError("3D描画中にエラーが発生しました。2D編集画面へ戻って作業を続けてください。");
