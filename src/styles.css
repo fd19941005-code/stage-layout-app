@@ -189,6 +189,22 @@ button:disabled {
   pointer-events: none;
 }
 
+.scene-object {
+  color: #2f7fd1;
+}
+
+.scene-object.symbol-object {
+  color: #bd3d3d;
+}
+
+.scene-object.selected {
+  color: #e07b00;
+}
+
+.scene-object .symbol-use {
+  color: inherit;
+}
+
 .scene-object rect,
 .scene-object ellipse {
   fill: rgba(47, 127, 209, 0.15);

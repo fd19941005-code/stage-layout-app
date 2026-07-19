@@ -2,7 +2,7 @@
 // ポインター入力はPointer Events APIで統一し(12.1)。1本指の編集と
 // 2本指のパン/ピンチを同じイベント列から判定する(iPad Safari対応)。
 
-import { useRef, useState, type Dispatch, type PointerEvent, type WheelEvent } from "react";
+import { useRef, useState, type Dispatch, type PointerEvent, type ReactNode, type WheelEvent } from "react";
 import type { AnnotationKind, PointMm, SceneObject, Wall } from "../types/project";
 import {
   displayedPxToSourcePx,
@@ -20,6 +20,7 @@ import { effectiveMmPerPixel, type Action, type AppState, type ObjectMove } from
 import { findPreset } from "../core/presets";
 import { snapPointMm } from "../core/snap";
 import { generateId } from "../core/project";
+import { SYMBOL_DEFINITIONS, SYMBOL_VIEW_BOX, symbolIdForPreset, symbolPaintProps, type SymbolNode } from "../core/symbols";
 
 interface Props {
   state: AppState;
@@ -99,6 +100,31 @@ function annotationName(kind: AnnotationKind): string {
   }
 }
 
+function renderSymbolNode(node: SymbolNode, key: string): ReactNode {
+  const paint = symbolPaintProps(node.paint);
+  switch (node.kind) {
+    case "rect":
+      return <rect key={key} {...paint} x={node.x} y={node.y} width={node.width} height={node.height} rx={node.rx} />;
+    case "ellipse":
+      return <ellipse key={key} {...paint} cx={node.cx} cy={node.cy} rx={node.rx} ry={node.ry} />;
+    case "circle":
+      return <circle key={key} {...paint} cx={node.cx} cy={node.cy} r={node.r} />;
+    case "line":
+      return <line key={key} {...paint} x1={node.x1} y1={node.y1} x2={node.x2} y2={node.y2} />;
+    case "polyline":
+      return <polyline key={key} {...paint} points={node.points.map((point) => String(point.x) + "," + String(point.y)).join(" ")} />;
+    case "path":
+      return <path key={key} {...paint} d={node.d} />;
+  }
+}
+
+function renderSymbolDefinition(definition: (typeof SYMBOL_DEFINITIONS)[number]) {
+  return (
+    <symbol key={definition.id} id={definition.id} viewBox={SYMBOL_VIEW_BOX} preserveAspectRatio="none">
+      {definition.nodes.map((node, index) => renderSymbolNode(node, definition.id + "-" + index))}
+    </symbol>
+  );
+}
 export function CanvasStage({ state, dispatch, onCursorMm, onNotice, wallDraft, onWallDraftChange }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const dragRef = useRef<DragState | null>(null);
@@ -465,13 +491,19 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice, wallDraft, 
     const layer = project.layers.find((candidate) => candidate.id === object.layerId);
     const editable = !object.locked && !layer?.locked;
     const isAnnotation = object.annotationKind !== null && object.annotationKind !== undefined;
+    const symbolId = !isAnnotation ? symbolIdForPreset(object.presetId) : null;
+    const displayLabel = object.label || (symbolId ? "" : object.name);
     return (
-      <g key={object.id} data-object-id={object.id} className={`scene-object${isAnnotation ? " annotation-object" : ""}${selectedIds.includes(object.id) ? " selected" : ""}${object.locked || layer?.locked ? " locked" : ""}`} transform={`translate(${object.xMm} ${object.yMm}) rotate(${object.rotationDeg})`}>
+      <g key={object.id} data-object-id={object.id} className={`scene-object${symbolId ? " symbol-object" : ""}${isAnnotation ? " annotation-object" : ""}${selectedIds.includes(object.id) ? " selected" : ""}${object.locked || layer?.locked ? " locked" : ""}`} transform={`translate(${object.xMm} ${object.yMm}) rotate(${object.rotationDeg})`}>
         {isAnnotation ? renderAnnotation(object) : (
           <>
-            {object.shape === "circle" ? <ellipse rx={object.widthMm / 2} ry={object.depthMm / 2} /> : <rect x={-object.widthMm / 2} y={-object.depthMm / 2} width={object.widthMm} height={object.depthMm} />}
-            {(object.type === "chair" || object.type === "musicStand") && <line x1={0} y1={0} x2={0} y2={-object.depthMm / 2} className="facing" />}
-            <text y={object.depthMm / 2 + 320} textAnchor="middle">{object.label || object.name}</text>
+            {symbolId
+              ? <use className="symbol-use" href={"#" + symbolId} x={-object.widthMm / 2} y={-object.depthMm / 2} width={object.widthMm} height={object.depthMm} />
+              : <>
+                  {object.shape === "circle" ? <ellipse rx={object.widthMm / 2} ry={object.depthMm / 2} /> : <rect x={-object.widthMm / 2} y={-object.depthMm / 2} width={object.widthMm} height={object.depthMm} />}
+                  {(object.type === "chair" || object.type === "musicStand") && <line x1={0} y1={0} x2={0} y2={-object.depthMm / 2} className="facing" />}
+                </>}
+            {displayLabel && <text y={object.depthMm / 2 + 320} textAnchor="middle">{displayLabel}</text>}
           </>
         )}
         {selectedIds.includes(object.id) && editable && !isAnnotation && mode === "select" && (
@@ -517,6 +549,7 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice, wallDraft, 
         <marker id="canvas-arrow" markerWidth="160" markerHeight="160" refX="120" refY="60" orient="auto">
           <path d="M0,0 L120,60 L0,120 z" fill="#d12f2f" />
         </marker>
+        {SYMBOL_DEFINITIONS.map(renderSymbolDefinition)}
       </defs>
       <g transform={`translate(${view.panX} ${view.panY}) scale(${view.zoom})`}>
         {background.imageDataUrl && background.visible && project.layers.find((layer) => layer.id === "layer-background")?.visible !== false && (

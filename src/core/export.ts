@@ -5,6 +5,7 @@ import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import type { Background, Project, SceneObject } from "../types/project";
 import { effectiveMmPerPixel } from "../state/appState";
 import { getBackgroundDisplaySizePx, getEffectiveCrop, sceneObjectBoundsMm } from "./transform";
+import { renderSymbolDefinitionsSvg, renderSymbolUseSvg, symbolIdForPreset } from "./symbols";
 
 export const PDF_POINTS_PER_INCH = 72;
 export const MM_PER_INCH = 25.4;
@@ -164,7 +165,8 @@ function renderGridSvg(bounds: ExportBounds, intervalMm = 910): string {
 function renderObjectsSvg(objects: readonly SceneObject[], layers: ExportLayerOptions): string {
   return objects.map((object) => {
     const annotation = object.annotationKind;
-    const labelText = escapeXml(object.label || object.name);
+    const symbolId = annotation ? null : symbolIdForPreset(object.presetId);
+    const labelText = escapeXml(object.label || (symbolId ? "" : object.name));
     if (annotation === "text") {
       return layers.labels
         ? `<text x="${object.xMm}" y="${object.yMm}" class="annotation-text">${labelText}</text>`
@@ -178,6 +180,12 @@ function renderObjectsSvg(objects: readonly SceneObject[], layers: ExportLayerOp
         ? `<text x="${(object.xMm + endX) / 2}" y="${(object.yMm + endY) / 2 - 120}" text-anchor="middle">${labelText || Math.round(Math.hypot(endX - object.xMm, endY - object.yMm)) + " mm"}</text>`
         : "";
       return `<g class="annotation-segment" fill="none" stroke="#d12f2f" stroke-width="18"><line x1="${object.xMm}" y1="${object.yMm}" x2="${endX}" y2="${endY}"${marker} />${dimensionLabel}</g>`;
+    }
+    if (symbolId) {
+      const symbolLabel = layers.labels && labelText
+        ? '<text y="' + (object.depthMm / 2 + 260) + '" text-anchor="middle">' + labelText + '</text>'
+        : "";
+      return '<g transform="translate(' + object.xMm + ' ' + object.yMm + ') rotate(' + object.rotationDeg + ')" color="#bd3d3d">' + renderSymbolUseSvg(symbolId, object.widthMm, object.depthMm) + symbolLabel + '</g>';
     }
     const shape = object.annotationKind === "circle" || object.shape === "circle"
       ? `<ellipse rx="${object.widthMm / 2}" ry="${object.depthMm / 2}" />`
@@ -202,7 +210,7 @@ export function renderProjectToSvg(
   const heightPx = outputHeightPx ?? Math.max(1, Math.round(bounds.heightMm));
   const grid = layers.grid ? renderGridSvg(bounds) : "";
   const objects = renderObjectsSvg(selectExportObjects(project, layers), layers);
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${widthPx}" height="${heightPx}" viewBox="${bounds.minXMm} ${bounds.minYMm} ${bounds.widthMm} ${bounds.heightMm}"><defs><marker id="annotation-arrow" markerWidth="16" markerHeight="16" refX="12" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#d12f2f" /></marker></defs><rect x="${bounds.minXMm}" y="${bounds.minYMm}" width="${bounds.widthMm}" height="${bounds.heightMm}" fill="#ffffff" />${renderBackgroundSvg(project, layers, mmPerPixel)}${grid}${objects}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${widthPx}" height="${heightPx}" viewBox="${bounds.minXMm} ${bounds.minYMm} ${bounds.widthMm} ${bounds.heightMm}"><defs><marker id="annotation-arrow" markerWidth="16" markerHeight="16" refX="12" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#d12f2f" /></marker>${renderSymbolDefinitionsSvg()}</defs><rect x="${bounds.minXMm}" y="${bounds.minYMm}" width="${bounds.widthMm}" height="${bounds.heightMm}" fill="#ffffff" />${renderBackgroundSvg(project, layers, mmPerPixel)}${grid}${objects}</svg>`;
 }
 
 function clampLongSide(value: number): number {
