@@ -24,9 +24,9 @@ export function symbolPaintProps(paint: SymbolPaint = "detail") {
   if (paint === "body") {
     return {
       fill: "currentColor",
-      fillOpacity: 0.05,
+      fillOpacity: "var(--symbol-body-opacity, 0.05)",
       stroke: "currentColor",
-      strokeWidth: 12,
+      strokeWidth: "var(--symbol-stroke-width, 12)",
       strokeLinecap: "round" as const,
       strokeLinejoin: "round" as const,
     };
@@ -34,9 +34,9 @@ export function symbolPaintProps(paint: SymbolPaint = "detail") {
   if (paint === "solid") {
     return {
       fill: "currentColor",
-      fillOpacity: 0.16,
+      fillOpacity: "var(--symbol-solid-opacity, 0.16)",
       stroke: "currentColor",
-      strokeWidth: 12,
+      strokeWidth: "var(--symbol-stroke-width, 12)",
       strokeLinecap: "round" as const,
       strokeLinejoin: "round" as const,
     };
@@ -44,7 +44,7 @@ export function symbolPaintProps(paint: SymbolPaint = "detail") {
   return {
     fill: "none",
     stroke: "currentColor",
-    strokeWidth: 10,
+    strokeWidth: "var(--symbol-detail-stroke-width, 10)",
     strokeLinecap: "round" as const,
     strokeLinejoin: "round" as const,
   };

@@ -37,7 +37,7 @@ describe("Phase 4プロジェクト互換性", () => {
 
     const restored = deserializeProject(serializeProject(project));
 
-    expect(restored.schemaVersion).toBe("1.2.0");
+    expect(restored.schemaVersion).toBe("1.3.0");
     expect(restored.objects[0].annotationKind).toBe("dimension");
     expect(restored.objects[0].endXMm).toBe(2000);
     expect(restored.objects[0].endYMm).toBe(2000);

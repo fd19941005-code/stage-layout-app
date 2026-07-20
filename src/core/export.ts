@@ -6,6 +6,7 @@ import type { Background, Project, SceneObject } from "../types/project";
 import { effectiveMmPerPixel } from "../state/appState";
 import { getBackgroundDisplaySizePx, getEffectiveCrop, sceneObjectBoundsMm } from "./transform";
 import { renderSymbolDefinitionsSvg, renderSymbolUseSvg, symbolIdForPreset } from "./symbols";
+import { resolveObjectStyle, type ObjectStyle } from "./visualStyle";
 
 export const PDF_POINTS_PER_INCH = 72;
 export const MM_PER_INCH = 25.4;
@@ -162,41 +163,60 @@ function renderGridSvg(bounds: ExportBounds, intervalMm = 910): string {
   return `<g class="export-grid" stroke="#9aa6b2" stroke-width="8" opacity="0.35">${lines.join("")}</g>`;
 }
 
+function renderSvgText(value: string, x: number, y: number, style: ObjectStyle, anchor = "middle", className = "object-label"): string {
+  const lines = value.split(/\r?\n/);
+  const lineHeight = style.labelFontSizeMm * 1.2;
+  const firstY = y - ((lines.length - 1) * lineHeight) / 2;
+  const tspans = lines.map((line, index) => '<tspan x="' + x + '" dy="' + (index === 0 ? 0 : lineHeight) + '">' + escapeXml(line) + '</tspan>').join("");
+  return '<text class="' + className + '" x="' + x + '" y="' + firstY + '" text-anchor="' + anchor + '" fill="' + style.labelColor + '" font-size="' + style.labelFontSizeMm + '">' + tspans + '</text>';
+}
+
+function renderShapeStyle(style: ObjectStyle): string {
+  return 'fill="' + style.fillColor + '" fill-opacity="' + style.fillOpacity + '" stroke="' + style.color + '" stroke-width="' + style.strokeWidthMm + '"';
+}
+
+function renderSymbolStyle(style: ObjectStyle): string {
+  return 'color="' + style.color + '" style="--symbol-body-opacity:' + style.fillOpacity + ';--symbol-solid-opacity:' + Math.min(1, style.fillOpacity + 0.16) + ';--symbol-stroke-width:' + style.strokeWidthMm + ';--symbol-detail-stroke-width:' + Math.max(6, style.strokeWidthMm * 0.84) + '"';
+}
+
 function renderObjectsSvg(objects: readonly SceneObject[], layers: ExportLayerOptions): string {
   return objects.map((object) => {
     const annotation = object.annotationKind;
+    const style = resolveObjectStyle(object);
+    const labelText = object.label || object.name;
     const symbolId = annotation ? null : symbolIdForPreset(object.presetId);
-    const labelText = escapeXml(object.label || (symbolId ? "" : object.name));
+    const showLabel = Boolean(layers.labels && labelText && (object.label || style.labelVisible));
+
     if (annotation === "text") {
-      return layers.labels
-        ? `<text x="${object.xMm}" y="${object.yMm}" class="annotation-text">${labelText}</text>`
-        : "";
+      return layers.labels ? renderSvgText(object.label || "注釈", object.xMm, object.yMm, style, "middle", "annotation-text") : "";
     }
     if (annotation === "line" || annotation === "arrow" || annotation === "dimension") {
       const endX = typeof object.endXMm === "number" && Number.isFinite(object.endXMm) ? object.endXMm : object.xMm + object.widthMm;
       const endY = typeof object.endYMm === "number" && Number.isFinite(object.endYMm) ? object.endYMm : object.yMm;
       const marker = annotation === "arrow" ? ' marker-end="url(#annotation-arrow)"' : "";
       const dimensionLabel = annotation === "dimension" && layers.labels
-        ? `<text x="${(object.xMm + endX) / 2}" y="${(object.yMm + endY) / 2 - 120}" text-anchor="middle">${labelText || Math.round(Math.hypot(endX - object.xMm, endY - object.yMm)) + " mm"}</text>`
+        ? renderSvgText(object.label || String(Math.round(Math.hypot(endX - object.xMm, endY - object.yMm))) + " mm", (object.xMm + endX) / 2, (object.yMm + endY) / 2 - 120, style)
         : "";
-      return `<g class="annotation-segment" fill="none" stroke="#d12f2f" stroke-width="18"><line x1="${object.xMm}" y1="${object.yMm}" x2="${endX}" y2="${endY}"${marker} />${dimensionLabel}</g>`;
+      return '<g class="annotation-segment" fill="none" stroke="' + style.color + '" stroke-width="' + style.strokeWidthMm + '"><line x1="' + object.xMm + '" y1="' + object.yMm + '" x2="' + endX + '" y2="' + endY + '"' + marker + ' />' + dimensionLabel + '</g>';
+    }
+    if (annotation === "rect" || annotation === "circle") {
+      const shape = annotation === "circle"
+        ? '<ellipse rx="' + object.widthMm / 2 + '" ry="' + object.depthMm / 2 + '" ' + renderShapeStyle(style) + ' />'
+        : '<rect x="' + (-object.widthMm / 2) + '" y="' + (-object.depthMm / 2) + '" width="' + object.widthMm + '" height="' + object.depthMm + '" ' + renderShapeStyle(style) + ' />';
+      const label = layers.labels && object.label ? renderSvgText(object.label, 0, 0, style) : "";
+      return '<g transform="translate(' + object.xMm + ' ' + object.yMm + ') rotate(' + object.rotationDeg + ')">' + shape + label + '</g>';
     }
     if (symbolId) {
-      const symbolLabel = layers.labels && labelText
-        ? '<text y="' + (object.depthMm / 2 + 260) + '" text-anchor="middle">' + labelText + '</text>'
-        : "";
-      return '<g transform="translate(' + object.xMm + ' ' + object.yMm + ') rotate(' + object.rotationDeg + ')" color="#bd3d3d">' + renderSymbolUseSvg(symbolId, object.widthMm, object.depthMm) + symbolLabel + '</g>';
+      const symbolLabel = showLabel ? renderSvgText(labelText, 0, object.depthMm / 2 + 320, style) : "";
+      return '<g transform="translate(' + object.xMm + ' ' + object.yMm + ') rotate(' + object.rotationDeg + ')" ' + renderSymbolStyle(style) + '>' + renderSymbolUseSvg(symbolId, object.widthMm, object.depthMm) + symbolLabel + '</g>';
     }
-    const shape = object.annotationKind === "circle" || object.shape === "circle"
-      ? `<ellipse rx="${object.widthMm / 2}" ry="${object.depthMm / 2}" />`
-      : `<rect x="${-object.widthMm / 2}" y="${-object.depthMm / 2}" width="${object.widthMm}" height="${object.depthMm}" />`;
-    const label = layers.labels && labelText
-      ? `<text y="${object.depthMm / 2 + 260}" text-anchor="middle">${labelText}</text>`
-      : "";
-    return `<g transform="translate(${object.xMm} ${object.yMm}) rotate(${object.rotationDeg})" fill="rgba(47,127,209,0.18)" stroke="#2f7fd1" stroke-width="18">${shape}${label}</g>`;
+    const shape = object.shape === "circle"
+      ? '<ellipse rx="' + object.widthMm / 2 + '" ry="' + object.depthMm / 2 + '" ' + renderShapeStyle(style) + ' />'
+      : '<rect x="' + (-object.widthMm / 2) + '" y="' + (-object.depthMm / 2) + '" width="' + object.widthMm + '" height="' + object.depthMm + '" ' + renderShapeStyle(style) + ' />';
+    const label = showLabel ? renderSvgText(labelText, 0, object.depthMm / 2 + 260, style) : "";
+    return '<g transform="translate(' + object.xMm + ' ' + object.yMm + ') rotate(' + object.rotationDeg + ')">' + shape + label + '</g>';
   }).join("");
 }
-
 /** 出力専用SVG。編集UIを含めないためPNGとPDFの共通基盤になる */
 export function renderProjectToSvg(
   project: Project,

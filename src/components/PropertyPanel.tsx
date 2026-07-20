@@ -5,6 +5,7 @@ import type { Dispatch } from "react";
 import type { Action, AppState } from "../state/appState";
 import type { SceneObject, Wall } from "../types/project";
 import type { Alignment } from "../core/layout";
+import { resolveObjectStyle, STYLE_PRESETS, type ObjectStyle } from "../core/visualStyle";
 import { BackgroundPanel } from "./BackgroundPanel";
 import { LayerPanel } from "./LayerPanel";
 import { SnapPanel } from "./SnapPanel";
@@ -138,6 +139,10 @@ export function PropertyPanel({ state, dispatch, onOpenGrid, onOpenPultArc }: Pr
     function commit(patch: Partial<SceneObject>) {
       dispatch({ type: "UPDATE_OBJECT", id: selectedObject.id, patch });
     }
+    const visualStyle = resolveObjectStyle(selectedObject);
+    function updateStyle(patch: Partial<ObjectStyle>) {
+      commit({ style: { ...(selectedObject.style ?? {}), ...patch } });
+    }
     return (
       <>
         <p className="object-name">{selectedObject.name}</p>
@@ -146,7 +151,10 @@ export function PropertyPanel({ state, dispatch, onOpenGrid, onOpenPultArc }: Pr
             {state.project.layers.map((layer) => <option key={layer.id} value={layer.id}>{layer.name}{layer.locked ? " 🔒" : ""}</option>)}
           </select>
         </label>
-        <label>ラベル<input value={selectedObject.label} disabled={!editable} onChange={(e) => commit({ label: e.target.value })} /></label>
+        <label>ラベル{selectedObject.annotationKind === "text" || selectedObject.annotationKind === "rect"
+          ? <textarea className="multiline-label" rows={4} value={selectedObject.label} disabled={!editable} onChange={(e) => commit({ label: e.target.value })} />
+          : <input value={selectedObject.label} disabled={!editable} onChange={(e) => commit({ label: e.target.value })} />}
+        </label>
         {NUMERIC_FIELDS.map(({ key, label, min }) => (
           <label key={key}>
             {label}
@@ -163,6 +171,36 @@ export function PropertyPanel({ state, dispatch, onOpenGrid, onOpenPultArc }: Pr
             />
           </label>
         ))}
+        <details className="object-style-editor" open>
+          <summary>表示スタイル</summary>
+          <div className="style-palette" aria-label="表示スタイルプリセット">
+            {STYLE_PRESETS.map((preset) => (
+              <button
+                key={preset.id}
+                type="button"
+                className="style-palette-button"
+                disabled={!editable}
+                title={preset.name}
+                style={{ backgroundColor: preset.style.fillColor, color: preset.style.labelColor, borderColor: preset.style.color }}
+                onClick={() => updateStyle(preset.style)}
+              >
+                {preset.name}
+              </button>
+            ))}
+          </div>
+          <div className="style-color-grid">
+            <label>記号・線色<input type="color" value={visualStyle.color} disabled={!editable} onChange={(e) => updateStyle({ color: e.target.value })} /></label>
+            <label>塗り色<input type="color" value={visualStyle.fillColor} disabled={!editable} onChange={(e) => updateStyle({ fillColor: e.target.value })} /></label>
+            <label>ラベル色<input type="color" value={visualStyle.labelColor} disabled={!editable} onChange={(e) => updateStyle({ labelColor: e.target.value })} /></label>
+          </div>
+          <label>塗りの濃さ
+            <input type="range" min={0} max={1} step={0.05} value={visualStyle.fillOpacity} disabled={!editable} onChange={(e) => updateStyle({ fillOpacity: Number(e.target.value) })} />
+            <span className="style-value">{Math.round(visualStyle.fillOpacity * 100)}%</span>
+          </label>
+          <label>線幅(mm)<input type="number" min={2} max={80} value={visualStyle.strokeWidthMm} disabled={!editable} onChange={(e) => updateStyle({ strokeWidthMm: Number(e.target.value) })} /></label>
+          <label>ラベル文字サイズ(mm)<input type="number" min={80} max={600} value={visualStyle.labelFontSizeMm} disabled={!editable} onChange={(e) => updateStyle({ labelFontSizeMm: Number(e.target.value) })} /></label>
+          <label className="row"><input type="checkbox" checked={visualStyle.labelVisible} disabled={!editable} onChange={(e) => updateStyle({ labelVisible: e.target.checked })} />既定ラベルを表示</label>
+        </details>
         {(selectedObject.annotationKind === "line" || selectedObject.annotationKind === "arrow" || selectedObject.annotationKind === "dimension") && (
           <div className="dialog-form-grid">
             <label>終点X(mm)<input type="number" value={selectedObject.endXMm ?? selectedObject.xMm} disabled={!editable} onChange={(e) => commit({ endXMm: Number(e.target.value) })} /></label>

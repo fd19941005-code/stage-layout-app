@@ -36,7 +36,7 @@ describe("シンボル付きSVG出力", () => {
     expect(svg).toContain("Piano");
   });
 
-  it("プリセット名を自動表示せず、ユーザーラベルだけを表示する", () => {
+  it("default labels identify instruments", () => {
     const project = createEmptyProject("ラベル表示");
     project.calibration.mmPerPixel = 1;
     project.objects.push({
@@ -63,7 +63,7 @@ describe("シンボル付きSVG出力", () => {
 
     const svg = renderProjectToSvg(project, { background: false, objects: true, labels: true, grid: false });
     expect(svg).toContain('href="#stage-symbol-grand-piano"');
-    expect(svg).not.toContain("グランドピアノ(フル)");
+    expect(svg).toContain("グランドピアノ(フル)");
   });
   it("汎用図形は従来の矩形描画へフォールバックする", () => {
     const project = createEmptyProject("汎用図形出力");
@@ -91,6 +91,6 @@ describe("シンボル付きSVG出力", () => {
     });
 
     const svg = renderProjectToSvg(project, { background: false, objects: true, labels: true, grid: false });
-    expect(svg).toContain('<rect x="-500" y="-300" width="1000" height="600" />');
+    expect(svg).toContain('<rect x="-500" y="-300" width="1000" height="600" fill=');
   });
 });

@@ -61,6 +61,33 @@ describe("プロジェクト保存・復元 (FR-003、AC-009)", () => {
     expect(o.label).toBe("Vn1-1");
   });
 
+  it("style round-trip persists", () => {
+    const project = createEmptyProject("Style");
+    project.objects.push(sampleObject({
+      style: {
+        color: "#12151a",
+        fillColor: "#995c67",
+        fillOpacity: 0.58,
+        labelColor: "#ffffff",
+        labelVisible: true,
+        labelFontSizeMm: 200,
+        strokeWidthMm: 16,
+      },
+    }));
+
+    const restored = deserializeProject(serializeProject(project));
+
+    expect(restored.objects[0].style).toEqual({
+      color: "#12151a",
+      fillColor: "#995c67",
+      fillOpacity: 0.58,
+      labelColor: "#ffffff",
+      labelVisible: true,
+      labelFontSizeMm: 200,
+      strokeWidthMm: 16,
+    });
+  });
+
   it("背景のPDFページ、回転、切り抜きを保存・復元できる(AC-004)", () => {
     const project = createEmptyProject("背景編集");
     project.background = {
