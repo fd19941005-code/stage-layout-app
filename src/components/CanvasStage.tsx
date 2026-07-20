@@ -2,7 +2,7 @@
 // ポインター入力はPointer Events APIで統一し(12.1)。1本指の編集と
 // 2本指のパン/ピンチを同じイベント列から判定する(iPad Safari対応)。
 
-import { useRef, useState, type Dispatch, type PointerEvent, type WheelEvent } from "react";
+import { useRef, useState, type CSSProperties, type Dispatch, type PointerEvent, type ReactNode, type WheelEvent } from "react";
 import type { AnnotationKind, PointMm, SceneObject, Wall } from "../types/project";
 import {
   displayedPxToSourcePx,
@@ -20,6 +20,8 @@ import { effectiveMmPerPixel, type Action, type AppState, type ObjectMove } from
 import { findPreset } from "../core/presets";
 import { snapPointMm } from "../core/snap";
 import { generateId } from "../core/project";
+import { SYMBOL_DEFINITIONS, SYMBOL_VIEW_BOX, symbolIdForPreset, symbolPaintProps, type SymbolNode } from "../core/symbols";
+import { resolveObjectStyle, type ObjectStyle } from "../core/visualStyle";
 
 interface Props {
   state: AppState;
@@ -99,6 +101,31 @@ function annotationName(kind: AnnotationKind): string {
   }
 }
 
+function renderSymbolNode(node: SymbolNode, key: string): ReactNode {
+  const paint = symbolPaintProps(node.paint);
+  switch (node.kind) {
+    case "rect":
+      return <rect key={key} {...paint} x={node.x} y={node.y} width={node.width} height={node.height} rx={node.rx} />;
+    case "ellipse":
+      return <ellipse key={key} {...paint} cx={node.cx} cy={node.cy} rx={node.rx} ry={node.ry} />;
+    case "circle":
+      return <circle key={key} {...paint} cx={node.cx} cy={node.cy} r={node.r} />;
+    case "line":
+      return <line key={key} {...paint} x1={node.x1} y1={node.y1} x2={node.x2} y2={node.y2} />;
+    case "polyline":
+      return <polyline key={key} {...paint} points={node.points.map((point) => String(point.x) + "," + String(point.y)).join(" ")} />;
+    case "path":
+      return <path key={key} {...paint} d={node.d} />;
+  }
+}
+
+function renderSymbolDefinition(definition: (typeof SYMBOL_DEFINITIONS)[number]) {
+  return (
+    <symbol key={definition.id} id={definition.id} viewBox={SYMBOL_VIEW_BOX} preserveAspectRatio="none">
+      {definition.nodes.map((node, index) => renderSymbolNode(node, definition.id + "-" + index))}
+    </symbol>
+  );
+}
 export function CanvasStage({ state, dispatch, onCursorMm, onNotice, wallDraft, onWallDraftChange }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const dragRef = useRef<DragState | null>(null);
@@ -443,38 +470,92 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice, wallDraft, 
     );
   }
 
+  function symbolStyle(style: ObjectStyle, selected: boolean): CSSProperties {
+    return {
+      color: selected ? "#e07b00" : style.color,
+      "--symbol-body-opacity": String(style.fillOpacity),
+      "--symbol-solid-opacity": String(Math.min(1, style.fillOpacity + 0.16)),
+      "--symbol-stroke-width": String(style.strokeWidthMm),
+      "--symbol-detail-stroke-width": String(Math.max(6, style.strokeWidthMm * 0.84)),
+    } as CSSProperties;
+  }
+
+  function renderMultilineLabel(value: string, style: ObjectStyle, x: number, y: number, keyPrefix: string) {
+    const lines = value.split(/\r?\n/);
+    const lineHeight = style.labelFontSizeMm * 1.2;
+    const firstY = y - ((lines.length - 1) * lineHeight) / 2;
+    return (
+      <text className="object-label" x={x} y={firstY} textAnchor="middle" style={{ fill: style.labelColor, fontSize: style.labelFontSizeMm }}>
+        {lines.map((line, index) => <tspan key={keyPrefix + "-" + index} x={x} dy={index === 0 ? 0 : lineHeight}>{line}</tspan>)}
+      </text>
+    );
+  }
+
   function renderAnnotation(object: SceneObject) {
     const kind = object.annotationKind;
-    if (kind === "text") return <text className="annotation-text" x={0} y={0}>{object.label || "注釈"}</text>;
+    const style = resolveObjectStyle(object);
+    const selected = selectedIds.includes(object.id);
+    const lineStyle: CSSProperties = { fill: "none", stroke: selected ? "#e07b00" : style.color, strokeWidth: style.strokeWidthMm };
+    if (kind === "text") {
+      return renderMultilineLabel(object.label || "注釈", style, 0, 0, object.id);
+    }
     if (kind === "line" || kind === "arrow" || kind === "dimension") {
       const endX = (object.endXMm ?? object.xMm + object.widthMm) - object.xMm;
       const endY = (object.endYMm ?? object.yMm) - object.yMm;
       return (
         <>
-          <line className={`annotation-line ${kind}`} x1={0} y1={0} x2={endX} y2={endY} markerEnd={kind === "arrow" ? "url(#canvas-arrow)" : undefined} />
-          {kind === "dimension" && <text className="annotation-dimension-label" x={endX / 2} y={endY / 2 - 120} textAnchor="middle">{object.label || `${Math.round(Math.hypot(endX, endY))} mm`}</text>}
+          <line className={"annotation-line " + kind} style={lineStyle} x1={0} y1={0} x2={endX} y2={endY} markerEnd={kind === "arrow" ? "url(#canvas-arrow)" : undefined} />
+          {kind === "dimension" && renderMultilineLabel(object.label || String(Math.round(Math.hypot(endX, endY))) + " mm", style, endX / 2, endY / 2 - 120, object.id + "-dimension")}
         </>
       );
     }
-    return object.shape === "circle"
-      ? <ellipse className={`annotation-shape ${kind}`} rx={object.widthMm / 2} ry={object.depthMm / 2} />
-      : <rect className={`annotation-shape ${kind}`} x={-object.widthMm / 2} y={-object.depthMm / 2} width={object.widthMm} height={object.depthMm} />;
+    const shapeStyle: CSSProperties = {
+      fill: style.fillColor,
+      fillOpacity: style.fillOpacity,
+      stroke: selected ? "#e07b00" : style.color,
+      strokeWidth: style.strokeWidthMm,
+      strokeDasharray: "none",
+    };
+    return (
+      <>
+        {object.shape === "circle"
+          ? <ellipse className={"annotation-shape " + kind} style={shapeStyle} rx={object.widthMm / 2} ry={object.depthMm / 2} />
+          : <rect className={"annotation-shape " + kind} style={shapeStyle} x={-object.widthMm / 2} y={-object.depthMm / 2} width={object.widthMm} height={object.depthMm} />}
+        {object.label && renderMultilineLabel(object.label, style, 0, 0, object.id + "-label")}
+      </>
+    );
   }
 
   function renderObject(object: SceneObject) {
     const layer = project.layers.find((candidate) => candidate.id === object.layerId);
     const editable = !object.locked && !layer?.locked;
     const isAnnotation = object.annotationKind !== null && object.annotationKind !== undefined;
+    const selected = selectedIds.includes(object.id);
+    const symbolId = !isAnnotation ? symbolIdForPreset(object.presetId) : null;
+    const visualStyle = resolveObjectStyle(object);
+    const displayLabel = object.label || object.name;
+    const showLabel = Boolean(displayLabel && (object.label || visualStyle.labelVisible));
+    const className = "scene-object"
+      + (symbolId ? " symbol-object" : "")
+      + (isAnnotation ? " annotation-object" : "")
+      + (selected ? " selected" : "")
+      + (object.locked || layer?.locked ? " locked" : "");
     return (
-      <g key={object.id} data-object-id={object.id} className={`scene-object${isAnnotation ? " annotation-object" : ""}${selectedIds.includes(object.id) ? " selected" : ""}${object.locked || layer?.locked ? " locked" : ""}`} transform={`translate(${object.xMm} ${object.yMm}) rotate(${object.rotationDeg})`}>
+      <g key={object.id} data-object-id={object.id} className={className} style={symbolId ? symbolStyle(visualStyle, selected) : undefined} transform={"translate(" + object.xMm + " " + object.yMm + ") rotate(" + object.rotationDeg + ")"}>
         {isAnnotation ? renderAnnotation(object) : (
           <>
-            {object.shape === "circle" ? <ellipse rx={object.widthMm / 2} ry={object.depthMm / 2} /> : <rect x={-object.widthMm / 2} y={-object.depthMm / 2} width={object.widthMm} height={object.depthMm} />}
-            {(object.type === "chair" || object.type === "musicStand") && <line x1={0} y1={0} x2={0} y2={-object.depthMm / 2} className="facing" />}
-            <text y={object.depthMm / 2 + 320} textAnchor="middle">{object.label || object.name}</text>
+            {symbolId
+              ? <use className="symbol-use" href={"#" + symbolId} x={-object.widthMm / 2} y={-object.depthMm / 2} width={object.widthMm} height={object.depthMm} />
+              : <>
+                  {object.shape === "circle"
+                    ? <ellipse style={{ fill: visualStyle.fillColor, fillOpacity: visualStyle.fillOpacity, stroke: selected ? "#e07b00" : visualStyle.color, strokeWidth: selected ? Math.max(visualStyle.strokeWidthMm, 40) : visualStyle.strokeWidthMm }} rx={object.widthMm / 2} ry={object.depthMm / 2} />
+                    : <rect style={{ fill: visualStyle.fillColor, fillOpacity: visualStyle.fillOpacity, stroke: selected ? "#e07b00" : visualStyle.color, strokeWidth: selected ? Math.max(visualStyle.strokeWidthMm, 40) : visualStyle.strokeWidthMm }} x={-object.widthMm / 2} y={-object.depthMm / 2} width={object.widthMm} height={object.depthMm} />}
+                  {(object.type === "chair" || object.type === "musicStand") && <line className="facing" style={{ stroke: selected ? "#e07b00" : visualStyle.color, strokeWidth: visualStyle.strokeWidthMm }} x1={0} y1={0} x2={0} y2={-object.depthMm / 2} />}
+                </>}
+            {showLabel && renderMultilineLabel(displayLabel, visualStyle, 0, object.depthMm / 2 + 320, object.id + "-object")}
           </>
         )}
-        {selectedIds.includes(object.id) && editable && !isAnnotation && mode === "select" && (
+        {selected && editable && !isAnnotation && mode === "select" && (
           <g className="rotate-handle" data-rotate-handle="true" data-object-id={object.id}>
             <line x1={0} y1={-object.depthMm / 2} x2={0} y2={-object.depthMm / 2 - 300} />
             <circle cx={0} cy={-object.depthMm / 2 - 300} r={110} />
@@ -517,6 +598,7 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice, wallDraft, 
         <marker id="canvas-arrow" markerWidth="160" markerHeight="160" refX="120" refY="60" orient="auto">
           <path d="M0,0 L120,60 L0,120 z" fill="#d12f2f" />
         </marker>
+        {SYMBOL_DEFINITIONS.map(renderSymbolDefinition)}
       </defs>
       <g transform={`translate(${view.panX} ${view.panY}) scale(${view.zoom})`}>
         {background.imageDataUrl && background.visible && project.layers.find((layer) => layer.id === "layer-background")?.visible !== false && (

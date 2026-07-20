@@ -10,6 +10,7 @@ import {
   type Wall,
 } from "../types/project";
 import { clampCrop } from "./transform";
+import { parseObjectStyle } from "./visualStyle";
 
 let idCounter = 0;
 
@@ -125,7 +126,7 @@ export function deserializeProject(json: string): Project {
   if (typeof raw.schemaVersion !== "string") {
     throw new Error("schemaVersionがありません。プロジェクトファイルではない可能性があります");
   }
-  // 1.0.0からのマイグレーションは、追加フィールドの既定値を適用する非破壊移行。
+  // 1.0.0〜1.3.0からのマイグレーションは、追加フィールドの既定値を適用する非破壊移行。
   // 将来の破壊的変更もここで版ごとに吸収し、既存JSONを読めなくしない。
 
   const base = createEmptyProject(str(raw.name, "無題のプロジェクト"));
@@ -151,6 +152,7 @@ export function deserializeProject(json: string): Project {
         layerId: str(o.layerId, DEFAULT_LAYER_ID),
         zIndex: num(o.zIndex, i),
         shape: o.shape === "circle" ? "circle" : "rect",
+        style: parseObjectStyle(o.style),
         annotationKind: parseAnnotationKind(o.annotationKind),
         endXMm: typeof o.endXMm === "number" && Number.isFinite(o.endXMm) ? o.endXMm : null,
         endYMm: typeof o.endYMm === "number" && Number.isFinite(o.endYMm) ? o.endYMm : null,

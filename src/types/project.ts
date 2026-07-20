@@ -1,7 +1,7 @@
 // 要件定義書 第9章「データ要件」に基づくプロジェクトモデル定義。
 // 最重要設計原則: 配置物の正本は常にmm単位。px値は保存しない。
 
-export const SCHEMA_VERSION = "1.2.0";
+export const SCHEMA_VERSION = "1.3.0";
 
 /** 実寸座標系(mm)上の点 */
 export interface PointMm {
@@ -26,6 +26,18 @@ export type ObjectType =
 
 export type ShapeKind = "rect" | "circle";
 export type AnnotationKind = "text" | "line" | "arrow" | "rect" | "circle" | "dimension";
+
+export interface ObjectStyle {
+  color: string;
+  fillColor: string;
+  fillOpacity: number;
+  labelColor: string;
+  labelVisible: boolean;
+  labelFontSizeMm: number;
+  strokeWidthMm: number;
+}
+
+export type ObjectStylePatch = Partial<ObjectStyle>;
 export type BackgroundSourceType = "image" | "pdf";
 
 export interface CropPx {
@@ -118,6 +130,8 @@ export interface SceneObject {
   layerId: string;
   zIndex: number;
   shape: ShapeKind;
+  /** 参考図のような色・塗り・ラベル表示を保存する表示属性。 */
+  style?: ObjectStylePatch;
   /** Phase 4注釈。通常の配置物ではnullまたは未指定。 */
   annotationKind?: AnnotationKind | null;
   /** 線・矢印・寸法線の終点。pxではなくmmで保持する。 */
