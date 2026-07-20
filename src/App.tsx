@@ -5,7 +5,7 @@ import { Component, lazy, Suspense, useEffect, useReducer, useRef, useState, typ
 import type { PointMm } from "./types/project";
 import { appReducer, createInitialState } from "./state/appState";
 import { generateId } from "./core/project";
-import { loadAutosavedProject, saveAutosavedProject } from "./core/storage";
+import { appServices } from "./services";
 import { Toolbar } from "./components/Toolbar";
 import { LibraryPanel } from "./components/LibraryPanel";
 import { CanvasStage } from "./components/CanvasStage";
@@ -105,7 +105,7 @@ export function App() {
   useEffect(() => {
     if (storageLoadStarted.current) return;
     storageLoadStarted.current = true;
-    loadAutosavedProject()
+    appServices.autosave.loadProject()
       .then((project) => {
         if (project) dispatch({ type: "LOAD_PROJECT", project });
       })
@@ -122,7 +122,7 @@ export function App() {
   useEffect(() => {
     if (!storageReady || state.saveState !== "dirty") return;
     const timer = window.setTimeout(() => {
-      saveAutosavedProject(state.project).catch(() => showNotice("自動保存に失敗しました(容量超過の可能性があります)"));
+      appServices.autosave.saveProject(state.project).catch(() => showNotice("自動保存に失敗しました(容量超過の可能性があります)"));
     }, 1500);
     return () => window.clearTimeout(timer);
   }, [state.project, state.saveState, storageReady]);
@@ -225,4 +225,3 @@ export function App() {
     </div>
   );
 }
-

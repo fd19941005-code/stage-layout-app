@@ -1,13 +1,12 @@
 // 上部ツールバー(10.1): 新規、開く、保存、背景読込、編集履歴、選択、校正、測定、出力、ズーム
 
-import { useRef, useState, type ChangeEvent, type Dispatch } from "react";
+import { useState, type Dispatch } from "react";
 import type { PointMm } from "../types/project";
 import type { Action, AppState, ToolMode } from "../state/appState";
 import { toolModeLabel } from "../state/appState";
-import { deserializeProject, serializeProject } from "../core/project";
 import { zoomAt } from "../core/transform";
-import { isPdfFile, isSupportedBackgroundFile, renderPdfPages, type PdfPageImage } from "../core/pdf";
 import { findPreset } from "../core/presets";
+import { appServices, isPdfFile, isSupportedBackgroundFile, type PdfPageImage } from "../services";
 
 interface Props {
   state: AppState;
@@ -22,10 +21,9 @@ interface Props {
 }
 
 export function Toolbar({ state, dispatch, onNotice, onExport, onToggle3d, is3dOpen, wallDraft, onFinishWall, onClearWallDraft }: Props) {
-  const imageInputRef = useRef<HTMLInputElement>(null);
-  const projectInputRef = useRef<HTMLInputElement>(null);
   const [pdfPages, setPdfPages] = useState<PdfPageImage[]>([]);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [fileSaving, setFileSaving] = useState(false);
   const { project, mode, saveState } = state;
   const [wallHeightMm, setWallHeightMm] = useState(6000);
 
@@ -47,9 +45,16 @@ export function Toolbar({ state, dispatch, onNotice, onExport, onToggle3d, is3dO
     onNotice(sourceType === "pdf" ? `PDF ${page.pageNumber}ページを背景として読み込みました。` : "背景を読み込みました。「校正」で2点と実距離を指定してください。");
   }
 
-  function handleImageSelected(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = "";
+  async function handleBackgroundOpen() {
+    let file;
+    try {
+      file = await appServices.file.openFile({
+        accept: ["image/png", "image/jpeg", "application/pdf", ".png", ".jpg", ".jpeg", ".pdf"],
+      });
+    } catch (error) {
+      onNotice(error instanceof Error ? error.message : "背景ファイルを開けません");
+      return;
+    }
     if (!file) return;
     if (!isSupportedBackgroundFile(file)) {
       onNotice("対応形式はPNG、JPEG、PDFです。ファイル形式を確認してください。");
@@ -57,7 +62,7 @@ export function Toolbar({ state, dispatch, onNotice, onExport, onToggle3d, is3dO
     }
     if (isPdfFile(file)) {
       setPdfLoading(true);
-      renderPdfPages(file)
+      appServices.pdf.loadPages(file)
         .then((pages) => {
           if (pages.length === 0) onNotice("PDFに読み込めるページがありません");
           else if (pages.length === 1) applyBackground(pages[0], "pdf");
@@ -70,50 +75,37 @@ export function Toolbar({ state, dispatch, onNotice, onExport, onToggle3d, is3dO
         .finally(() => setPdfLoading(false));
       return;
     }
-    const reader = new FileReader();
-    reader.onerror = () => onNotice("画像の読み込みに失敗しました");
-    reader.onload = () => {
-      const dataUrl = reader.result as string;
-      const img = new Image();
-      img.onerror = () => onNotice("画像を解析できません。別のファイルを試してください");
-      img.onload = () => applyBackground({ pageNumber: 1, imageDataUrl: dataUrl, naturalWidthPx: img.naturalWidth, naturalHeightPx: img.naturalHeight }, "image");
-      img.src = dataUrl;
-    };
-    reader.readAsDataURL(file);
+    try {
+      const image = await appServices.image.loadImage(file);
+      applyBackground({ pageNumber: 1, ...image }, "image");
+    } catch (error) {
+      onNotice(error instanceof Error ? error.message : "画像の読み込みに失敗しました");
+    }
   }
 
-  function handleOpen() {
+  async function handleOpen() {
     if (saveState === "dirty" && !window.confirm("未保存の変更があります。読み込むと現在の変更は破棄されます。続けますか？")) return;
-    projectInputRef.current?.click();
+    try {
+      const loaded = await appServices.project.openProject();
+      if (!loaded) return;
+      dispatch({ type: "LOAD_PROJECT", project: loaded });
+      onNotice(`プロジェクト「${loaded.name}」を開きました`);
+    } catch (error) {
+      onNotice(error instanceof Error ? error.message : "プロジェクトを開けません");
+    }
   }
 
-  function handleProjectSelected(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onerror = () => onNotice("ファイルの読み込みに失敗しました");
-    reader.onload = () => {
-      try {
-        const loaded = deserializeProject(reader.result as string);
-        dispatch({ type: "LOAD_PROJECT", project: loaded });
-        onNotice(`プロジェクト「${loaded.name}」を開きました`);
-      } catch (error) {
-        onNotice(error instanceof Error ? error.message : "プロジェクトを開けません");
-      }
-    };
-    reader.readAsText(file);
-  }
-
-  function handleSave() {
-    const blob = new Blob([serializeProject(project)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${project.name || "stage-layout"}.stage.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    dispatch({ type: "MARK_SAVED" });
+  async function handleSave() {
+    setFileSaving(true);
+    try {
+      await appServices.project.saveProject(project);
+      dispatch({ type: "MARK_SAVED" });
+      onNotice("プロジェクトを保存しました");
+    } catch (error) {
+      onNotice(error instanceof Error ? error.message : "プロジェクトの保存に失敗しました");
+    } finally {
+      setFileSaving(false);
+    }
   }
 
   function setMode(next: ToolMode) {
@@ -151,14 +143,14 @@ export function Toolbar({ state, dispatch, onNotice, onExport, onToggle3d, is3dO
         <input className="project-name" value={project.name} onChange={(e) => dispatch({ type: "SET_PROJECT_NAME", name: e.target.value })} aria-label="プロジェクト名" />
         <button type="button" onClick={handleNew}>新規</button>
         <button type="button" onClick={handleOpen}>開く</button>
-        <button type="button" onClick={handleSave}>保存(JSON)</button>
+        <button type="button" onClick={handleSave} disabled={fileSaving}>{fileSaving ? "保存中…" : "保存(JSON)"}</button>
         <button type="button" onClick={onExport} disabled={project.calibration.mmPerPixel === null}>出力</button>
         <span className="separator" />
         <button type="button" onClick={() => dispatch({ type: "UNDO" })} disabled={state.past.length === 0} title="Ctrl/Cmd+Z">↶ Undo</button>
         <button type="button" onClick={() => dispatch({ type: "REDO" })} disabled={state.future.length === 0} title="Ctrl/Cmd+Shift+Z">↷ Redo</button>
         <button type="button" onClick={onToggle3d} disabled={!is3dOpen && project.calibration.mmPerPixel === null} title="2Dのmm配置を3Dで確認します">{is3dOpen ? "2D編集へ" : "3Dビュー"}</button>
         <span className="separator" />
-        <button type="button" onClick={() => imageInputRef.current?.click()} disabled={pdfLoading}>{pdfLoading ? "PDF読込中…" : "背景読込"}</button>
+        <button type="button" onClick={handleBackgroundOpen} disabled={pdfLoading}>{pdfLoading ? "PDF読込中…" : "背景読込"}</button>
         <span className="separator" />
         {modeButton("select", "選択")}
         {modeButton("selectRect", "範囲選択")}
@@ -184,7 +176,6 @@ export function Toolbar({ state, dispatch, onNotice, onExport, onToggle3d, is3dO
           {mode === "select" && !pendingPreset && state.selectedIds.length > 0 && <span>矢印キー: 10mm移動（Shift+矢印: 100mm）</span>}
         </div>
 
-        <input ref={imageInputRef} type="file" accept="image/png,image/jpeg,application/pdf,.pdf" hidden onChange={handleImageSelected} />
         {mode === "traceWall" && (
           <div className="wall-trace-toolbar">
             <span>頂点: {wallDraft.length}点</span>
@@ -193,7 +184,6 @@ export function Toolbar({ state, dispatch, onNotice, onExport, onToggle3d, is3dO
             <button type="button" disabled={wallDraft.length === 0} onClick={onClearWallDraft}>やり直し</button>
           </div>
         )}
-        <input ref={projectInputRef} type="file" accept=".json,application/json" hidden onChange={handleProjectSelected} />
       </header>
 
       {pdfPages.length > 0 && (
@@ -215,4 +205,3 @@ export function Toolbar({ state, dispatch, onNotice, onExport, onToggle3d, is3dO
     </>
   );
 }
-
