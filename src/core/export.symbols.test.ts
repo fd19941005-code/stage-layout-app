@@ -30,6 +30,7 @@ describe("シンボル付きSVG出力", () => {
 
     const svg = renderProjectToSvg(project, { background: false, objects: true, labels: true, grid: false });
     expect(svg).toContain('<symbol id="stage-symbol-grand-piano"');
+    expect(svg).toContain('<symbol id="stage-symbol-grand-piano-semi"');
     expect(svg).toContain('href="#stage-symbol-grand-piano"');
     expect(svg).toContain('width="1560" height="2740"');
     expect(svg).toContain("rotate(30)");
@@ -62,8 +63,9 @@ describe("シンボル付きSVG出力", () => {
     });
 
     const svg = renderProjectToSvg(project, { background: false, objects: true, labels: true, grid: false });
-    expect(svg).toContain('href="#stage-symbol-grand-piano"');
-    expect(svg).toContain("グランドピアノ(フル)");
+    expect(svg).toContain('class="symbol-label"');
+    expect(svg).toContain(">ピアノ<");
+    expect(svg).toContain('y="0"');
   });
   it("汎用図形は従来の矩形描画へフォールバックする", () => {
     const project = createEmptyProject("汎用図形出力");

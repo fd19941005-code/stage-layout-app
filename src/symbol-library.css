@@ -1,0 +1,452 @@
+/* 舞台図面の凡例から着想を得た、図面記号ギャラリーの表示層。 */
+
+.symbol-library {
+  padding: 14px 12px 18px;
+  background: #f5f8f6;
+  border-right-color: #c8d6d2;
+  color: #18343a;
+}
+
+.symbol-library .library-header {
+  margin: 0 2px 12px;
+}
+
+.symbol-library .library-kicker {
+  margin: 0 0 5px;
+  color: #6b7c7a;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.symbol-library .library-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.symbol-library h2 {
+  margin: 0;
+  color: #16353a;
+  font-size: 16px;
+  letter-spacing: -0.03em;
+}
+
+.symbol-library .library-count {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 7px;
+  border: 1px solid #c2d3ce;
+  border-radius: 999px;
+  background: #eaf1ee;
+  color: #59706c;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.symbol-library .library-intro {
+  margin: 7px 0 0;
+  color: #5d706d;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.symbol-library .library-warning {
+  margin: 0 0 10px;
+  padding: 8px 9px;
+  border: 1px solid #e2c58b;
+  border-radius: 8px;
+  background: #fff8e8;
+  color: #795e27;
+  line-height: 1.45;
+}
+
+.symbol-library .library-target {
+  margin: -2px 2px 9px;
+  color: #6b7c7a;
+  font-size: 10px;
+}
+
+.symbol-library .library-target strong {
+  color: #2b4f53;
+}
+
+.symbol-library .placement-controls {
+  padding: 9px 0 11px;
+  border-top: 1px solid #d6e1de;
+  border-bottom: 1px solid #d6e1de;
+}
+
+.symbol-library .placement-mode-toggle {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 7px;
+  margin: 0;
+  padding: 8px 9px;
+  border: 1px solid #b7cfca;
+  border-radius: 9px;
+  background: #e9f2ef;
+  color: #1f5559;
+}
+
+.symbol-library .placement-mode-toggle input {
+  grid-row: span 2;
+  margin: 2px 0 0;
+  accent-color: #d2673d;
+}
+
+.symbol-library .placement-mode-toggle span:nth-of-type(1) {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.symbol-library .placement-mode-caption {
+  color: #67817c;
+  font-size: 10px;
+}
+
+.symbol-library .placement-hint {
+  margin: 7px 2px 0;
+  color: #74837f;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.symbol-library .placement-status {
+  margin: 8px 0 0;
+  padding: 6px 8px;
+  border-radius: 7px;
+  background: #fff0e7;
+  color: #a34e31;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.symbol-library .library-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 12px 0 9px;
+  padding: 0 8px;
+  border: 1px solid #cbdad6;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 1px 0 #fff;
+}
+
+.symbol-library .library-search:focus-within {
+  border-color: #bb6445;
+  box-shadow: 0 0 0 3px rgba(187, 100, 69, 0.13);
+}
+
+.symbol-library .library-search-icon {
+  color: #66817d;
+  font-size: 20px;
+  line-height: 1;
+  transform: rotate(-20deg);
+}
+
+.symbol-library .library-search input {
+  min-width: 0;
+  width: 100%;
+  padding: 9px 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #17383d;
+  font-size: 12px;
+}
+
+.symbol-library .library-search input::placeholder {
+  color: #9aa9a6;
+}
+
+.symbol-library .library-search-clear {
+  min-width: 22px;
+  min-height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #e9f0ed;
+  color: #58706d;
+  line-height: 1;
+}
+
+.symbol-library .library-category-tabs {
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+  padding: 1px 0 5px;
+  scrollbar-width: thin;
+}
+
+.symbol-library .library-category-tabs button {
+  flex: 0 0 auto;
+  min-height: 28px;
+  padding: 4px 8px;
+  border: 1px solid #cbdad6;
+  border-radius: 999px;
+  background: #eef4f1;
+  color: #607773;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.symbol-library .library-category-tabs button:hover {
+  border-color: #9bb9b2;
+  background: #e4efeb;
+}
+
+.symbol-library .library-category-tabs button.active {
+  border-color: #245a5c;
+  background: #245a5c;
+  color: #fff;
+}
+
+.symbol-library .library-results-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 10px 2px 7px;
+  color: #7a8c88;
+  font-size: 10px;
+}
+
+.symbol-library .library-empty {
+  margin: 18px 4px;
+  color: #70827e;
+  font-size: 11px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.symbol-library .library-group {
+  margin: 0 0 15px;
+}
+
+.symbol-library .library-group-heading {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  gap: 7px;
+  align-items: center;
+  margin: 0 2px 7px;
+}
+
+.symbol-library .library-group-mark {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 26px;
+  border-radius: 6px;
+  background: #dfeae6;
+  color: #53736f;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+}
+
+.symbol-library .library-group-heading h3 {
+  overflow: hidden;
+  margin: 0;
+  color: #294c4f;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.symbol-library .library-group-heading p {
+  margin: 1px 0 0;
+  color: #889894;
+  font-size: 9px;
+}
+
+.symbol-library .library-group-count {
+  color: #9aaba7;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.symbol-library .library-preset-list {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+}
+
+.symbol-library .library-preset-list li {
+  min-width: 0;
+}
+
+.symbol-library .library-preset-card {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  min-height: 64px;
+  margin: 0;
+  padding: 7px 7px 7px 8px;
+  border: 1px solid #d3dfdc;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 2px 7px rgba(26, 62, 62, 0.05);
+  color: #24484c;
+  text-align: left;
+  transition: border-color 120ms ease, background 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+}
+
+.symbol-library .library-preset-card:hover:not(:disabled) {
+  border-color: #91b2aa;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(26, 62, 62, 0.11);
+  transform: translateY(-1px);
+}
+
+.symbol-library .library-preset-card.active {
+  border-color: #c45f3d;
+  background: #fff5ee;
+  box-shadow: 0 0 0 2px rgba(196, 95, 61, 0.14), 0 4px 12px rgba(133, 71, 43, 0.1);
+}
+
+.symbol-library .library-preset-card:disabled {
+  opacity: 0.58;
+}
+
+.symbol-library .symbol-preview {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  overflow: hidden;
+  border: 1px solid #d5e2de;
+  border-radius: 8px;
+  background: #edf4f1;
+}
+
+.symbol-library .library-symbol-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  color: #1b4d51;
+}
+
+/* Keep source drawings visible in small cards without changing canvas/export geometry. */
+.symbol-library .library-symbol-svg .stage-asset-preview path,
+.symbol-library .library-symbol-svg .stage-asset-preview rect,
+.symbol-library .library-symbol-svg .stage-asset-preview ellipse,
+.symbol-library .library-symbol-svg .stage-asset-preview circle,
+.symbol-library .library-symbol-svg .stage-asset-preview line,
+.symbol-library .library-symbol-svg .stage-asset-preview polyline,
+.symbol-library .library-symbol-svg .stage-asset-preview polygon {
+  vector-effect: non-scaling-stroke;
+  stroke: currentColor !important;
+  stroke-width: 0.8 !important;
+}
+
+.symbol-library .library-symbol-svg .stage-asset-preview [style*="#ffffff"],
+.symbol-library .library-symbol-svg .stage-asset-preview [fill="#ffffff"] {
+  fill: #dceae7 !important;
+}
+
+.symbol-library .generic-symbol-shape {
+  fill: rgba(36, 90, 92, 0.08);
+  stroke: #1b4d51;
+  stroke-width: 18;
+}
+
+.symbol-library .library-card-copy {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.symbol-library .library-card-copy strong {
+  overflow: hidden;
+  color: #24484c;
+  font-size: 11px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.symbol-library .library-card-copy span {
+  color: #81918d;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.symbol-library .library-card-action {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid #c6d8d3;
+  border-radius: 50%;
+  color: #65817c;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.symbol-library .library-preset-card.active .library-card-action {
+  border-color: #c45f3d;
+  background: #c45f3d;
+  color: #fff;
+}
+
+/* シンボルの空白部分も選択できるようにする。CanvasStage側のmm矩形を
+   入力面として扱い、見た目の線や塗りにクリックを限定しない。 */
+.scene-object.symbol-object {
+  pointer-events: bounding-box;
+}
+
+.scene-object.symbol-object .symbol-use {
+  pointer-events: none;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 900px) {
+  .symbol-library {
+    padding: 12px 10px 14px;
+  }
+
+  .symbol-library .library-preset-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .symbol-library .library-preset-card {
+    grid-template-columns: 42px minmax(0, 1fr);
+    min-height: 58px;
+    padding: 6px;
+  }
+
+  .symbol-library .symbol-preview {
+    width: 40px;
+    height: 40px;
+  }
+
+  .symbol-library .library-card-action {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .symbol-library .library-preset-list {
+    grid-template-columns: 1fr;
+  }
+}

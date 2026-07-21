@@ -43,6 +43,7 @@ export const OBJECT_PRESETS: ObjectPreset[] = [
   { id: "podium", category: "指揮・平台", name: "指揮台", type: "podium", widthMm: 900, depthMm: 900, heightMm: 200, shape: "rect" },
   { id: "riser-3x6", category: "指揮・平台", name: "山台(平台)3×6尺", type: "riser", widthMm: 910, depthMm: 1820, heightMm: 300, shape: "rect" },
   { id: "riser-4x6", category: "指揮・平台", name: "山台 4×6尺", type: "riser", widthMm: 1220, depthMm: 1820, heightMm: 300, shape: "rect" },
+  { id: "riser-6x6", category: "指揮・平台", name: "山台 6×6尺", type: "riser", widthMm: 1820, depthMm: 1820, heightMm: 300, shape: "rect" },
   { id: "hakouma", category: "指揮・平台", name: "箱馬", type: "riser", widthMm: 300, depthMm: 450, heightMm: 300, shape: "rect" },
   { id: "table-long", category: "指揮・平台", name: "長机", type: "shape", widthMm: 1800, depthMm: 450, heightMm: 700, shape: "rect" },
   // 鍵盤
@@ -61,6 +62,7 @@ export const OBJECT_PRESETS: ObjectPreset[] = [
   { id: "drum-set", category: "打楽器", name: "ドラムセット", type: "instrument", widthMm: 1800, depthMm: 1500, heightMm: 1200, shape: "rect" },
   { id: "timpani-23", category: "打楽器", name: "ティンパニ 23インチ", type: "instrument", widthMm: 690, depthMm: 690, heightMm: 900, shape: "circle" },
   { id: "timpani-32", category: "打楽器", name: "ティンパニ 32インチ", type: "instrument", widthMm: 910, depthMm: 910, heightMm: 900, shape: "circle" },
+  { id: "timpani-set-4", category: "打楽器", name: "ティンパニ 4個セット", type: "instrument", widthMm: 2400, depthMm: 1500, heightMm: 900, shape: "rect" },
   // 大型弦・他
   { id: "harp", category: "大型弦・他", name: "ハープ", type: "instrument", widthMm: 1000, depthMm: 1000, heightMm: 1800, shape: "rect" },
   { id: "contrabass-stool", category: "大型弦・他", name: "コントラバス用椅子(占有域)", type: "chair", widthMm: 900, depthMm: 1200, heightMm: 1900, shape: "rect" },

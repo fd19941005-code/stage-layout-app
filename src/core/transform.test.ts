@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   computeMmPerPixel,
   displayedPxToSourcePx,
+  fitViewToProject,
   getBackgroundDisplaySizePx,
   imagePxToMm,
   measuredCalibrationDistanceMm,
@@ -18,6 +19,7 @@ import {
   zoomAt,
 } from "./transform";
 import type { Background, ViewState } from "../types/project";
+import { createEmptyProject } from "./project";
 
 describe("computeMmPerPixel (FR-020 2点校正)", () => {
   it("2点距離と実距離からmm/pxを算出する", () => {
@@ -152,5 +154,17 @@ describe("rotatedBoundsMm (回転を含む境界計算)", () => {
   it("45度回転の外接矩形は対角寸法になる", () => {
     const b = rotatedBoundsMm({ xMm: 0, yMm: 0, widthMm: 100, depthMm: 100, rotationDeg: 45 });
     expect(b.maxXMm - b.minXMm).toBeCloseTo(100 * Math.SQRT2);
+  });
+});
+
+describe("fitViewToProject (全体表示)", () => {
+  it("背景のmm範囲をビューポート中央へ収める", () => {
+    const project = createEmptyProject("fit");
+    project.background = { ...project.background, imageDataUrl: "data:image/png;base64,x", naturalWidthPx: 1000, naturalHeightPx: 600 };
+    project.calibration = { ...project.calibration, mmPerPixel: 10 };
+    const view = fitViewToProject(project, 1000, 600);
+    expect(screenToMm({ x: 500, y: 300 }, view).xMm).toBeCloseTo(5000);
+    expect(screenToMm({ x: 500, y: 300 }, view).yMm).toBeCloseTo(3000);
+    expect(view.zoom).toBeCloseTo(0.084, 3);
   });
 });

@@ -165,7 +165,11 @@ export type Action =
   | { type: "COMMIT_TRANSIENT_EDIT" }
   | { type: "UNDO" }
   | { type: "REDO" }
-  | { type: "MARK_SAVED" };
+  | { type: "MARK_SAVED" }
+  | { type: "UPDATE_OBJECT_PREVIEW"; id: string; patch: Partial<SceneObject> }
+  | { type: "NUDGE_SELECTED_PREVIEW"; dxMm: number; dyMm: number }
+  | { type: "SELECT_GROUP"; id: string; additive?: boolean }
+  | { type: "SET_SELECTED_STYLE"; style: NonNullable<SceneObject["style"]> };
 
 function layerFor(project: Project, layerId: string) {
   return project.layers.find((layer) => layer.id === layerId);
@@ -341,6 +345,17 @@ function updateObject(state: AppState, id: string, patch: Partial<SceneObject>):
   });
 }
 
+function updateObjectPreview(state: AppState, id: string, patch: Partial<SceneObject>): AppState {
+  const committed = updateObject(state, id, patch);
+  if (committed === state) return state;
+  return previewProject(state, committed.project);
+}
+
+function groupedSelectionIds(project: AppState["project"], id: string): string[] {
+  const selected = project.objects.find((object) => object.id === id);
+  if (!selected?.groupId) return [id];
+  return project.objects.filter((object) => object.groupId === selected.groupId).map((object) => object.id);
+}
 function normalizeWallPoint(point: PointMm): PointMm {
   return {
     xMm: Number.isFinite(point.xMm) ? point.xMm : 0,
@@ -484,6 +499,29 @@ export function appReducer(state: AppState, action: Action): AppState {
     case "DELETE_WALL_POINT": return deleteWallPoint(state, action.wallId, action.index);
     case "DELETE_WALL": return deleteWall(state, action.id);
     case "SET_STAGE_FRONT": return commitProject(state, { ...state.project, stageFront: action.yMm === null || !Number.isFinite(action.yMm) ? null : { yMm: action.yMm } });
+    case "UPDATE_OBJECT_PREVIEW": return updateObjectPreview(state, action.id, action.patch);
+    case "NUDGE_SELECTED_PREVIEW": {
+      if (!Number.isFinite(action.dxMm) || !Number.isFinite(action.dyMm) || (action.dxMm === 0 && action.dyMm === 0)) return state;
+      const ids = new Set(editableSelectedIds(state));
+      if (ids.size === 0) return state;
+      const moves = state.project.objects.filter((object) => ids.has(object.id)).map((object) => ({ id: object.id, xMm: object.xMm + action.dxMm, yMm: object.yMm + action.dyMm }));
+      return appReducer(state, { type: "MOVE_OBJECTS", moves, preview: true });
+    }
+    case "SET_SELECTED_STYLE": {
+      const ids = new Set(editableSelectedIds(state));
+      if (ids.size === 0) return state;
+      return commitProject(state, {
+        ...state.project,
+        objects: state.project.objects.map((object) => ids.has(object.id) ? { ...object, style: { ...(object.style ?? {}), ...action.style } } : object),
+      });
+    }
+    case "SELECT_GROUP": {
+      const groupIds = groupedSelectionIds(state.project, action.id);
+      if (!action.additive) return setSelection(state, groupIds);
+      const groupSet = new Set(groupIds);
+      const remove = groupIds.every((groupId) => state.selectedIds.includes(groupId));
+      return setSelection(state, remove ? state.selectedIds.filter((selectedId) => !groupSet.has(selectedId)) : [...state.selectedIds.filter((selectedId) => !groupSet.has(selectedId)), ...groupIds]);
+    }
     case "UPDATE_OBJECT": return updateObject(state, action.id, action.patch);
     case "MOVE_OBJECT": {
       const object = state.project.objects.find((candidate) => candidate.id === action.id);
@@ -621,4 +659,3 @@ export function appReducer(state: AppState, action: Action): AppState {
 }
 
 export { selectionBoundsMm };
-

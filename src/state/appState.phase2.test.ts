@@ -114,3 +114,41 @@ describe("複数選択・一括編集 (FR-050、FR-052、FR-056)", () => {
     expect(state.project.objects).toHaveLength(3);
   });
 });
+
+
+describe("UX刷新の編集Action", () => {
+  it("グループをクリック選択すると全員を移動し、ナッジは1履歴にまとまる", () => {
+    let state = withObjects([chair("a", 100, 200), chair("b", 700, 200)]);
+    state = appReducer(state, { type: "SELECT_MANY", ids: ["a", "b"] });
+    state = appReducer(state, { type: "GROUP_SELECTED" });
+    const beforePast = state.past.length;
+    state = appReducer(state, { type: "SELECT_GROUP", id: "a" });
+    expect(state.selectedIds).toEqual(["a", "b"]);
+    state = appReducer(state, { type: "NUDGE_SELECTED_PREVIEW", dxMm: 10, dyMm: -20 });
+    expect(state.project.objects.find((object) => object.id === "a")).toMatchObject({ xMm: 110, yMm: 180 });
+    expect(state.project.objects.find((object) => object.id === "b")).toMatchObject({ xMm: 710, yMm: 180 });
+    expect(state.past).toHaveLength(beforePast);
+    state = appReducer(state, { type: "COMMIT_TRANSIENT_EDIT" });
+    expect(state.past).toHaveLength(beforePast + 1);
+  });
+
+  it("プレビュー編集は履歴を増やさず、確定時だけ保存する", () => {
+    let state = withObjects([chair("a")]);
+    const beforePast = state.past.length;
+    state = appReducer(state, { type: "UPDATE_OBJECT_PREVIEW", id: "a", patch: { xMm: 250 } });
+    expect(state.project.objects[0].xMm).toBe(250);
+    expect(state.past).toHaveLength(beforePast);
+    state = appReducer(state, { type: "COMMIT_TRANSIENT_EDIT" });
+    expect(state.past).toHaveLength(beforePast + 1);
+  });
+
+  it("複数選択へスタイルプリセットを一括適用できる", () => {
+    let state = withObjects([chair("a"), chair("b", 500)]);
+    state = appReducer(state, { type: "SELECT_MANY", ids: ["a", "b"] });
+    state = appReducer(state, { type: "SET_SELECTED_STYLE", style: { fillOpacity: 0.65, labelVisible: true } });
+    expect(state.project.objects).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "a", style: expect.objectContaining({ fillOpacity: 0.65, labelVisible: true }) }),
+      expect.objectContaining({ id: "b", style: expect.objectContaining({ fillOpacity: 0.65, labelVisible: true }) }),
+    ]));
+  });
+});

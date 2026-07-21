@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   getSymbolDefinition,
   renderSymbolDefinitionsSvg,
+  getSymbolLabelLayout,
   renderSymbolUseSvg,
   SYMBOL_DEFINITIONS,
+  symbolLabelForPreset,
   symbolIdForPreset,
 } from "./symbols";
 
@@ -11,8 +13,11 @@ describe("配置物シンボル", () => {
   it("主要プリセットを上面図シンボルへ割り当てる", () => {
     expect(symbolIdForPreset("chair")).toBe("stage-symbol-chair");
     expect(symbolIdForPreset("grand-piano-full")).toBe("stage-symbol-grand-piano");
+    expect(symbolIdForPreset("grand-piano-semi")).toBe("stage-symbol-grand-piano-semi");
     expect(symbolIdForPreset("drum-set")).toBe("stage-symbol-drum-set");
     expect(symbolIdForPreset("timpani-32")).toBe("stage-symbol-timpani");
+    expect(symbolIdForPreset("timpani-set-4")).toBe("stage-symbol-timpani-set");
+    expect(symbolIdForPreset("riser-6x6")).toBe("stage-symbol-riser-6x6");
     expect(symbolIdForPreset("generic-rect")).toBeNull();
     expect(symbolIdForPreset(null)).toBeNull();
   });
@@ -54,10 +59,22 @@ describe("配置物シンボル", () => {
     }
   });
 
+  it("シンボル名は短い既定名へ整形し、収まる場合だけ内側レイアウトを返す", () => {
+    expect(symbolLabelForPreset("grand-piano-full", "グランドピアノ(フル)")).toBe("ピアノ");
+    expect(symbolLabelForPreset("timpani-26", "ティンパニ 26\"")).toBe("ティンパニ\n26\"");
+    expect(symbolLabelForPreset("timpani-set-4", "timpani set")).toBe("ティンパニ\n4個セット");
+    expect(symbolLabelForPreset("grand-piano-full", "Piano", true)).toBe("Piano");
+    expect(getSymbolLabelLayout("ティンパニ\n26\"", 760, 760, 160)?.lines).toEqual(["ティンパニ", "26\""]);
+    expect(getSymbolLabelLayout("\u975e\u5e38\u306b\u9577\u3044\u4efb\u610f\u30e9\u30d9\u30eb", 300, 300, 160)).toBeNull();
+  });
+
   it("画面と出力で共有できるSVG定義と実寸useを生成する", () => {
     const defs = renderSymbolDefinitionsSvg();
     expect(defs).toContain('<symbol id="stage-symbol-grand-piano"');
-    expect(defs).toContain("preserveAspectRatio=\"none\"");
+    expect(defs).toContain('<symbol id="stage-symbol-grand-piano-semi"');
+    expect(defs).toContain('<symbol id="stage-symbol-timpani-set"');
+    expect(defs).toContain('<symbol id="stage-symbol-riser-6x6"');
+    expect(defs).toContain("preserveAspectRatio=\"xMidYMid meet\"");
     expect(defs).not.toContain("http://");
 
     expect(renderSymbolUseSvg("stage-symbol-chair", 450, 520)).toContain('x="-225"');

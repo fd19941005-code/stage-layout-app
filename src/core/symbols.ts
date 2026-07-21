@@ -1,3 +1,5 @@
+import { STAGE_OPEN_TEMPLATE_ASSETS, type StageOpenTemplateAsset } from "./stageOpenTemplateSymbols";
+
 // 配置物の上面図シンボル定義。
 // 寸法・位置・回転はSceneObjectのmm値を正本とし、ここでは表示用の
 // 1000 x 1000座標系だけを定義する。SVGのsymbol/useで画面と出力へ共有する。
@@ -17,6 +19,9 @@ export type SymbolNode =
 export interface SymbolDefinition {
   id: string;
   nodes: readonly SymbolNode[];
+  viewBox?: string;
+  rawSvg?: string;
+  preserveAspectRatio?: "none" | "xMidYMid meet";
 }
 
 /** React描画とSVG文字列描画で共通に使う塗り・線属性。 */
@@ -24,9 +29,9 @@ export function symbolPaintProps(paint: SymbolPaint = "detail") {
   if (paint === "body") {
     return {
       fill: "currentColor",
-      fillOpacity: "var(--symbol-body-opacity, 0.05)",
+      fillOpacity: "var(--symbol-body-opacity, 0.10)",
       stroke: "currentColor",
-      strokeWidth: "var(--symbol-stroke-width, 12)",
+      strokeWidth: "var(--symbol-stroke-width, 16)",
       strokeLinecap: "round" as const,
       strokeLinejoin: "round" as const,
     };
@@ -34,9 +39,9 @@ export function symbolPaintProps(paint: SymbolPaint = "detail") {
   if (paint === "solid") {
     return {
       fill: "currentColor",
-      fillOpacity: "var(--symbol-solid-opacity, 0.16)",
+      fillOpacity: "var(--symbol-solid-opacity, 0.24)",
       stroke: "currentColor",
-      strokeWidth: "var(--symbol-stroke-width, 12)",
+      strokeWidth: "var(--symbol-stroke-width, 16)",
       strokeLinecap: "round" as const,
       strokeLinejoin: "round" as const,
     };
@@ -44,7 +49,7 @@ export function symbolPaintProps(paint: SymbolPaint = "detail") {
   return {
     fill: "none",
     stroke: "currentColor",
-    strokeWidth: "var(--symbol-detail-stroke-width, 10)",
+    strokeWidth: "var(--symbol-detail-stroke-width, 13)",
     strokeLinecap: "round" as const,
     strokeLinejoin: "round" as const,
   };
@@ -73,24 +78,25 @@ function path(d: string, paint: SymbolPaint = "detail"): SymbolNode {
 const chair: SymbolDefinition = {
   id: "stage-symbol-chair",
   nodes: [
-    ellipse(500, 575, 260, 215, "body"),
-    path("M275 365 Q330 190 500 190 Q670 190 725 365", "detail"),
-    path("M315 355 Q365 250 500 250 Q635 250 685 355", "detail"),
-    line(330, 730, 275, 875),
-    line(670, 730, 725, 875),
-    line(385, 755, 350, 900),
-    line(615, 755, 650, 900),
+    // 四角い座面と背の二重線で、縮小時も「椅子」と判別できる形にする。
+    rect(145, 135, 710, 730, "body", 42),
+    rect(220, 205, 560, 230, "solid", 28),
+    line(220, 500, 780, 500),
+    line(300, 865, 245, 940),
+    line(700, 865, 755, 940),
+    line(390, 865, 350, 940),
+    line(610, 865, 650, 940),
   ],
 };
 
 const chairBack: SymbolDefinition = {
   id: "stage-symbol-chair-back",
   nodes: [
-    ellipse(500, 590, 255, 205, "body"),
-    path("M275 380 Q310 175 500 145 Q690 175 725 380", "detail"),
-    path("M325 365 Q360 235 500 220 Q640 235 675 365", "detail"),
-    line(330, 745, 275, 890),
-    line(670, 745, 725, 890),
+    rect(125, 105, 750, 780, "body", 46),
+    rect(195, 170, 610, 270, "solid", 32),
+    line(195, 510, 805, 510),
+    line(280, 875, 230, 950),
+    line(720, 875, 770, 950),
   ],
 };
 
@@ -375,28 +381,69 @@ const ampSpeaker: SymbolDefinition = {
   ],
 };
 
+function withStageAsset(definition: SymbolDefinition, asset: StageOpenTemplateAsset): SymbolDefinition {
+  return { ...definition, nodes: [], viewBox: asset.viewBox, rawSvg: asset.rawSvg, preserveAspectRatio: "xMidYMid meet" };
+}
+
+function namedStageAssetSymbol(id: string, asset: StageOpenTemplateAsset): SymbolDefinition {
+  return { id, nodes: [], viewBox: asset.viewBox, rawSvg: asset.rawSvg, preserveAspectRatio: "xMidYMid meet" };
+}
+
+const stageChair = withStageAsset(chair, STAGE_OPEN_TEMPLATE_ASSETS.chair);
+const stageChairBack = withStageAsset(chairBack, STAGE_OPEN_TEMPLATE_ASSETS.chairBack);
+const stagePianoBench = withStageAsset(pianoBench, STAGE_OPEN_TEMPLATE_ASSETS.pianoBench);
+const stageMusicStand = withStageAsset(musicStand, STAGE_OPEN_TEMPLATE_ASSETS.musicStand);
+const stageLectern = withStageAsset(lectern, STAGE_OPEN_TEMPLATE_ASSETS.lectern);
+const stageConductorStand = namedStageAssetSymbol("stage-symbol-conductor-stand", STAGE_OPEN_TEMPLATE_ASSETS.conductorStand);
+const stagePodium = withStageAsset(podium, STAGE_OPEN_TEMPLATE_ASSETS.podium);
+const stageRiser3x6 = withStageAsset(riser, STAGE_OPEN_TEMPLATE_ASSETS.riser3x6);
+const stageRiser4x6 = namedStageAssetSymbol("stage-symbol-riser-4x6", STAGE_OPEN_TEMPLATE_ASSETS.riser4x6);
+const stageRiser6x6 = namedStageAssetSymbol("stage-symbol-riser-6x6", STAGE_OPEN_TEMPLATE_ASSETS.riser6x6);
+const stageHakouma = namedStageAssetSymbol("stage-symbol-hakouma", STAGE_OPEN_TEMPLATE_ASSETS.hakouma);
+const stageTable = withStageAsset(table, STAGE_OPEN_TEMPLATE_ASSETS.table);
+const stageGrandPiano = withStageAsset(grandPiano, STAGE_OPEN_TEMPLATE_ASSETS.grandPianoFull);
+const stageGrandPianoSemi = namedStageAssetSymbol("stage-symbol-grand-piano-semi", STAGE_OPEN_TEMPLATE_ASSETS.grandPianoSemi);
+const stageUprightPiano = withStageAsset(uprightPiano, STAGE_OPEN_TEMPLATE_ASSETS.uprightPiano);
+const stageCelesta = withStageAsset(celesta, STAGE_OPEN_TEMPLATE_ASSETS.celesta);
+const stageMarimba = withStageAsset(marimba, STAGE_OPEN_TEMPLATE_ASSETS.marimba);
+const stageKeyboardPercussion = withStageAsset(keyboardPercussion, STAGE_OPEN_TEMPLATE_ASSETS.xylophone);
+const stageBassDrum = withStageAsset(bassDrum, STAGE_OPEN_TEMPLATE_ASSETS.bassDrum);
+const stageVibraphone = withStageAsset(vibraphone, STAGE_OPEN_TEMPLATE_ASSETS.vibraphone);
+const stageChimes = withStageAsset(chimes, STAGE_OPEN_TEMPLATE_ASSETS.chimes);
+const stageDrumSet = withStageAsset(drumSet, STAGE_OPEN_TEMPLATE_ASSETS.drumSet);
+const stageHarp = withStageAsset(harp, STAGE_OPEN_TEMPLATE_ASSETS.harp);
+const stageContrabass = withStageAsset(contrabass, STAGE_OPEN_TEMPLATE_ASSETS.contrabass);
+const stageAmpSpeaker = withStageAsset(ampSpeaker, STAGE_OPEN_TEMPLATE_ASSETS.ampSpeaker);
+const stageTimpaniSet = namedStageAssetSymbol("stage-symbol-timpani-set", STAGE_OPEN_TEMPLATE_ASSETS.timpaniSet);
+
 export const SYMBOL_DEFINITIONS: readonly SymbolDefinition[] = [
-  chair,
-  chairBack,
-  pianoBench,
-  musicStand,
-  lectern,
-  podium,
-  riser,
-  table,
-  grandPiano,
-  uprightPiano,
-  celesta,
+  stageChair,
+  stageChairBack,
+  stagePianoBench,
+  stageMusicStand,
+  stageLectern,
+  stageConductorStand,
+  stagePodium,
+  stageRiser3x6,
+  stageRiser4x6,
+  stageRiser6x6,
+  stageHakouma,
+  stageTable,
+  stageGrandPiano,
+  stageGrandPianoSemi,
+  stageUprightPiano,
+  stageCelesta,
   timpani,
-  marimba,
-  keyboardPercussion,
-  bassDrum,
-  vibraphone,
-  chimes,
-  drumSet,
-  harp,
-  contrabass,
-  ampSpeaker,
+  stageTimpaniSet,
+  stageMarimba,
+  stageKeyboardPercussion,
+  stageBassDrum,
+  stageVibraphone,
+  stageChimes,
+  stageDrumSet,
+  stageHarp,
+  stageContrabass,
+  stageAmpSpeaker,
 ];
 
 const PRESET_SYMBOL_IDS: Readonly<Record<string, string>> = {
@@ -404,25 +451,27 @@ const PRESET_SYMBOL_IDS: Readonly<Record<string, string>> = {
   "chair-back": chairBack.id,
   "piano-bench": pianoBench.id,
   "music-stand": musicStand.id,
-  "conductor-stand": musicStand.id,
+  "conductor-stand": stageConductorStand.id,
   lectern: lectern.id,
   podium: podium.id,
-  "riser-3x6": riser.id,
-  "riser-4x6": riser.id,
-  hakouma: riser.id,
+  "riser-3x6": stageRiser3x6.id,
+  "riser-4x6": stageRiser4x6.id,
+  "riser-6x6": stageRiser6x6.id,
+  hakouma: stageHakouma.id,
   "table-long": table.id,
-  "grand-piano-full": grandPiano.id,
-  "grand-piano-semi": grandPiano.id,
+  "grand-piano-full": stageGrandPiano.id,
+  "grand-piano-semi": stageGrandPianoSemi.id,
   "upright-piano": uprightPiano.id,
   celesta: celesta.id,
   "timpani-23": timpani.id,
   "timpani-26": timpani.id,
   "timpani-29": timpani.id,
   "timpani-32": timpani.id,
+  "timpani-set-4": stageTimpaniSet.id,
   marimba: marimba.id,
   "bass-drum": bassDrum.id,
   vibraphone: vibraphone.id,
-  xylophone: keyboardPercussion.id,
+  xylophone: stageKeyboardPercussion.id,
   chimes: chimes.id,
   "drum-set": drumSet.id,
   harp: harp.id,
@@ -441,6 +490,84 @@ export function symbolIdForPreset(presetId: string | null): string | null {
 
 export function getSymbolDefinition(symbolId: string): SymbolDefinition | undefined {
   return SYMBOL_BY_ID.get(symbolId);
+}
+
+const PRESET_SYMBOL_LABELS: Readonly<Record<string, string>> = {
+  "chair": "椅子",
+  "chair-back": "背付椅子",
+  "piano-bench": "ピアノ椅子",
+  "music-stand": "譜面台",
+  "conductor-stand": "指揮者台",
+  "lectern": "演台",
+  "podium": "指揮台",
+  "riser-3x6": "平台",
+  "riser-4x6": "平台",
+  "riser-6x6": "平台",
+  "hakouma": "箱馬",
+  "table-long": "長机",
+  "grand-piano-full": "ピアノ",
+  "grand-piano-semi": "ピアノ",
+  "upright-piano": "アップライト",
+  "celesta": "チェレスタ",
+  "timpani-23": "ティンパニ\n23\"",
+  "timpani-26": "ティンパニ\n26\"",
+  "timpani-29": "ティンパニ\n29\"",
+  "timpani-32": "ティンパニ\n32\"",
+  "timpani-set-4": "ティンパニ\n4個セット",
+  "marimba": "マリンバ",
+  "bass-drum": "バスドラム",
+  "vibraphone": "ヴィブラフォン",
+  "xylophone": "シロフォン",
+  "chimes": "チャイム",
+  "drum-set": "ドラムセット",
+  "harp": "ハープ",
+  "contrabass-stool": "コントラバス",
+  "amp-speaker": "アンプ"
+};
+
+/** シンボル内に収めるための短い既定名。任意ラベルは原文を優先する。 */
+export function symbolLabelForPreset(presetId: string | null, fallback: string, custom = false): string {
+  const value = fallback.trim();
+  if (custom && value) return value;
+  return PRESET_SYMBOL_LABELS[presetId ?? ""] ?? value;
+}
+
+export interface SymbolLabelLayout {
+  lines: string[];
+  fontSizeMm: number;
+  lineHeightMm: number;
+}
+
+function symbolLabelWidthUnits(value: string): number {
+  return [...value].reduce((total, character) => {
+    if (/\s/.test(character)) return total + 0.45;
+    if (/[A-Za-z0-9]/.test(character)) return total + 0.65;
+    return total + 1;
+  }, 0);
+}
+
+/** ラベルが実寸フットプリント内に収まる場合だけ内側表示する。 */
+export function getSymbolLabelLayout(
+  value: string,
+  widthMm: number,
+  depthMm: number,
+  preferredFontSizeMm: number,
+): SymbolLabelLayout | null {
+  const lines = value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  if (lines.length === 0 || !Number.isFinite(widthMm) || !Number.isFinite(depthMm)) return null;
+  const availableWidthMm = Math.max(1, widthMm) * 0.78;
+  const availableHeightMm = Math.max(1, depthMm) * 0.42;
+  const longestLineUnits = Math.max(...lines.map(symbolLabelWidthUnits), 1);
+  const preferred = Number.isFinite(preferredFontSizeMm) ? Math.min(600, Math.max(80, preferredFontSizeMm)) : 160;
+  const widthFit = availableWidthMm / (longestLineUnits * 0.92);
+  const heightFit = availableHeightMm / (lines.length * 1.2);
+  const fontSizeMm = Math.min(preferred, widthFit, heightFit);
+  if (fontSizeMm < 76) return null;
+  return {
+    lines,
+    fontSizeMm,
+    lineHeightMm: fontSizeMm * 1.2,
+  };
 }
 
 function svgPaintAttributes(paint: SymbolPaint = "detail"): string {
@@ -469,7 +596,10 @@ function renderSymbolNodeSvg(node: SymbolNode): string {
 /** 出力SVGのdefsへ埋め込むシンボル定義。外部URLは参照しない。 */
 export function renderSymbolDefinitionsSvg(): string {
   return SYMBOL_DEFINITIONS
-    .map((definition) => `<symbol id="${definition.id}" viewBox="${SYMBOL_VIEW_BOX}" preserveAspectRatio="none">${definition.nodes.map(renderSymbolNodeSvg).join("")}</symbol>`)
+    .map((definition) => {
+      const content = definition.rawSvg ?? definition.nodes.map(renderSymbolNodeSvg).join("");
+      return `<symbol id="${definition.id}" viewBox="${definition.viewBox ?? SYMBOL_VIEW_BOX}" preserveAspectRatio="${definition.preserveAspectRatio ?? "none"}">${content}</symbol>`;
+    })
     .join("");
 }
 

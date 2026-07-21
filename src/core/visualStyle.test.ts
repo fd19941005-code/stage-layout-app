@@ -9,7 +9,7 @@ import {
 describe("配置物の表示スタイル", () => {
   it("楽器は既定ラベルを表示し、椅子は図面を汚さない", () => {
     expect(defaultObjectStyle({ type: "instrument", annotationKind: null })).toMatchObject({
-      color: "#12151a",
+      color: "#173e43",
       labelVisible: true,
     });
     expect(defaultObjectStyle({ type: "chair", annotationKind: null }).labelVisible).toBe(false);
@@ -46,6 +46,6 @@ describe("配置物の表示スタイル", () => {
     });
     expect(style.fillColor).toBe("#4e7fb6");
     expect(style.labelVisible).toBe(false);
-    expect(style.strokeWidthMm).toBe(12);
+    expect(style.strokeWidthMm).toBe(16);
   });
 });
