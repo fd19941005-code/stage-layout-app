@@ -1,7 +1,7 @@
 // 座標変換の純粋関数群(9.4 座標変換の原則、12.1 実装上の制約)。
 // UIコンポーネントへ散在させず、ここに集約する。自動テスト必須領域(11.4)。
 
-import type { Background, CropPx, PointMm, PointPx, SceneObject, ViewState } from "../types/project";
+import type { Background, CropPx, PointMm, PointPx, Project, SceneObject, ViewState } from "../types/project";
 
 /** 画面上の点(px)。保存対象にしてはならない */
 export interface ScreenPoint {
@@ -229,3 +229,60 @@ export function sceneObjectBoundsMm(obj: SceneObject): { minXMm: number; minYMm:
   return rotatedBoundsMm(obj);
 }
 
+
+/**
+ * 表示中の図面全体が見えるViewStateを計算する。背景・表示中オブジェクト・壁を
+ * 同じmm座標系でまとめるため、画面のフィット操作でも実寸データは変更しない。
+ */
+export function fitViewToProject(
+  project: Pick<Project, "background" | "calibration" | "layers" | "objects" | "walls">,
+  viewportWidth: number,
+  viewportHeight: number,
+  paddingPx = 48,
+): ViewState {
+  const mmPerPixel = project.calibration.mmPerPixel ?? 10;
+  const visibleLayerIds = new Set(project.layers.filter((layer) => layer.visible).map((layer) => layer.id));
+  const bounds = { minXMm: Number.POSITIVE_INFINITY, minYMm: Number.POSITIVE_INFINITY, maxXMm: Number.NEGATIVE_INFINITY, maxYMm: Number.NEGATIVE_INFINITY };
+  let hasContent = false;
+
+  function include(minXMm: number, minYMm: number, maxXMm: number, maxYMm: number) {
+    bounds.minXMm = Math.min(bounds.minXMm, minXMm);
+    bounds.minYMm = Math.min(bounds.minYMm, minYMm);
+    bounds.maxXMm = Math.max(bounds.maxXMm, maxXMm);
+    bounds.maxYMm = Math.max(bounds.maxYMm, maxYMm);
+    hasContent = true;
+  }
+
+  if (project.background.imageDataUrl && project.background.visible && visibleLayerIds.has("layer-background")) {
+    const display = getBackgroundDisplaySizePx(project.background);
+    include(0, 0, display.widthPx * mmPerPixel, display.heightPx * mmPerPixel);
+  }
+
+  for (const object of project.objects) {
+    if (!object.visible || !visibleLayerIds.has(object.layerId)) continue;
+    const objectBounds = sceneObjectBoundsMm(object);
+    include(objectBounds.minXMm, objectBounds.minYMm, objectBounds.maxXMm, objectBounds.maxYMm);
+  }
+
+  for (const wall of project.walls) {
+    if (wall.points.length === 0) continue;
+    for (const point of wall.points) include(point.xMm, point.yMm, point.xMm, point.yMm);
+  }
+
+  if (!hasContent) {
+    return { zoom: 0.04, panX: Math.max(0, viewportWidth / 2), panY: Math.max(0, viewportHeight / 2) };
+  }
+
+  const widthMm = Math.max(1, bounds.maxXMm - bounds.minXMm);
+  const heightMm = Math.max(1, bounds.maxYMm - bounds.minYMm);
+  const availableWidthPx = Math.max(160, viewportWidth - paddingPx * 2);
+  const availableHeightPx = Math.max(160, viewportHeight - paddingPx * 2);
+  const zoom = Math.min(2, Math.max(0.005, Math.min(availableWidthPx / widthMm, availableHeightPx / heightMm)));
+  const centerXMm = (bounds.minXMm + bounds.maxXMm) / 2;
+  const centerYMm = (bounds.minYMm + bounds.maxYMm) / 2;
+  return {
+    zoom,
+    panX: viewportWidth / 2 - centerXMm * zoom,
+    panY: viewportHeight / 2 - centerYMm * zoom,
+  };
+}

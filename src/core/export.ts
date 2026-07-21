@@ -5,7 +5,7 @@ import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import type { Background, Project, SceneObject } from "../types/project";
 import { effectiveMmPerPixel } from "../state/appState";
 import { getBackgroundDisplaySizePx, getEffectiveCrop, sceneObjectBoundsMm } from "./transform";
-import { renderSymbolDefinitionsSvg, renderSymbolUseSvg, symbolIdForPreset } from "./symbols";
+import { getSymbolLabelLayout, renderSymbolDefinitionsSvg, renderSymbolUseSvg, symbolIdForPreset, symbolLabelForPreset, type SymbolLabelLayout } from "./symbols";
 import { resolveObjectStyle, type ObjectStyle } from "./visualStyle";
 
 export const PDF_POINTS_PER_INCH = 72;
@@ -163,12 +163,15 @@ function renderGridSvg(bounds: ExportBounds, intervalMm = 910): string {
   return `<g class="export-grid" stroke="#9aa6b2" stroke-width="8" opacity="0.35">${lines.join("")}</g>`;
 }
 
-function renderSvgText(value: string, x: number, y: number, style: ObjectStyle, anchor = "middle", className = "object-label"): string {
-  const lines = value.split(/\r?\n/);
-  const lineHeight = style.labelFontSizeMm * 1.2;
+function renderSvgText(value: string, x: number, y: number, style: ObjectStyle, anchor = "middle", className = "object-label", layout?: SymbolLabelLayout): string {
+  const lines = layout?.lines ?? value.split(/\r?\n/);
+  const lineHeight = layout?.lineHeightMm ?? style.labelFontSizeMm * 1.2;
   const firstY = y - ((lines.length - 1) * lineHeight) / 2;
   const tspans = lines.map((line, index) => '<tspan x="' + x + '" dy="' + (index === 0 ? 0 : lineHeight) + '">' + escapeXml(line) + '</tspan>').join("");
-  return '<text class="' + className + '" x="' + x + '" y="' + firstY + '" text-anchor="' + anchor + '" fill="' + style.labelColor + '" font-size="' + style.labelFontSizeMm + '">' + tspans + '</text>';
+  const symbolStyle = className === "symbol-label"
+    ? ' style="paint-order:stroke;stroke:' + (style.labelColor.toLowerCase() === "#ffffff" ? "rgba(18,21,26,0.65)" : "rgba(255,255,255,0.86)") + ';stroke-width:' + Math.max(8, (layout?.fontSizeMm ?? style.labelFontSizeMm) * 0.08) + '"'
+    : "";
+  return '<text class="' + className + '" x="' + x + '" y="' + firstY + '" text-anchor="' + anchor + '" fill="' + style.labelColor + '" font-size="' + (layout?.fontSizeMm ?? style.labelFontSizeMm) + '"' + symbolStyle + '>' + tspans + '</text>';
 }
 
 function renderShapeStyle(style: ObjectStyle): string {
@@ -207,7 +210,13 @@ function renderObjectsSvg(objects: readonly SceneObject[], layers: ExportLayerOp
       return '<g transform="translate(' + object.xMm + ' ' + object.yMm + ') rotate(' + object.rotationDeg + ')">' + shape + label + '</g>';
     }
     if (symbolId) {
-      const symbolLabel = showLabel ? renderSvgText(labelText, 0, object.depthMm / 2 + 320, style) : "";
+      const symbolText = symbolLabelForPreset(object.presetId, labelText, Boolean(object.label));
+      const symbolLayout = getSymbolLabelLayout(symbolText, object.widthMm, object.depthMm, style.labelFontSizeMm);
+      const symbolLabel = showLabel
+        ? symbolLayout
+          ? renderSvgText(symbolText, 0, 0, style, "middle", "symbol-label", symbolLayout)
+          : renderSvgText(symbolText, 0, object.depthMm / 2 + 320, style)
+        : "";
       return '<g transform="translate(' + object.xMm + ' ' + object.yMm + ') rotate(' + object.rotationDeg + ')" ' + renderSymbolStyle(style) + '>' + renderSymbolUseSvg(symbolId, object.widthMm, object.depthMm) + symbolLabel + '</g>';
     }
     const shape = object.shape === "circle"

@@ -9,19 +9,19 @@ export interface StylePreset {
   style: ObjectStyle;
 }
 
-const INK = "#12151a";
-const LABEL_RED = "#b2333f";
+const INK = "#173e43";
+const LABEL_RED = "#8b594a";
 
 export const STYLE_PRESETS: readonly StylePreset[] = [
   {
     id: "instrument-ink",
     name: "楽器（黒）",
-    style: { color: INK, fillColor: INK, fillOpacity: 0.92, labelColor: LABEL_RED, labelVisible: true, labelFontSizeMm: 180, strokeWidthMm: 12 },
+    style: { color: INK, fillColor: INK, fillOpacity: 0.16, labelColor: LABEL_RED, labelVisible: true, labelFontSizeMm: 160, strokeWidthMm: 16 },
   },
   {
     id: "seat-ink",
     name: "座席（黒）",
-    style: { color: INK, fillColor: INK, fillOpacity: 0.96, labelColor: LABEL_RED, labelVisible: false, labelFontSizeMm: 150, strokeWidthMm: 12 },
+    style: { color: INK, fillColor: INK, fillOpacity: 0.08, labelColor: LABEL_RED, labelVisible: false, labelFontSizeMm: 140, strokeWidthMm: 16 },
   },
   {
     id: "riser-red",

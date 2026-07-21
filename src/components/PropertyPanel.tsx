@@ -1,7 +1,7 @@
 // 右プロパティパネル(10.1): 背景、レイヤー、スナップ、選択物の編集。
 // 寸法変更は数値入力のみ(FR-042、FR-043)。ドラッグによる拡大縮小は提供しない。
 
-import type { Dispatch } from "react";
+import { useEffect, useState, type ChangeEvent, type Dispatch, type KeyboardEvent } from "react";
 import type { Action, AppState } from "../state/appState";
 import type { SceneObject, Wall } from "../types/project";
 import type { Alignment } from "../core/layout";
@@ -15,6 +15,7 @@ interface Props {
   dispatch: Dispatch<Action>;
   onOpenGrid: (sourceId: string) => void;
   onOpenPultArc: () => void;
+  onClose?: () => void;
 }
 
 type NumericField = "xMm" | "yMm" | "widthMm" | "depthMm" | "heightMm" | "rotationDeg";
@@ -36,6 +37,93 @@ const ALIGN_BUTTONS: { alignment: Alignment; label: string }[] = [
   { alignment: "centerY", label: "上下中央" },
   { alignment: "bottom", label: "下揃え" },
 ];
+
+interface DraftNumberFieldProps {
+  label: string;
+  value: number | null | undefined;
+  min?: number;
+  max?: number;
+  disabled?: boolean;
+  className?: string;
+  onCommit: (value: number) => void;
+}
+
+function DraftNumberField({ label, value, min, max, disabled, className, onCommit }: DraftNumberFieldProps) {
+  const currentValue = typeof value === "number" && Number.isFinite(value) ? value : 0;
+  const [draft, setDraft] = useState(String(currentValue));
+  const [invalid, setInvalid] = useState(false);
+
+  useEffect(() => {
+    setDraft(String(currentValue));
+    setInvalid(false);
+  }, [currentValue]);
+
+  function reset() {
+    setDraft(String(currentValue));
+    setInvalid(false);
+  }
+
+  function commit() {
+    const next = Number(draft);
+    if (!draft.trim() || !Number.isFinite(next) || (min !== undefined && next < min) || (max !== undefined && next > max)) {
+      setDraft(String(currentValue));
+      setInvalid(true);
+      return;
+    }
+    setInvalid(false);
+    onCommit(next);
+  }
+
+  return (
+    <label className={className}>
+      {label}
+      <input
+        type="number"
+        value={draft}
+        min={min}
+        max={max}
+        disabled={disabled}
+        className={invalid ? "input-invalid" : undefined}
+        aria-invalid={invalid}
+        onChange={(event) => { setDraft(event.target.value); setInvalid(false); }}
+        onBlur={commit}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") event.currentTarget.blur();
+          if (event.key === "Escape") { reset(); event.currentTarget.blur(); }
+        }}
+      />
+      {invalid && <small className="input-error">数値を確認してください</small>}
+    </label>
+  );
+}
+
+interface DraftTextFieldProps {
+  label: string;
+  value: string;
+  multiline?: boolean;
+  rows?: number;
+  disabled?: boolean;
+  onCommit: (value: string) => void;
+}
+
+function DraftTextField({ label, value, multiline = false, rows = 3, disabled, onCommit }: DraftTextFieldProps) {
+  const [draft, setDraft] = useState(value);
+  useEffect(() => setDraft(value), [value]);
+  function commit() { if (draft !== value) onCommit(draft); }
+  function reset() { setDraft(value); }
+  function handleKeyDown(event: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) {
+    if (event.key === "Escape") { reset(); event.currentTarget.blur(); }
+    if (event.key === "Enter" && (!multiline || event.ctrlKey || event.metaKey)) event.currentTarget.blur();
+  }
+  return (
+    <label>
+      {label}
+      {multiline
+        ? <textarea rows={rows} className="multiline-label" value={draft} disabled={disabled} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setDraft(event.target.value)} onBlur={commit} onKeyDown={handleKeyDown} />
+        : <input value={draft} disabled={disabled} onChange={(event: ChangeEvent<HTMLInputElement>) => setDraft(event.target.value)} onBlur={commit} onKeyDown={handleKeyDown} />}
+    </label>
+  );
+}
 
 interface WallPanelProps {
   state: AppState;
@@ -97,7 +185,7 @@ function WallPanel({ state, dispatch }: WallPanelProps) {
   );
 }
 
-export function PropertyPanel({ state, dispatch, onOpenGrid, onOpenPultArc }: Props) {
+export function PropertyPanel({ state, dispatch, onOpenGrid, onOpenPultArc, onClose }: Props) {
   const selectedObjects = state.project.objects.filter((object) => state.selectedIds.includes(object.id));
   const selected: SceneObject | undefined = selectedObjects[0] ?? state.project.objects.find((object) => object.id === state.selectedId);
   const activeLayer = state.project.layers.find((layer) => layer.id === state.activeLayerId);
@@ -108,6 +196,22 @@ export function PropertyPanel({ state, dispatch, onOpenGrid, onOpenPultArc }: Pr
     return (
       <div className="multi-properties">
         <p className="object-name">{selectedObjects.length}個を選択中</p>
+        <section className="multi-style-editor">
+          <h3>一括スタイル</h3>
+          <div className="style-palette compact-style-palette">
+            {STYLE_PRESETS.map((preset) => (
+              <button
+                key={preset.id}
+                type="button"
+                className="style-palette-button"
+                style={{ backgroundColor: preset.style.fillColor, color: preset.style.labelColor, borderColor: preset.style.color }}
+                onClick={() => dispatch({ type: "SET_SELECTED_STYLE", style: preset.style })}
+              >
+                {preset.name}
+              </button>
+            ))}
+          </div>
+        </section>
         <h3>整列</h3>
         <div className="property-button-grid">
           {ALIGN_BUTTONS.map(({ alignment, label }) => (
@@ -140,8 +244,10 @@ export function PropertyPanel({ state, dispatch, onOpenGrid, onOpenPultArc }: Pr
       dispatch({ type: "UPDATE_OBJECT", id: selectedObject.id, patch });
     }
     const visualStyle = resolveObjectStyle(selectedObject);
-    function updateStyle(patch: Partial<ObjectStyle>) {
-      commit({ style: { ...(selectedObject.style ?? {}), ...patch } });
+    function updateStyle(patch: Partial<ObjectStyle>, preview = false) {
+      const style = { ...(selectedObject.style ?? {}), ...patch };
+      if (preview) dispatch({ type: "UPDATE_OBJECT_PREVIEW", id: selectedObject.id, patch: { style } });
+      else commit({ style });
     }
     return (
       <>
@@ -151,25 +257,23 @@ export function PropertyPanel({ state, dispatch, onOpenGrid, onOpenPultArc }: Pr
             {state.project.layers.map((layer) => <option key={layer.id} value={layer.id}>{layer.name}{layer.locked ? " 🔒" : ""}</option>)}
           </select>
         </label>
-        <label>ラベル{selectedObject.annotationKind === "text" || selectedObject.annotationKind === "rect"
-          ? <textarea className="multiline-label" rows={4} value={selectedObject.label} disabled={!editable} onChange={(e) => commit({ label: e.target.value })} />
-          : <input value={selectedObject.label} disabled={!editable} onChange={(e) => commit({ label: e.target.value })} />}
-        </label>
+        <DraftTextField
+          label="ラベル"
+          value={selectedObject.label}
+          multiline={selectedObject.annotationKind === "text" || selectedObject.annotationKind === "rect"}
+          rows={4}
+          disabled={!editable}
+          onCommit={(label) => commit({ label })}
+        />
         {NUMERIC_FIELDS.map(({ key, label, min }) => (
-          <label key={key}>
-            {label}
-            <input
-              type="number"
-              value={selectedObject[key]}
-              min={min}
-              disabled={!editable}
-              onChange={(e) => {
-                const value = Number(e.target.value);
-                if (!Number.isFinite(value) || (min !== undefined && value < min)) return;
-                commit({ [key]: value });
-              }}
-            />
-          </label>
+          <DraftNumberField
+            key={key}
+            label={label}
+            value={selectedObject[key]}
+            min={min}
+            disabled={!editable}
+            onCommit={(value) => commit({ [key]: value } as Partial<SceneObject>)}
+          />
         ))}
         <details className="object-style-editor" open>
           <summary>表示スタイル</summary>
@@ -194,17 +298,17 @@ export function PropertyPanel({ state, dispatch, onOpenGrid, onOpenPultArc }: Pr
             <label>ラベル色<input type="color" value={visualStyle.labelColor} disabled={!editable} onChange={(e) => updateStyle({ labelColor: e.target.value })} /></label>
           </div>
           <label>塗りの濃さ
-            <input type="range" min={0} max={1} step={0.05} value={visualStyle.fillOpacity} disabled={!editable} onChange={(e) => updateStyle({ fillOpacity: Number(e.target.value) })} />
+            <input type="range" min={0} max={1} step={0.05} value={visualStyle.fillOpacity} disabled={!editable} onChange={(e) => updateStyle({ fillOpacity: Number(e.target.value) }, true)} onPointerUp={() => dispatch({ type: "COMMIT_TRANSIENT_EDIT" })} onBlur={() => dispatch({ type: "COMMIT_TRANSIENT_EDIT" })} />
             <span className="style-value">{Math.round(visualStyle.fillOpacity * 100)}%</span>
           </label>
-          <label>線幅(mm)<input type="number" min={2} max={80} value={visualStyle.strokeWidthMm} disabled={!editable} onChange={(e) => updateStyle({ strokeWidthMm: Number(e.target.value) })} /></label>
-          <label>ラベル文字サイズ(mm)<input type="number" min={80} max={600} value={visualStyle.labelFontSizeMm} disabled={!editable} onChange={(e) => updateStyle({ labelFontSizeMm: Number(e.target.value) })} /></label>
+          <DraftNumberField label="線幅(mm)" min={2} max={80} value={visualStyle.strokeWidthMm} disabled={!editable} className="style-number-field" onCommit={(value) => updateStyle({ strokeWidthMm: value })} />
+          <DraftNumberField label="ラベル文字サイズ(mm)" min={80} max={600} value={visualStyle.labelFontSizeMm} disabled={!editable} className="style-number-field" onCommit={(value) => updateStyle({ labelFontSizeMm: value })} />
           <label className="row"><input type="checkbox" checked={visualStyle.labelVisible} disabled={!editable} onChange={(e) => updateStyle({ labelVisible: e.target.checked })} />既定ラベルを表示</label>
         </details>
         {(selectedObject.annotationKind === "line" || selectedObject.annotationKind === "arrow" || selectedObject.annotationKind === "dimension") && (
           <div className="dialog-form-grid">
-            <label>終点X(mm)<input type="number" value={selectedObject.endXMm ?? selectedObject.xMm} disabled={!editable} onChange={(e) => commit({ endXMm: Number(e.target.value) })} /></label>
-            <label>終点Y(mm)<input type="number" value={selectedObject.endYMm ?? selectedObject.yMm} disabled={!editable} onChange={(e) => commit({ endYMm: Number(e.target.value) })} /></label>
+            <DraftNumberField label="終点X(mm)" value={selectedObject.endXMm ?? selectedObject.xMm} disabled={!editable} onCommit={(value) => commit({ endXMm: value })} />
+            <DraftNumberField label="終点Y(mm)" value={selectedObject.endYMm ?? selectedObject.yMm} disabled={!editable} onCommit={(value) => commit({ endYMm: value })} />
           </div>
         )}
         {selectedObject.type !== "riser" && (
@@ -227,6 +331,10 @@ export function PropertyPanel({ state, dispatch, onOpenGrid, onOpenPultArc }: Pr
 
   return (
     <aside className="property-panel">
+      <div className="panel-heading">
+        <div><span className="eyebrow">図面情報 / 編集</span><h2>インスペクター</h2></div>
+        {onClose && <button type="button" className="panel-close" onClick={onClose} aria-label="インスペクターを閉じる">×</button>}
+      </div>
       <BackgroundPanel state={state} dispatch={dispatch} />
       <LayerPanel state={state} dispatch={dispatch} />
       <SnapPanel state={state} dispatch={dispatch} />
@@ -245,4 +353,3 @@ export function PropertyPanel({ state, dispatch, onOpenGrid, onOpenPultArc }: Pr
     </aside>
   );
 }
-

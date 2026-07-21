@@ -4,11 +4,10 @@ import { useState, type Dispatch } from "react";
 import type { Action, AppState } from "../state/appState";
 import type { ExportSettings, ProjectMetadata } from "../types/project";
 import {
-  createProjectPdf,
+  appServices,
   DEFAULT_EXPORT_LAYERS,
-  renderProjectToPng,
   type ExportLayerOptions,
-} from "../core/export";
+} from "../services";
 
 interface Props {
   state: AppState;
@@ -19,13 +18,8 @@ interface Props {
 
 type Format = "png" | "pdf";
 
-function downloadBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.click();
-  URL.revokeObjectURL(url);
+function safeOutputBaseName(name: string): string {
+  return (name.trim() || "stage-layout").replace(/[<>:"/\\|?*\x00-\x1f]/g, "_").slice(0, 80);
 }
 
 export function ExportDialog({ state, dispatch, onClose, onNotice }: Props) {
@@ -57,11 +51,14 @@ export function ExportDialog({ state, dispatch, onClose, onNotice }: Props) {
     try {
       dispatch({ type: "SET_METADATA", metadata });
       dispatch({ type: "SET_EXPORT_SETTINGS", settings: exportSettings });
-      const blob = format === "png"
-        ? await renderProjectToPng(exportProject, { longSidePx: pngLongSidePx, layers })
-        : await createProjectPdf(exportProject, { paper, orientation, scale, layers });
-      const extension = format === "png" ? "png" : "pdf";
-      downloadBlob(blob, `${state.project.name || "stage-layout"}.${extension}`);
+      const artifact = format === "png"
+        ? await appServices.exporter.exportPng(exportProject, { longSidePx: pngLongSidePx, layers })
+        : await appServices.exporter.exportPdf(exportProject, { paper, orientation, scale, layers });
+      await appServices.file.saveFile({
+        filename: `${safeOutputBaseName(state.project.name)}.${artifact.extension}`,
+        mimeType: artifact.mimeType,
+        data: artifact.data,
+      });
       onNotice(`${format === "png" ? "PNG" : "PDF"}を出力しました`);
       onClose();
     } catch (error) {
@@ -135,4 +132,3 @@ export function ExportDialog({ state, dispatch, onClose, onNotice }: Props) {
     </div>
   );
 }
-

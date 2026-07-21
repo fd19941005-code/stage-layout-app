@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="16.125017mm"
+   height="6.6322389mm"
+   viewBox="0 0 16.125017 6.632239"
+   version="1.1"
+   id="svg3"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <!-- Master Definitions -->
+  <style
+     id="style1">
+text { white-space: pre; }
+.sfont-3 { font-style:normal; font-weight:400; font-size:2.46944px; font-family:游ゴシック; }
+</style>
+  <defs
+     id="defs1" />
+  <!-- 多角線部品 ID=6480 -->
+  <!-- End of 多角線部品 ID=6480 -->
+  <g
+     id="g3"
+     transform="translate(-0.302083,-0.29484117)">
+    <g
+       id="Group-6480"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs2">
+        <symbol
+           id="ObjectBody-0">
+          <path
+             d="m 16.3646,6.86458 c 0,0 0,-6.499997 0,-6.499997 0,0 -16.000017,1.757657 -16.000017,1.757657 0,0 0,3.18367 0,3.18367 0,0 16.000017,1.55867 16.000017,1.55867"
+             id="path1" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-0"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use2"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <text
+         class="sfont-3"
+         fill="#000000ff"
+         id="text2"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1"><tspan
+           x="2.6378601"
+           y="4.3895001"
+           id="tspan2"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">Vibraphone</tspan></text>
+      <use
+         href="#ObjectBody-0"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use3"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-size:2.82223px;line-height:1.25;font-family:'Yu Gothic';-inkscape-font-specification:'Yu Gothic, Normal';text-align:center;text-anchor:middle;stroke-width:0.264583"
+       x="8.6870899"
+       y="4.8450847"
+       id="text3"><tspan
+         id="tspan3"
+         style="stroke-width:0.264583"
+         x="8.6870899"
+         y="4.8450847">Vibraphone</tspan></text>
+  </g>
+</svg>

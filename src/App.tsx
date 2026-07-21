@@ -5,7 +5,7 @@ import { Component, lazy, Suspense, useEffect, useReducer, useRef, useState, typ
 import type { PointMm } from "./types/project";
 import { appReducer, createInitialState } from "./state/appState";
 import { generateId } from "./core/project";
-import { loadAutosavedProject, saveAutosavedProject } from "./core/storage";
+import { appServices } from "./services";
 import { Toolbar } from "./components/Toolbar";
 import { LibraryPanel } from "./components/LibraryPanel";
 import { CanvasStage } from "./components/CanvasStage";
@@ -75,8 +75,11 @@ export function App() {
   const [pultArcOpen, setPultArcOpen] = useState(false);
   const [cursorMm, setCursorMm] = useState<PointMm | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [libraryOpen, setLibraryOpen] = useState(() => window.innerWidth > 960);
+  const [inspectorOpen, setInspectorOpen] = useState(() => window.innerWidth > 960);
   const noticeTimer = useRef<number | undefined>(undefined);
   const storageLoadStarted = useRef(false);
+  const nudgeActiveRef = useRef(false);
 
   function showNotice(message: string) {
     setNotice(message);
@@ -105,7 +108,7 @@ export function App() {
   useEffect(() => {
     if (storageLoadStarted.current) return;
     storageLoadStarted.current = true;
-    loadAutosavedProject()
+    appServices.autosave.loadProject()
       .then((project) => {
         if (project) dispatch({ type: "LOAD_PROJECT", project });
       })
@@ -122,7 +125,7 @@ export function App() {
   useEffect(() => {
     if (!storageReady || state.saveState !== "dirty") return;
     const timer = window.setTimeout(() => {
-      saveAutosavedProject(state.project).catch(() => showNotice("自動保存に失敗しました(容量超過の可能性があります)"));
+      appServices.autosave.saveProject(state.project).catch(() => showNotice("自動保存に失敗しました(容量超過の可能性があります)"));
     }, 1500);
     return () => window.clearTimeout(timer);
   }, [state.project, state.saveState, storageReady]);
@@ -131,6 +134,12 @@ export function App() {
     function handleKeyDown(event: KeyboardEvent) {
       const target = event.target as HTMLElement | null;
       if (["INPUT", "TEXTAREA", "SELECT", "BUTTON"].includes(target?.tagName ?? "")) return;
+      if (event.key === "Escape" && (state.mode !== "select" || Boolean(state.pendingPresetId))) {
+        event.preventDefault();
+        setWallDraft([]);
+        dispatch({ type: "SET_MODE", mode: "select" });
+        return;
+      }
       const modifier = event.ctrlKey || event.metaKey;
       if (modifier && event.key.toLowerCase() === "z") {
         event.preventDefault();
@@ -138,6 +147,15 @@ export function App() {
       } else if (modifier && event.key.toLowerCase() === "y") {
         event.preventDefault();
         dispatch({ type: "REDO" });
+      } else if (modifier && event.key.toLowerCase() === "d" && state.selectedIds.length > 0) {
+        event.preventDefault();
+        dispatch({ type: "DUPLICATE_SELECTED" });
+      } else if (modifier && event.key.toLowerCase() === "a") {
+        event.preventDefault();
+        dispatch({
+          type: "SELECT_MANY",
+          ids: state.project.objects.filter((object) => object.visible).map((object) => object.id),
+        });
       } else if (
         state.mode === "select"
         && !state.pendingPresetId
@@ -155,7 +173,8 @@ export function App() {
         }[event.key];
         if (!direction) return;
         event.preventDefault();
-        dispatch({ type: "NUDGE_SELECTED", ...direction });
+        nudgeActiveRef.current = true;
+        dispatch({ type: "NUDGE_SELECTED_PREVIEW", ...direction });
       } else if ((event.key === "Delete" || event.key === "Backspace") && state.selectedIds.length > 0) {
         event.preventDefault();
         dispatch({ type: "DELETE_SELECTED" });
@@ -165,6 +184,11 @@ export function App() {
     function handleKeyUp(event: KeyboardEvent) {
       const target = event.target as HTMLElement | null;
       if (target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.tagName === "SELECT") return;
+      if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key) && nudgeActiveRef.current) {
+        nudgeActiveRef.current = false;
+        dispatch({ type: "COMMIT_TRANSIENT_EDIT" });
+        return;
+      }
       if (event.key === "Shift" && state.pendingPresetId && !state.placementContinuous) {
         // Shift連続配置はキーを離した時点で待機を解除し、次のクリックを誤配置にしない。
         dispatch({ type: "SET_PENDING_PRESET", presetId: null });
@@ -177,14 +201,14 @@ export function App() {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [state.mode, state.selectedIds.length, state.pendingPresetId, state.placementContinuous]);
+  }, [state.mode, state.selectedIds.length, state.pendingPresetId, state.placementContinuous, state.project.objects]);
 
   const calibrationReady = state.mode === "calibrate" && state.calibPointsPx.length === 2;
   const verificationReady = state.mode === "verifyCalibration" && state.calibPointsPx.length === 2;
 
   return (
     <div className="app-layout">
-      {!viewer3dOpen && <Toolbar state={state} dispatch={dispatch} onNotice={showNotice} onExport={() => setExportOpen(true)} onToggle3d={toggleViewer3D} is3dOpen={viewer3dOpen} wallDraft={wallDraft} onFinishWall={finishWallTrace} onClearWallDraft={() => setWallDraft([])} />}
+      {!viewer3dOpen && <Toolbar state={state} dispatch={dispatch} onNotice={showNotice} onExport={() => setExportOpen(true)} onToggle3d={toggleViewer3D} is3dOpen={viewer3dOpen} wallDraft={wallDraft} onFinishWall={finishWallTrace} onClearWallDraft={() => setWallDraft([])} onToggleLibrary={() => setLibraryOpen((open) => !open)} onToggleInspector={() => setInspectorOpen((open) => !open)} libraryOpen={libraryOpen} inspectorOpen={inspectorOpen} />}
       {!storageReady && <div className="banner info">ローカル保存データを確認中…</div>}
       {state.mode === "traceWall" && <div className="banner info">壁トレースモード: 背景上を順にクリックして壁の頂点を追加します。2点以上で「壁を確定」、高さはmmで指定してください({wallDraft.length}点)</div>}
       {state.project.calibration.mmPerPixel === null && (
@@ -209,10 +233,10 @@ export function App() {
         </Viewer3DErrorBoundary>
       ) : (
         <>
-          <main className="main-area">
-            <LibraryPanel state={state} dispatch={dispatch} />
+          <main className={`main-area${libraryOpen ? " library-is-open" : ""}${inspectorOpen ? " inspector-is-open" : ""}`}>
+            <LibraryPanel state={state} dispatch={dispatch} onClose={() => setLibraryOpen(false)} />
             <CanvasStage state={state} dispatch={dispatch} onCursorMm={setCursorMm} onNotice={showNotice} wallDraft={wallDraft} onWallDraftChange={setWallDraft} />
-            <PropertyPanel state={state} dispatch={dispatch} onOpenGrid={setGridSourceId} onOpenPultArc={() => setPultArcOpen(true)} />
+            <PropertyPanel state={state} dispatch={dispatch} onOpenGrid={setGridSourceId} onOpenPultArc={() => setPultArcOpen(true)} onClose={() => setInspectorOpen(false)} />
           </main>
           <StatusBar state={state} cursorMm={cursorMm} />
         </>
@@ -225,4 +249,3 @@ export function App() {
     </div>
   );
 }
-

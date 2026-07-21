@@ -20,7 +20,7 @@ import { effectiveMmPerPixel, type Action, type AppState, type ObjectMove } from
 import { findPreset } from "../core/presets";
 import { snapPointMm } from "../core/snap";
 import { generateId } from "../core/project";
-import { SYMBOL_DEFINITIONS, SYMBOL_VIEW_BOX, symbolIdForPreset, symbolPaintProps, type SymbolNode } from "../core/symbols";
+import { getSymbolLabelLayout, SYMBOL_DEFINITIONS, SYMBOL_VIEW_BOX, symbolIdForPreset, symbolLabelForPreset, symbolPaintProps, type SymbolNode } from "../core/symbols";
 import { resolveObjectStyle, type ObjectStyle } from "../core/visualStyle";
 
 interface Props {
@@ -34,6 +34,7 @@ interface Props {
 
 type DragState =
   | { kind: "pan"; startX: number; startY: number; startPanX: number; startPanY: number }
+  | { kind: "point"; pointMode: "traceWall" | "calibrate" | "verifyCalibration" | "measure"; startScreen: ScreenPoint; startMm: PointMm }
   | { kind: "move"; startMm: PointMm; startPositions: ObjectMove[] }
   | { kind: "rotate"; id: string; centerMm: PointMm }
   | { kind: "marquee"; startMm: PointMm }
@@ -120,8 +121,11 @@ function renderSymbolNode(node: SymbolNode, key: string): ReactNode {
 }
 
 function renderSymbolDefinition(definition: (typeof SYMBOL_DEFINITIONS)[number]) {
+  if (definition.rawSvg) {
+    return <symbol key={definition.id} id={definition.id} viewBox={definition.viewBox ?? SYMBOL_VIEW_BOX} preserveAspectRatio={definition.preserveAspectRatio ?? "none"} dangerouslySetInnerHTML={{ __html: definition.rawSvg }} />;
+  }
   return (
-    <symbol key={definition.id} id={definition.id} viewBox={SYMBOL_VIEW_BOX} preserveAspectRatio="none">
+    <symbol key={definition.id} id={definition.id} viewBox={definition.viewBox ?? SYMBOL_VIEW_BOX} preserveAspectRatio={definition.preserveAspectRatio ?? "none"}>
       {definition.nodes.map((node, index) => renderSymbolNode(node, definition.id + "-" + index))}
     </symbol>
   );
@@ -275,21 +279,13 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice, wallDraft, 
     }
 
     const pMm = screenToMm(screen, view);
-    if (mode === "traceWall") {
-      if (!calibrated) {
+    if (mode === "traceWall" || mode === "calibrate" || mode === "verifyCalibration" || mode === "measure") {
+      if (mode === "traceWall" && !calibrated) {
         onNotice("未校正のため壁トレースできません。先に校正してください。");
+        pointersRef.current.delete(e.pointerId);
         return;
       }
-      onWallDraftChange([...wallDraft, snapPoint(pMm)]);
-      return;
-    }
-    if (mode === "calibrate" || mode === "verifyCalibration") {
-      const displayedPx = mmToImagePx(pMm, mmpp);
-      dispatch({ type: "ADD_CALIB_POINT", point: displayedPxToSourcePx(displayedPx, background) });
-      return;
-    }
-    if (mode === "measure") {
-      dispatch({ type: "ADD_MEASURE_POINT", point: pMm });
+      dragRef.current = { kind: "point", pointMode: mode, startScreen: screen, startMm: pMm };
       return;
     }
 
@@ -331,11 +327,16 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice, wallDraft, 
     }
     const objectId = target?.getAttribute("data-object-id") ?? null;
     if (objectId) {
-      dispatch({ type: "SELECT", id: objectId, additive: e.shiftKey || e.ctrlKey || e.metaKey });
+      const additive = e.shiftKey || e.ctrlKey || e.metaKey;
       const object = project.objects.find((item) => item.id === objectId);
       const layer = object && project.layers.find((candidate) => candidate.id === object.layerId);
-      if (object && !object.locked && !layer?.locked && mode === "select") {
-        const ids = (selectedIds.includes(objectId) ? selectedIds : [objectId]).filter((id) =>
+      if (object?.groupId) dispatch({ type: "SELECT_GROUP", id: objectId, additive });
+      else dispatch({ type: "SELECT", id: objectId, additive });
+      if (object && !object.locked && !layer?.locked && mode === "select" && !additive) {
+        const groupIds = object.groupId
+          ? project.objects.filter((item) => item.groupId === object.groupId).map((item) => item.id)
+          : (selectedIds.includes(objectId) ? selectedIds : [objectId]);
+        const ids = groupIds.filter((id) =>
           project.objects.some((item) => {
             const itemLayer = project.layers.find((candidate) => candidate.id === item.layerId);
             return item.id === id && !item.locked && !itemLayer?.locked;
@@ -361,6 +362,10 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice, wallDraft, 
 
   function handlePointerMove(e: PointerEvent<SVGSVGElement>) {
     const screen = toScreen(e);
+    if (!pointersRef.current.has(e.pointerId) && e.buttons === 0) {
+      onCursorMm(calibrated ? screenToMm(screen, view) : null);
+      return;
+    }
     pointersRef.current.set(e.pointerId, screen);
     onCursorMm(calibrated ? screenToMm(screen, view) : null);
     const drag = dragRef.current;
@@ -380,6 +385,13 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice, wallDraft, 
       return;
     }
     const pMm = screenToMm(screen, view);
+    if (drag.kind === "point") {
+      if (Math.hypot(screen.x - drag.startScreen.x, screen.y - drag.startScreen.y) > 8) {
+        dragRef.current = { kind: "pan", startX: drag.startScreen.x, startY: drag.startScreen.y, startPanX: view.panX, startPanY: view.panY };
+        dispatch({ type: "SET_VIEW", view: { ...view, panX: view.panX + screen.x - drag.startScreen.x, panY: view.panY + screen.y - drag.startScreen.y } });
+      }
+      return;
+    }
     if (drag.kind === "pan") {
       dispatch({ type: "SET_VIEW", view: { ...view, panX: drag.startPanX + screen.x - drag.startX, panY: drag.startPanY + screen.y - drag.startY } });
     } else if (drag.kind === "move") {
@@ -409,6 +421,19 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice, wallDraft, 
     pointersRef.current.delete(e.pointerId);
     const drag = dragRef.current;
     if (!drag) return;
+    if (drag.kind === "point") {
+      const endScreen = toScreen(e);
+      if (Math.hypot(endScreen.x - drag.startScreen.x, endScreen.y - drag.startScreen.y) <= 8) {
+        if (drag.pointMode === "traceWall") onWallDraftChange([...wallDraft, snapPoint(drag.startMm)]);
+        else if (drag.pointMode === "measure") dispatch({ type: "ADD_MEASURE_POINT", point: drag.startMm });
+        else {
+          const displayedPx = mmToImagePx(drag.startMm, mmpp);
+          dispatch({ type: "ADD_CALIB_POINT", point: displayedPxToSourcePx(displayedPx, background) });
+        }
+      }
+      dragRef.current = null;
+      return;
+    }
     if (drag.kind === "pinch") {
       if (pointersRef.current.size < 2) dragRef.current = null;
       return;
@@ -435,6 +460,12 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice, wallDraft, 
     dragRef.current = null;
     setMarquee(null);
     setAnnotationPreview(null);
+  }
+
+  function handlePointerLeave(e: PointerEvent<SVGSVGElement>) {
+    pointersRef.current.delete(e.pointerId);
+    onCursorMm(null);
+    if (pointersRef.current.size < 2 && dragRef.current?.kind === "pinch") dragRef.current = null;
   }
 
   const sortedObjects = visibleObjects().sort((a, b) => a.zIndex - b.zIndex);
@@ -491,6 +522,18 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice, wallDraft, 
     );
   }
 
+  function renderSymbolLabel(value: string, style: ObjectStyle, widthMm: number, depthMm: number, keyPrefix: string) {
+    const layout = getSymbolLabelLayout(value, widthMm, depthMm, style.labelFontSizeMm);
+    if (!layout) return null;
+    const firstY = -((layout.lines.length - 1) * layout.lineHeightMm) / 2;
+    const lightLabel = style.labelColor.toLowerCase() === "#ffffff";
+    return (
+      <text className={"symbol-label" + (lightLabel ? " symbol-label-light" : "")} x={0} y={firstY} textAnchor="middle" style={{ fill: style.labelColor, fontSize: layout.fontSizeMm }}>
+        {layout.lines.map((line, index) => <tspan key={keyPrefix + "-" + index} x={0} dy={index === 0 ? 0 : layout.lineHeightMm}>{line}</tspan>)}
+      </text>
+    );
+  }
+
   function renderAnnotation(object: SceneObject) {
     const kind = object.annotationKind;
     const style = resolveObjectStyle(object);
@@ -534,7 +577,8 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice, wallDraft, 
     const symbolId = !isAnnotation ? symbolIdForPreset(object.presetId) : null;
     const visualStyle = resolveObjectStyle(object);
     const displayLabel = object.label || object.name;
-    const showLabel = Boolean(displayLabel && (object.label || visualStyle.labelVisible));
+    const labelText = symbolId ? symbolLabelForPreset(object.presetId, displayLabel, Boolean(object.label)) : displayLabel;
+    const showLabel = Boolean(labelText && (object.label || visualStyle.labelVisible));
     const className = "scene-object"
       + (symbolId ? " symbol-object" : "")
       + (isAnnotation ? " annotation-object" : "")
@@ -544,6 +588,7 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice, wallDraft, 
       <g key={object.id} data-object-id={object.id} className={className} style={symbolId ? symbolStyle(visualStyle, selected) : undefined} transform={"translate(" + object.xMm + " " + object.yMm + ") rotate(" + object.rotationDeg + ")"}>
         {isAnnotation ? renderAnnotation(object) : (
           <>
+            {symbolId && <rect className="symbol-footprint" pointerEvents="all" fill="transparent" x={-object.widthMm / 2} y={-object.depthMm / 2} width={object.widthMm} height={object.depthMm} />}
             {symbolId
               ? <use className="symbol-use" href={"#" + symbolId} x={-object.widthMm / 2} y={-object.depthMm / 2} width={object.widthMm} height={object.depthMm} />
               : <>
@@ -552,12 +597,14 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice, wallDraft, 
                     : <rect style={{ fill: visualStyle.fillColor, fillOpacity: visualStyle.fillOpacity, stroke: selected ? "#e07b00" : visualStyle.color, strokeWidth: selected ? Math.max(visualStyle.strokeWidthMm, 40) : visualStyle.strokeWidthMm }} x={-object.widthMm / 2} y={-object.depthMm / 2} width={object.widthMm} height={object.depthMm} />}
                   {(object.type === "chair" || object.type === "musicStand") && <line className="facing" style={{ stroke: selected ? "#e07b00" : visualStyle.color, strokeWidth: visualStyle.strokeWidthMm }} x1={0} y1={0} x2={0} y2={-object.depthMm / 2} />}
                 </>}
-            {showLabel && renderMultilineLabel(displayLabel, visualStyle, 0, object.depthMm / 2 + 320, object.id + "-object")}
+            {showLabel && symbolId && (renderSymbolLabel(labelText, visualStyle, object.widthMm, object.depthMm, object.id + "-symbol") ?? renderMultilineLabel(labelText, visualStyle, 0, object.depthMm / 2 + 320, object.id + "-object"))}
+            {showLabel && !symbolId && renderMultilineLabel(displayLabel, visualStyle, 0, object.depthMm / 2 + 320, object.id + "-object")}
           </>
         )}
         {selected && editable && !isAnnotation && mode === "select" && (
           <g className="rotate-handle" data-rotate-handle="true" data-object-id={object.id}>
             <line x1={0} y1={-object.depthMm / 2} x2={0} y2={-object.depthMm / 2 - 300} />
+            <circle className="rotate-hit-area" pointerEvents="all" cx={0} cy={-object.depthMm / 2 - 300} r={28 / view.zoom} />
             <circle cx={0} cy={-object.depthMm / 2 - 300} r={110} />
           </g>
         )}
@@ -592,7 +639,7 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice, wallDraft, 
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerCancel}
-      onPointerLeave={() => onCursorMm(null)}
+      onPointerLeave={handlePointerLeave}
     >
       <defs>
         <marker id="canvas-arrow" markerWidth="160" markerHeight="160" refX="120" refY="60" orient="auto">
@@ -638,4 +685,3 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice, wallDraft, 
     </svg>
   );
 }
-
