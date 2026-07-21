@@ -1,4 +1,5 @@
 import { STAGE_OPEN_TEMPLATE_ASSETS, type StageOpenTemplateAsset } from "./stageOpenTemplateSymbols";
+import { INSTRUMENT_BODY_MASTERS, TIMPANI_SET_BODY_SIZE, TIMPANI_SET_LAYOUT } from "./instrumentCatalog";
 
 // 配置物の上面図シンボル定義。
 // 寸法・位置・回転はSceneObjectのmm値を正本とし、ここでは表示用の
@@ -225,20 +226,57 @@ const celesta: SymbolDefinition = {
   ],
 };
 
+function normalizedTimpaniBodyNodes(
+  diameterMm: number,
+  centerXMm: number,
+  centerYMm: number,
+  envelopeWidthMm: number,
+  envelopeDepthMm: number,
+  includeStand: boolean,
+): SymbolNode[] {
+  const cx = centerXMm / envelopeWidthMm * 1000;
+  const cy = centerYMm / envelopeDepthMm * 1000;
+  const rx = diameterMm / envelopeWidthMm * 500;
+  const ry = diameterMm / envelopeDepthMm * 500;
+  const nodes: SymbolNode[] = [
+    // The outer ellipse is the physical bowl diameter; the remaining nodes are decorative.
+    ellipse(cx, cy, rx, ry, "body"),
+    ellipse(cx, cy - ry * 0.16, rx * 0.83, ry * 0.78, "detail"),
+    ellipse(cx, cy - ry * 0.16, rx * 0.875, ry * 0.83, "detail"),
+    ellipse(cx, cy - ry * 0.16, rx * 0.07, ry * 0.07, "solid"),
+    line(cx - rx * 0.74, cy - ry * 0.16, cx + rx * 0.74, cy - ry * 0.16),
+    line(cx - rx * 0.53, cy - ry * 0.57, cx + rx * 0.53, cy - ry * 0.57),
+  ];
+  if (includeStand) {
+    const baseY = Math.min(980, cy + ry * 0.98);
+    nodes.push(
+      line(cx, cy + ry * 0.50, cx, baseY),
+      line(cx - rx * 0.30, baseY, cx + rx * 0.30, baseY),
+      line(cx - rx * 0.25, cy + ry * 0.50, cx - rx * 0.42, baseY - 18),
+      line(cx + rx * 0.25, cy + ry * 0.50, cx + rx * 0.42, baseY - 18),
+    );
+  }
+  return nodes;
+}
+
 const timpani: SymbolDefinition = {
   id: "stage-symbol-timpani",
-  nodes: [
-    ellipse(500, 465, 360, 350, "body"),
-    ellipse(500, 410, 300, 275, "detail"),
-    ellipse(500, 410, 315, 290, "detail"),
-    circle(500, 410, 25, "solid"),
-    line(250, 410, 750, 410),
-    line(315, 265, 685, 265),
-    line(500, 720, 500, 865),
-    line(390, 865, 610, 865),
-    line(410, 720, 350, 840),
-    line(590, 720, 650, 840),
-  ],
+  nodes: normalizedTimpaniBodyNodes(1000, 500, 500, 1000, 1000, true),
+};
+
+const timpaniSet: SymbolDefinition = {
+  id: "stage-symbol-timpani-set",
+  nodes: TIMPANI_SET_LAYOUT.flatMap((part) => {
+    const body = INSTRUMENT_BODY_MASTERS[part.presetId];
+    return normalizedTimpaniBodyNodes(
+      body.diameterMm ?? body.widthMm,
+      part.centerXMm,
+      part.centerYMm,
+      TIMPANI_SET_BODY_SIZE.widthMm,
+      TIMPANI_SET_BODY_SIZE.depthMm,
+      false,
+    );
+  }),
 };
 
 function keyboardBars(y: number, width: number, count: number): SymbolNode[] {
@@ -381,8 +419,17 @@ const ampSpeaker: SymbolDefinition = {
   ],
 };
 
-function withStageAsset(definition: SymbolDefinition, asset: StageOpenTemplateAsset): SymbolDefinition {
-  return { ...definition, nodes: [], viewBox: asset.viewBox, rawSvg: asset.rawSvg, preserveAspectRatio: "xMidYMid meet" };
+function withStageAsset(
+  definition: SymbolDefinition,
+  asset: StageOpenTemplateAsset,
+  preserveAspectRatio: "none" | "xMidYMid meet" = "xMidYMid meet",
+): SymbolDefinition {
+  return { ...definition, nodes: [], viewBox: asset.viewBox, rawSvg: asset.rawSvg, preserveAspectRatio };
+}
+
+function withPhysicalStageAsset(definition: SymbolDefinition, asset: StageOpenTemplateAsset): SymbolDefinition {
+  // Physical body assets fill the mm footprint; there is no symbol-specific px scale.
+  return withStageAsset(definition, asset, "none");
 }
 
 function namedStageAssetSymbol(id: string, asset: StageOpenTemplateAsset): SymbolDefinition {
@@ -401,20 +448,19 @@ const stageRiser4x6 = namedStageAssetSymbol("stage-symbol-riser-4x6", STAGE_OPEN
 const stageRiser6x6 = namedStageAssetSymbol("stage-symbol-riser-6x6", STAGE_OPEN_TEMPLATE_ASSETS.riser6x6);
 const stageHakouma = namedStageAssetSymbol("stage-symbol-hakouma", STAGE_OPEN_TEMPLATE_ASSETS.hakouma);
 const stageTable = withStageAsset(table, STAGE_OPEN_TEMPLATE_ASSETS.table);
-const stageGrandPiano = withStageAsset(grandPiano, STAGE_OPEN_TEMPLATE_ASSETS.grandPianoFull);
-const stageGrandPianoSemi = namedStageAssetSymbol("stage-symbol-grand-piano-semi", STAGE_OPEN_TEMPLATE_ASSETS.grandPianoSemi);
-const stageUprightPiano = withStageAsset(uprightPiano, STAGE_OPEN_TEMPLATE_ASSETS.uprightPiano);
-const stageCelesta = withStageAsset(celesta, STAGE_OPEN_TEMPLATE_ASSETS.celesta);
-const stageMarimba = withStageAsset(marimba, STAGE_OPEN_TEMPLATE_ASSETS.marimba);
-const stageKeyboardPercussion = withStageAsset(keyboardPercussion, STAGE_OPEN_TEMPLATE_ASSETS.xylophone);
-const stageBassDrum = withStageAsset(bassDrum, STAGE_OPEN_TEMPLATE_ASSETS.bassDrum);
-const stageVibraphone = withStageAsset(vibraphone, STAGE_OPEN_TEMPLATE_ASSETS.vibraphone);
-const stageChimes = withStageAsset(chimes, STAGE_OPEN_TEMPLATE_ASSETS.chimes);
-const stageDrumSet = withStageAsset(drumSet, STAGE_OPEN_TEMPLATE_ASSETS.drumSet);
-const stageHarp = withStageAsset(harp, STAGE_OPEN_TEMPLATE_ASSETS.harp);
-const stageContrabass = withStageAsset(contrabass, STAGE_OPEN_TEMPLATE_ASSETS.contrabass);
-const stageAmpSpeaker = withStageAsset(ampSpeaker, STAGE_OPEN_TEMPLATE_ASSETS.ampSpeaker);
-const stageTimpaniSet = namedStageAssetSymbol("stage-symbol-timpani-set", STAGE_OPEN_TEMPLATE_ASSETS.timpaniSet);
+const stageGrandPiano = withPhysicalStageAsset(grandPiano, STAGE_OPEN_TEMPLATE_ASSETS.grandPianoFull);
+const stageGrandPianoSemi = withPhysicalStageAsset({ id: "stage-symbol-grand-piano-semi", nodes: [] }, STAGE_OPEN_TEMPLATE_ASSETS.grandPianoSemi);
+const stageUprightPiano = withPhysicalStageAsset(uprightPiano, STAGE_OPEN_TEMPLATE_ASSETS.uprightPiano);
+const stageCelesta = withPhysicalStageAsset(celesta, STAGE_OPEN_TEMPLATE_ASSETS.celesta);
+const stageMarimba = withPhysicalStageAsset(marimba, STAGE_OPEN_TEMPLATE_ASSETS.marimba);
+const stageKeyboardPercussion = withPhysicalStageAsset(keyboardPercussion, STAGE_OPEN_TEMPLATE_ASSETS.xylophone);
+const stageBassDrum = withPhysicalStageAsset(bassDrum, STAGE_OPEN_TEMPLATE_ASSETS.bassDrum);
+const stageVibraphone = withPhysicalStageAsset(vibraphone, STAGE_OPEN_TEMPLATE_ASSETS.vibraphone);
+const stageChimes = withPhysicalStageAsset(chimes, STAGE_OPEN_TEMPLATE_ASSETS.chimes);
+const stageDrumSet = withPhysicalStageAsset(drumSet, STAGE_OPEN_TEMPLATE_ASSETS.drumSet);
+const stageHarp = withPhysicalStageAsset(harp, STAGE_OPEN_TEMPLATE_ASSETS.harp);
+const stageContrabass = withPhysicalStageAsset(contrabass, STAGE_OPEN_TEMPLATE_ASSETS.contrabass);
+const stageAmpSpeaker = withPhysicalStageAsset(ampSpeaker, STAGE_OPEN_TEMPLATE_ASSETS.ampSpeaker);
 
 export const SYMBOL_DEFINITIONS: readonly SymbolDefinition[] = [
   stageChair,
@@ -434,7 +480,7 @@ export const SYMBOL_DEFINITIONS: readonly SymbolDefinition[] = [
   stageUprightPiano,
   stageCelesta,
   timpani,
-  stageTimpaniSet,
+  timpaniSet,
   stageMarimba,
   stageKeyboardPercussion,
   stageBassDrum,
@@ -467,7 +513,7 @@ const PRESET_SYMBOL_IDS: Readonly<Record<string, string>> = {
   "timpani-26": timpani.id,
   "timpani-29": timpani.id,
   "timpani-32": timpani.id,
-  "timpani-set-4": stageTimpaniSet.id,
+  "timpani-set-4": timpaniSet.id,
   marimba: marimba.id,
   "bass-drum": bassDrum.id,
   vibraphone: vibraphone.id,

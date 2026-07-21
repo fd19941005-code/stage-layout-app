@@ -14,7 +14,6 @@ import grandPianoFullRaw from "../assets/stage-open-template/grand-piano-full.sv
 import grandPianoSemiRaw from "../assets/stage-open-template/grand-piano-semi.svg?raw";
 import uprightPianoRaw from "../assets/stage-open-template/upright-piano.svg?raw";
 import celestaRaw from "../assets/stage-open-template/celesta.svg?raw";
-import timpaniSetRaw from "../assets/stage-open-template/timpani-set.svg?raw";
 import marimbaRaw from "../assets/stage-open-template/marimba.svg?raw";
 import bassDrumRaw from "../assets/stage-open-template/bass-drum.svg?raw";
 import vibraphoneRaw from "../assets/stage-open-template/vibraphone.svg?raw";
@@ -112,7 +111,6 @@ export const STAGE_OPEN_TEMPLATE_ASSETS = {
   grandPianoSemi: asset(grandPianoSemiRaw, "stage-grand-piano-semi"),
   uprightPiano: asset(uprightPianoRaw, "stage-upright-piano"),
   celesta: asset(celestaRaw, "stage-celesta"),
-  timpaniSet: asset(timpaniSetRaw, "stage-timpani-set"),
   marimba: asset(marimbaRaw, "stage-marimba"),
   bassDrum: asset(bassDrumRaw, "stage-bass-drum"),
   vibraphone: asset(vibraphoneRaw, "stage-vibraphone"),

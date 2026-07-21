@@ -7,6 +7,7 @@ import {
   serializeProject,
 } from "./project";
 import { SCHEMA_VERSION, type SceneObject } from "../types/project";
+import { INSTRUMENT_BODY_MASTERS } from "./instrumentCatalog";
 
 function sampleObject(overrides: Partial<SceneObject> = {}): SceneObject {
   return {
@@ -169,5 +170,28 @@ describe("プロジェクト保存・復元 (FR-003、AC-009)", () => {
     const restored = deserializeProject(JSON.stringify(raw));
     expect(restored.objects[0].widthMm).toBeGreaterThan(0);
     expect(typeof restored.objects[0].heightMm).toBe("number");
+  });
+
+  it("migrates untouched legacy instrument defaults without overwriting custom mm", () => {
+    const project = createEmptyProject("instrument migration");
+    project.objects.push(sampleObject({
+      type: "instrument",
+      presetId: "timpani-32",
+      name: "timpani",
+      widthMm: 910,
+      depthMm: 910,
+      shape: "circle",
+    }));
+    const raw = JSON.parse(serializeProject(project));
+    raw.schemaVersion = "1.3.0";
+    const migrated = deserializeProject(JSON.stringify(raw));
+    expect(migrated.schemaVersion).toBe(SCHEMA_VERSION);
+    expect(migrated.objects[0].widthMm).toBe(INSTRUMENT_BODY_MASTERS["timpani-32"].widthMm);
+    expect(migrated.objects[0].depthMm).toBe(INSTRUMENT_BODY_MASTERS["timpani-32"].depthMm);
+    expect(migrated.objects[0].rotationDeg).toBe(30);
+    const customRaw = { ...raw, objects: [{ ...raw.objects[0], widthMm: 800, depthMm: 800 }] };
+    const custom = deserializeProject(JSON.stringify(customRaw));
+    expect(custom.objects[0].widthMm).toBe(800);
+    expect(custom.objects[0].depthMm).toBe(800);
   });
 });

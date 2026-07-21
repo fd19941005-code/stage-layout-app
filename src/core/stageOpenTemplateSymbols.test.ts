@@ -19,7 +19,6 @@ describe("StageOpenTemplate SVG assets", () => {
   it("loads the bundled source assets without external references", () => {
     expect(STAGE_OPEN_TEMPLATE_ASSETS.grandPianoFull.viewBox).toBe("0 0 21.371962 15.551068");
     expect(STAGE_OPEN_TEMPLATE_ASSETS.grandPianoSemi.viewBox).toBe("0 0 21.371962 15.551068");
-    expect(STAGE_OPEN_TEMPLATE_ASSETS.timpaniSet.viewBox).toBe("0 0 22.846644 14.27731");
     expect(STAGE_OPEN_TEMPLATE_ASSETS.riser6x6.viewBox).toBe("0 0 18.33 18.33");
     for (const asset of Object.values(STAGE_OPEN_TEMPLATE_ASSETS)) {
       expect(asset.rawSvg).not.toContain("http://");

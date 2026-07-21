@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createEmptyProject, deserializeProject, serializeProject } from "./project";
-import type { SceneObject } from "../types/project";
+import { SCHEMA_VERSION, type SceneObject } from "../types/project";
 
 function annotation(): SceneObject {
   return {
@@ -37,7 +37,7 @@ describe("Phase 4プロジェクト互換性", () => {
 
     const restored = deserializeProject(serializeProject(project));
 
-    expect(restored.schemaVersion).toBe("1.3.0");
+    expect(restored.schemaVersion).toBe(SCHEMA_VERSION);
     expect(restored.objects[0].annotationKind).toBe("dimension");
     expect(restored.objects[0].endXMm).toBe(2000);
     expect(restored.objects[0].endYMm).toBe(2000);
