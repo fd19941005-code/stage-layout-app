@@ -3,6 +3,7 @@
 // 高さHはPhase 5で使用するが、Phase 0から定義に含める(FR-046)。
 
 import type { ObjectType, ShapeKind } from "../types/project";
+import { instrumentBodyMasterForPreset } from "./instrumentCatalog";
 
 export interface ObjectPreset {
   id: string;
@@ -20,6 +21,18 @@ export const RISER_HEIGHTS_MM = [150, 300, 450, 600] as const;
 
 /** 校正距離プリセット(FR-021) */
 export const CALIBRATION_DISTANCE_PRESETS_MM = [910, 1820, 900, 1800, 1000] as const;
+
+function instrumentPreset(
+  id: string,
+  category: string,
+  name: string,
+  heightMm: number,
+  shape: ShapeKind = "rect",
+): ObjectPreset {
+  const body = instrumentBodyMasterForPreset(id);
+  if (!body) throw new Error("Missing instrument body master: " + id);
+  return { id, category, name, type: "instrument", widthMm: body.widthMm, depthMm: body.depthMm, heightMm, shape };
+}
 
 /**
  * 校正距離の数値だけでは尺貫法の図面に不慣れな利用者が判断しづらいため、
@@ -47,26 +60,26 @@ export const OBJECT_PRESETS: ObjectPreset[] = [
   { id: "hakouma", category: "指揮・平台", name: "箱馬", type: "riser", widthMm: 300, depthMm: 450, heightMm: 300, shape: "rect" },
   { id: "table-long", category: "指揮・平台", name: "長机", type: "shape", widthMm: 1800, depthMm: 450, heightMm: 700, shape: "rect" },
   // 鍵盤
-  { id: "grand-piano-full", category: "鍵盤", name: "グランドピアノ(フル)", type: "instrument", widthMm: 1560, depthMm: 2740, heightMm: 1020, shape: "rect" },
-  { id: "grand-piano-semi", category: "鍵盤", name: "グランドピアノ(セミ)", type: "instrument", widthMm: 1530, depthMm: 2120, heightMm: 1020, shape: "rect" },
-  { id: "upright-piano", category: "鍵盤", name: "アップライトピアノ", type: "instrument", widthMm: 1500, depthMm: 650, heightMm: 1250, shape: "rect" },
-  { id: "celesta", category: "鍵盤", name: "チェレスタ", type: "instrument", widthMm: 1080, depthMm: 620, heightMm: 970, shape: "rect" },
+  instrumentPreset("grand-piano-full", "鍵盤", "グランドピアノ(フル)", 1020),
+  instrumentPreset("grand-piano-semi", "鍵盤", "グランドピアノ(セミ)", 1020),
+  instrumentPreset("upright-piano", "鍵盤", "アップライトピアノ", 1250),
+  instrumentPreset("celesta", "鍵盤", "チェレスタ", 970),
   // 打楽器
-  { id: "timpani-26", category: "打楽器", name: "ティンパニ 26\"", type: "instrument", widthMm: 760, depthMm: 760, heightMm: 900, shape: "circle" },
-  { id: "timpani-29", category: "打楽器", name: "ティンパニ 29\"", type: "instrument", widthMm: 840, depthMm: 840, heightMm: 900, shape: "circle" },
-  { id: "marimba", category: "打楽器", name: "マリンバ", type: "instrument", widthMm: 2600, depthMm: 1100, heightMm: 950, shape: "rect" },
-  { id: "bass-drum", category: "打楽器", name: "バスドラム", type: "instrument", widthMm: 1100, depthMm: 700, heightMm: 1400, shape: "rect" },
-  { id: "vibraphone", category: "打楽器", name: "ヴィブラフォン", type: "instrument", widthMm: 1500, depthMm: 900, heightMm: 950, shape: "rect" },
-  { id: "xylophone", category: "打楽器", name: "シロフォン/グロッケン", type: "instrument", widthMm: 1400, depthMm: 800, heightMm: 950, shape: "rect" },
-  { id: "chimes", category: "打楽器", name: "チャイム", type: "instrument", widthMm: 1000, depthMm: 600, heightMm: 1900, shape: "rect" },
-  { id: "drum-set", category: "打楽器", name: "ドラムセット", type: "instrument", widthMm: 1800, depthMm: 1500, heightMm: 1200, shape: "rect" },
-  { id: "timpani-23", category: "打楽器", name: "ティンパニ 23インチ", type: "instrument", widthMm: 690, depthMm: 690, heightMm: 900, shape: "circle" },
-  { id: "timpani-32", category: "打楽器", name: "ティンパニ 32インチ", type: "instrument", widthMm: 910, depthMm: 910, heightMm: 900, shape: "circle" },
-  { id: "timpani-set-4", category: "打楽器", name: "ティンパニ 4個セット", type: "instrument", widthMm: 2400, depthMm: 1500, heightMm: 900, shape: "rect" },
+  instrumentPreset("timpani-26", "打楽器", "ティンパニ 26\"", 900, "circle"),
+  instrumentPreset("timpani-29", "打楽器", "ティンパニ 29\"", 900, "circle"),
+  instrumentPreset("marimba", "打楽器", "マリンバ", 950),
+  instrumentPreset("bass-drum", "打楽器", "バスドラム", 1400),
+  instrumentPreset("vibraphone", "打楽器", "ヴィブラフォン", 950),
+  instrumentPreset("xylophone", "打楽器", "シロフォン/グロッケン", 950),
+  instrumentPreset("chimes", "打楽器", "チャイム", 1900),
+  instrumentPreset("drum-set", "打楽器", "ドラムセット", 1200),
+  instrumentPreset("timpani-23", "打楽器", "ティンパニ 23インチ", 900, "circle"),
+  instrumentPreset("timpani-32", "打楽器", "ティンパニ 32インチ", 900, "circle"),
+  instrumentPreset("timpani-set-4", "打楽器", "ティンパニ 4個セット", 900),
   // 大型弦・他
-  { id: "harp", category: "大型弦・他", name: "ハープ", type: "instrument", widthMm: 1000, depthMm: 1000, heightMm: 1800, shape: "rect" },
+  instrumentPreset("harp", "大型弦・他", "ハープ", 1800),
   { id: "contrabass-stool", category: "大型弦・他", name: "コントラバス用椅子(占有域)", type: "chair", widthMm: 900, depthMm: 1200, heightMm: 1900, shape: "rect" },
-  { id: "amp-speaker", category: "大型弦・他", name: "アンプ/スピーカー", type: "instrument", widthMm: 600, depthMm: 450, heightMm: 600, shape: "rect" },
+  instrumentPreset("amp-speaker", "大型弦・他", "アンプ/スピーカー", 600),
   // 汎用
   { id: "generic-rect", category: "汎用", name: "長方形(任意寸法)", type: "shape", widthMm: 1000, depthMm: 1000, heightMm: 0, shape: "rect" },
   { id: "generic-circle", category: "汎用", name: "円(任意径)", type: "shape", widthMm: 1000, depthMm: 1000, heightMm: 0, shape: "circle" },

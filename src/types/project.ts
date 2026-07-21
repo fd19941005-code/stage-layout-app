@@ -1,7 +1,7 @@
 // 要件定義書 第9章「データ要件」に基づくプロジェクトモデル定義。
 // 最重要設計原則: 配置物の正本は常にmm単位。px値は保存しない。
 
-export const SCHEMA_VERSION = "1.3.0";
+export const SCHEMA_VERSION = "1.4.0";
 
 /** 実寸座標系(mm)上の点 */
 export interface PointMm {

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { INSTRUMENT_BODY_MASTERS, TIMPANI_SET_BODY_SIZE, TIMPANI_SET_LAYOUT } from "./instrumentCatalog";
 import {
   getSymbolDefinition,
   renderSymbolDefinitionsSvg,
@@ -80,4 +81,26 @@ describe("配置物シンボル", () => {
     expect(renderSymbolUseSvg("stage-symbol-chair", 450, 520)).toContain('x="-225"');
     expect(renderSymbolUseSvg("stage-symbol-chair", 450, 520)).toContain('width="450" height="520"');
   });
+  it("uses one physical scale for every timpani body", () => {
+    const single = getSymbolDefinition("stage-symbol-timpani")!;
+    const set = getSymbolDefinition("stage-symbol-timpani-set")!;
+    const singleBody = single.nodes.find((node) => node.kind === "ellipse" && node.paint === "body");
+    const setBodies = set.nodes.filter((node) => node.kind === "ellipse" && node.paint === "body");
+    expect(singleBody).toMatchObject({ rx: 500, ry: 500 });
+    expect(setBodies).toHaveLength(TIMPANI_SET_LAYOUT.length);
+    for (const [index, part] of TIMPANI_SET_LAYOUT.entries()) {
+      const body = setBodies[index];
+      if (!body || body.kind !== "ellipse") throw new Error("missing timpani body");
+      const master = INSTRUMENT_BODY_MASTERS[part.presetId];
+      expect((body.rx * 2 * TIMPANI_SET_BODY_SIZE.widthMm) / 1000).toBeCloseTo(master.diameterMm!, 6);
+      expect((body.ry * 2 * TIMPANI_SET_BODY_SIZE.depthMm) / 1000).toBeCloseTo(master.diameterMm!, 6);
+    }
+  });
+
+  it("uses the physical footprint for imported instrument assets", () => {
+    expect(getSymbolDefinition("stage-symbol-grand-piano")?.preserveAspectRatio).toBe("none");
+    expect(getSymbolDefinition("stage-symbol-grand-piano-semi")?.preserveAspectRatio).toBe("none");
+    expect(getSymbolDefinition("stage-symbol-marimba")?.preserveAspectRatio).toBe("none");
+  });
+
 });

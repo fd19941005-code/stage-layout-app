@@ -11,6 +11,7 @@ import {
 } from "../types/project";
 import { clampCrop } from "./transform";
 import { parseObjectStyle } from "./visualStyle";
+import { INSTRUMENT_BODY_MASTERS, LEGACY_INSTRUMENT_BODY_MASTERS } from "./instrumentCatalog";
 
 let idCounter = 0;
 
@@ -108,6 +109,23 @@ function parseAnnotationKind(value: unknown): SceneObject["annotationKind"] {
     : null;
 }
 
+function shouldMigrateInstrumentDimensions(schemaVersion: string): boolean {
+  const [major, minor] = schemaVersion.split(".").map(Number);
+  return major === 1 && Number.isFinite(minor) && minor < 4;
+}
+
+function migratedInstrumentDimensions(rawObject: Record<string, unknown>, schemaVersion: string): { widthMm: number; depthMm: number } | null {
+  if (!shouldMigrateInstrumentDimensions(schemaVersion)) return null;
+  if (rawObject.type !== "instrument") return null;
+  const presetId = typeof rawObject.presetId === "string" ? rawObject.presetId : null;
+  if (!presetId) return null;
+  const legacy = LEGACY_INSTRUMENT_BODY_MASTERS[presetId];
+  const current = INSTRUMENT_BODY_MASTERS[presetId];
+  if (!legacy || !current) return null;
+  if (rawObject.widthMm !== legacy.widthMm || rawObject.depthMm !== legacy.depthMm) return null;
+  return { widthMm: current.widthMm, depthMm: current.depthMm };
+}
+
 /**
  * JSONからプロジェクトを復元する。
  * 1.0.0では背景のsourceType/sourcePageが存在しなかったため既定値を補う。
@@ -126,37 +144,41 @@ export function deserializeProject(json: string): Project {
   if (typeof raw.schemaVersion !== "string") {
     throw new Error("schemaVersionがありません。プロジェクトファイルではない可能性があります");
   }
-  // 1.0.0〜1.3.0からのマイグレーションは、追加フィールドの既定値を適用する非破壊移行。
+  const sourceSchemaVersion = raw.schemaVersion;
+  // 1.0.0?1.3.0????????????????????????????????????
   // 将来の破壊的変更もここで版ごとに吸収し、既存JSONを読めなくしない。
 
   const base = createEmptyProject(str(raw.name, "無題のプロジェクト"));
 
   const objects: SceneObject[] = Array.isArray(raw.objects)
-    ? raw.objects.filter(isRecord).map((o, i): SceneObject => ({
-        id: str(o.id, generateId("obj")),
-        type: str(o.type, "shape") as SceneObject["type"],
-        presetId: typeof o.presetId === "string" ? o.presetId : null,
-        name: str(o.name, "オブジェクト"),
-        xMm: num(o.xMm, 0),
-        yMm: num(o.yMm, 0),
-        widthMm: Math.max(1, num(o.widthMm, 1)),
-        depthMm: Math.max(1, num(o.depthMm, 1)),
-        heightMm: Math.max(0, num(o.heightMm, 0)),
-        rotationDeg: num(o.rotationDeg, 0),
-        label: str(o.label, ""),
-        onRiserId: typeof o.onRiserId === "string" ? o.onRiserId : null,
-        avatar: typeof o.avatar === "string" ? o.avatar : null,
-        locked: bool(o.locked, false),
-        visible: bool(o.visible, true),
-        groupId: typeof o.groupId === "string" ? o.groupId : null,
-        layerId: str(o.layerId, DEFAULT_LAYER_ID),
-        zIndex: num(o.zIndex, i),
-        shape: o.shape === "circle" ? "circle" : "rect",
-        style: parseObjectStyle(o.style),
-        annotationKind: parseAnnotationKind(o.annotationKind),
-        endXMm: typeof o.endXMm === "number" && Number.isFinite(o.endXMm) ? o.endXMm : null,
-        endYMm: typeof o.endYMm === "number" && Number.isFinite(o.endYMm) ? o.endYMm : null,
-      }))
+    ? raw.objects.filter(isRecord).map((o, i): SceneObject => {
+        const migratedDimensions = migratedInstrumentDimensions(o, sourceSchemaVersion);
+        return ({
+          id: str(o.id, generateId("obj")),
+          type: str(o.type, "shape") as SceneObject["type"],
+          presetId: typeof o.presetId === "string" ? o.presetId : null,
+          name: str(o.name, "オブジェクト"),
+          xMm: num(o.xMm, 0),
+          yMm: num(o.yMm, 0),
+          widthMm: migratedDimensions?.widthMm ?? Math.max(1, num(o.widthMm, 1)),
+          depthMm: migratedDimensions?.depthMm ?? Math.max(1, num(o.depthMm, 1)),
+          heightMm: Math.max(0, num(o.heightMm, 0)),
+          rotationDeg: num(o.rotationDeg, 0),
+          label: str(o.label, ""),
+          onRiserId: typeof o.onRiserId === "string" ? o.onRiserId : null,
+          avatar: typeof o.avatar === "string" ? o.avatar : null,
+          locked: bool(o.locked, false),
+          visible: bool(o.visible, true),
+          groupId: typeof o.groupId === "string" ? o.groupId : null,
+          layerId: str(o.layerId, DEFAULT_LAYER_ID),
+          zIndex: num(o.zIndex, i),
+          shape: o.shape === "circle" ? "circle" : "rect",
+          style: parseObjectStyle(o.style),
+          annotationKind: parseAnnotationKind(o.annotationKind),
+          endXMm: typeof o.endXMm === "number" && Number.isFinite(o.endXMm) ? o.endXMm : null,
+          endYMm: typeof o.endYMm === "number" && Number.isFinite(o.endYMm) ? o.endYMm : null,
+        });
+      })
     : [];
 
   const walls: Wall[] = Array.isArray(raw.walls)
