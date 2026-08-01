@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
+import { BetaGate } from "./BetaGate";
 import "./styles.css";
 import "./phase2.css";
 import "./phase5.css";
@@ -10,6 +11,8 @@ import "./ui-refresh.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <App />
+    <BetaGate>
+      <App />
+    </BetaGate>
   </StrictMode>,
 );

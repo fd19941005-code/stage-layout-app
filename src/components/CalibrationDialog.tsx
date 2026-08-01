@@ -1,7 +1,8 @@
 // 2点校正の実距離入力ダイアログ(FR-020〜022、6.1)。
 // 距離プリセット(910/1820/900/1800/1000mm)で日本のホール図面入力を高速化する。
 
-import { useState, type Dispatch } from "react";
+import { useRef, useState, type Dispatch } from "react";
+import { useDialogFocus } from "./useDialogFocus";
 import type { Action } from "../state/appState";
 import { CALIBRATION_DISTANCE_PRESETS_MM, calibrationDistanceLabel } from "../core/presets";
 import { toMm } from "../core/transform";
@@ -16,6 +17,8 @@ export function CalibrationDialog({ dispatch }: Props) {
   const [text, setText] = useState("");
   const [unit, setUnit] = useState<Unit>("mm");
   const [error, setError] = useState<string | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(dialogRef, { onClose: () => dispatch({ type: "CANCEL_CALIBRATION" }) });
 
   function apply(distanceMm: number) {
     // 正数のみ確定可(6.1)
@@ -28,7 +31,7 @@ export function CalibrationDialog({ dispatch }: Props) {
 
   return (
     <div className="dialog-backdrop">
-      <div className="dialog calibration-dialog" role="dialog" aria-label="図面の縮尺を合わせる">
+      <div ref={dialogRef} className="dialog calibration-dialog" role="dialog" aria-modal="true" aria-label="図面の縮尺を合わせる" tabIndex={-1}>
         <h2>図面の縮尺を合わせる</h2>
         <p className="calibration-lead">
           これは「距離を測る」画面ではありません。図面上でクリックした2点間の、正しい実寸を登録します。
@@ -38,7 +41,7 @@ export function CalibrationDialog({ dispatch }: Props) {
           <ol>
             <li>図面の既知寸法の始点と終点をクリックする</li>
             <li>その2点間の実寸を下から選ぶ</li>
-            <li>校正後に未知の距離を測るときは、上部の「測定」を使う</li>
+            <li>縮尺を合わせた後に距離を測るときは、上部の「距離を測る」を使う</li>
           </ol>
           <p><b>寸法の目安:</b> 1間 = 1820mm、3尺(半間) = 910mmです。図面に「1間」「半間」「3尺」などの表記があれば、その区間の実寸に対応するボタンを選びます。</p>
         </div>
@@ -79,4 +82,3 @@ export function CalibrationDialog({ dispatch }: Props) {
     </div>
   );
 }
-

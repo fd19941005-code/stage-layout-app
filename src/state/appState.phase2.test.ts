@@ -113,6 +113,23 @@ describe("複数選択・一括編集 (FR-050、FR-052、FR-056)", () => {
     state = appReducer(state, { type: "DELETE_SELECTED" });
     expect(state.project.objects).toHaveLength(3);
   });
+
+  it("SELECT_RECT additive preserves existing selection", () => {
+    let state = withObjects([chair("a"), chair("b", 1000), chair("c", 2000)]);
+    state = appReducer(state, { type: "SELECT", id: "a" });
+    state = appReducer(state, {
+      type: "SELECT_RECT",
+      bounds: { minXMm: 700, minYMm: -300, maxXMm: 1300, maxYMm: 300 },
+      additive: true,
+    });
+    expect(state.selectedIds).toEqual(["a", "b"]);
+  });
+  it("SELECT_RECT selects an object when its bounds partially overlap the marquee", () => {
+    let state = withObjects([chair("partial", 1000), chair("outside", 1500)]);
+    state = appReducer(state, { type: "SELECT_RECT", bounds: { minXMm: 700, minYMm: -300, maxXMm: 900, maxYMm: 300 } });
+    expect(state.selectedIds).toEqual(["partial"]);
+  });
+
 });
 
 
@@ -150,5 +167,134 @@ describe("UX刷新の編集Action", () => {
       expect.objectContaining({ id: "a", style: expect.objectContaining({ fillOpacity: 0.65, labelVisible: true }) }),
       expect.objectContaining({ id: "b", style: expect.objectContaining({ fillOpacity: 0.65, labelVisible: true }) }),
     ]));
+  });
+});
+
+
+describe("instrument symbol variant Action", () => {
+  it("changes only assetVariantId and supports Undo/Redo", () => {
+    const original = {
+      ...chair("snare-1"),
+      type: "instrument" as const,
+      presetId: "snare-drum",
+      name: "\u30b9\u30cd\u30a2\u30c9\u30e9\u30e0",
+      widthMm: 400,
+      depthMm: 400,
+      assetVariantId: "stage-open-template/snare-drum-a",
+    };
+    let state = withObjects([original]);
+    const before = state.project.objects[0];
+    const selectedBefore = state.selectedIds;
+    state = appReducer(state, { type: "SET_OBJECT_ASSET_VARIANT", id: original.id, assetVariantId: "stage-open-template/snare-drum-b" });
+    const after = state.project.objects[0];
+    const beforeWithoutVariant = { ...before };
+    const afterWithoutVariant = { ...after };
+    delete beforeWithoutVariant.assetVariantId;
+    delete afterWithoutVariant.assetVariantId;
+
+    expect(after.assetVariantId).toBe("stage-open-template/snare-drum-b");
+    expect(afterWithoutVariant).toEqual(beforeWithoutVariant);
+    expect(state.selectedIds).toEqual(selectedBefore);
+
+    state = appReducer(state, { type: "UNDO" });
+    expect(state.project.objects[0].assetVariantId).toBe("stage-open-template/snare-drum-a");
+    state = appReducer(state, { type: "REDO" });
+    expect(state.project.objects[0].assetVariantId).toBe("stage-open-template/snare-drum-b");
+  });
+
+  it("keyboard percussion B variants change only assetVariantId and support Undo/Redo", () => {
+    const variants = [
+      ["marimba-5oct", "stage-open-template/marimba-a", "stage-open-template/marimba-b"],
+      ["vibraphone-standard", "stage-open-template/vibraphone-a", "stage-open-template/vibraphone-b"],
+      ["xylophone-concert", "stage-open-template/xylophone-a", "stage-open-template/xylophone-b"],
+      ["glockenspiel-concert", "stage-open-template/glockenspiel-concert-provisional", "stage-open-template/glockenspiel-b"],
+    ] as const;
+
+    for (const [index, [presetId, assetVariantA, assetVariantB]] of variants.entries()) {
+      const original = {
+        ...chair(`keyboard-${index}`, 1000 + index * 100, 2000 + index * 100),
+        type: "instrument" as const,
+        presetId,
+        name: "鍵盤打楽器",
+        widthMm: 1234,
+        depthMm: 567,
+        heightMm: 900,
+        rotationDeg: 27,
+        label: "B候補",
+        assetVariantId: assetVariantA,
+      };
+      let state = withObjects([original]);
+      const before = state.project.objects[0];
+      const selectedBefore = state.selectedIds;
+
+      state = appReducer(state, { type: "SET_OBJECT_ASSET_VARIANT", id: original.id, assetVariantId: assetVariantB });
+      const after = state.project.objects[0];
+      expect(after.assetVariantId).toBe(assetVariantB);
+      expect(after).toMatchObject({
+        presetId: before.presetId,
+        xMm: before.xMm,
+        yMm: before.yMm,
+        widthMm: before.widthMm,
+        depthMm: before.depthMm,
+        heightMm: before.heightMm,
+        rotationDeg: before.rotationDeg,
+        label: before.label,
+        groupId: before.groupId,
+        layerId: before.layerId,
+      });
+      expect(state.selectedIds).toEqual(selectedBefore);
+
+      state = appReducer(state, { type: "UNDO" });
+      expect(state.project.objects[0].assetVariantId).toBe(assetVariantA);
+      state = appReducer(state, { type: "REDO" });
+      expect(state.project.objects[0].assetVariantId).toBe(assetVariantB);
+    }
+  });
+
+  it("楽器以外の譜面台も×印へ切り替えられる", () => {
+    const original = {
+      ...chair("stand-1"),
+      type: "musicStand" as const,
+      presetId: "music-stand",
+      name: "譜面台",
+      widthMm: 480,
+      depthMm: 450,
+      assetVariantId: "stage-open-template/music-stand-a",
+    };
+    let state = withObjects([original]);
+    state = appReducer(state, { type: "SET_OBJECT_ASSET_VARIANT", id: original.id, assetVariantId: "generated/music-stand-cross" });
+    expect(state.project.objects[0].assetVariantId).toBe("generated/music-stand-cross");
+    // 寸法・位置・回転はvariant切替では動かさない。
+    expect(state.project.objects[0]).toMatchObject({ widthMm: 480, depthMm: 450, xMm: original.xMm, yMm: original.yMm });
+
+    // variant台帳に無いassetIdは従来どおり拒否する。
+    state = appReducer(state, { type: "SET_OBJECT_ASSET_VARIANT", id: original.id, assetVariantId: "stage-open-template/snare-drum-b" });
+    expect(state.project.objects[0].assetVariantId).toBe("generated/music-stand-cross");
+  });
+});
+
+
+describe("椅子の円内略称", () => {
+  it("複数の椅子へ略称を一括適用し、Undo/Redoできる", () => {
+    let state = withObjects([chair("a"), chair("b", 500), chair("c", 1000)]);
+    state = appReducer(state, { type: "SELECT_MANY", ids: ["a", "b", "c"] });
+    state = appReducer(state, { type: "SET_SELECTED_CHAIR_LABEL", label: "①" });
+
+    expect(state.project.objects.map((object) => object.label)).toEqual(["①", "①", "①"]);
+    state = appReducer(state, { type: "UNDO" });
+    expect(state.project.objects.map((object) => object.label)).toEqual(["", "", ""]);
+    state = appReducer(state, { type: "REDO" });
+    expect(state.project.objects.map((object) => object.label)).toEqual(["①", "①", "①"]);
+  });
+
+  it("椅子以外とロック中の椅子は変更しない", () => {
+    const stand: SceneObject = { ...chair("stand"), type: "musicStand", presetId: "music-stand", name: "譜面台" };
+    let state = withObjects([chair("editable"), { ...chair("locked"), locked: true }, stand]);
+    state = appReducer(state, { type: "SELECT_MANY", ids: ["editable", "locked", "stand"] });
+    state = appReducer(state, { type: "SET_SELECTED_CHAIR_LABEL", label: "Cl" });
+
+    expect(state.project.objects.find((object) => object.id === "editable")?.label).toBe("Cl");
+    expect(state.project.objects.find((object) => object.id === "locked")?.label).toBe("");
+    expect(state.project.objects.find((object) => object.id === "stand")?.label).toBe("");
   });
 });

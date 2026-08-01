@@ -178,6 +178,99 @@ svg:focus-visible {
   color: #21383a;
 }
 
+
+/* 編集操作はトップメニューと右クリックメニューで同じ見た目・キーボード操作に揃える。 */
+.edit-menu {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.toolbar.app-toolbar .edit-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 58px;
+  justify-content: center;
+}
+
+.edit-menu-trigger span {
+  color: #f4d79d;
+  font-size: 12px;
+}
+
+.edit-menu-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 40;
+  min-width: 248px;
+  padding: 6px;
+  border: 1px solid #c9c2b4;
+  border-radius: 8px;
+  background: #fffdf8;
+  box-shadow: 0 12px 28px rgba(26, 43, 43, 0.22);
+  color: #203438;
+}
+
+.object-context-menu {
+  position: fixed;
+  top: auto;
+  left: auto;
+  z-index: 100;
+}
+
+.edit-menu-segment {
+  display: block;
+}
+
+.edit-menu-separator {
+  height: 1px;
+  margin: 5px 2px;
+  background: #ded8cc;
+}
+
+.edit-command-item,
+.toolbar.app-toolbar .edit-command-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 31px;
+  padding: 6px 9px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #203438;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+  transform: none;
+}
+
+.edit-command-item:hover:not(:disabled),
+.toolbar.app-toolbar .edit-command-item:hover:not(:disabled) {
+  border-color: transparent;
+  background: #e8f0eb;
+  color: #162f33;
+  transform: none;
+}
+
+.edit-command-item.danger {
+  color: #a13e36;
+}
+
+.edit-command-item:disabled {
+  color: #83908b;
+}
+
+.edit-command-item kbd {
+  margin-left: 18px;
+  color: #71817b;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .history-actions button {
   width: 30px;
   padding-inline: 0 !important;
@@ -386,6 +479,10 @@ svg:focus-visible {
   font-size: 20px;
   line-height: 1;
 }
+.panel-close-label {
+  display: none;
+}
+
 
 .property-panel > section,
 .property-panel > .background-panel,
@@ -394,6 +491,160 @@ svg:focus-visible {
   margin: 0 14px 14px;
   padding: 0 0 14px;
   border-bottom: 1px solid var(--ux-line);
+}
+
+
+.property-panel > .requirements-panel {
+  margin: 0 14px 14px;
+  padding: 0 0 14px;
+  border-bottom: 1px solid var(--ux-line);
+}
+
+/* 選択物のプロパティを常に最上段へ置き、それ以外は折りたたんで到達距離を縮める。 */
+.property-panel > .inspector-section {
+  margin: 0 14px 14px;
+  padding: 0 0 14px;
+  border-bottom: 1px solid var(--ux-line);
+}
+
+.property-panel > .inspector-section > summary {
+  padding: 2px 0;
+  color: var(--ux-ink);
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.property-panel > .inspector-section > summary:focus-visible {
+  border-radius: 4px;
+  outline: 3px solid rgba(31, 91, 96, 0.22);
+  outline-offset: 3px;
+}
+
+/* 折りたたみ内の子パネルは、外側のdetailsが余白と区切り線を持つ。 */
+.property-panel > .inspector-section > section {
+  margin: 10px 0 0;
+  padding: 0;
+  border-bottom: 0;
+}
+
+.multi-orientation-editor .orientation-advanced > summary {
+  padding: 4px 0;
+  color: var(--ux-muted);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.requirements-panel summary {
+  padding: 2px 0;
+  color: var(--ux-ink);
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.requirements-panel summary:focus-visible {
+  border-radius: 4px;
+  outline: 3px solid rgba(31, 91, 96, 0.22);
+  outline-offset: 3px;
+}
+
+.requirements-panel-body {
+  margin-top: 10px;
+}
+
+.requirements-scope {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin: 0 0 10px;
+  padding: 0;
+  border: 0;
+}
+
+.requirements-scope legend {
+  width: 100%;
+  margin: 0 0 4px;
+  color: #5e6b6d;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.property-panel .requirements-scope label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  color: var(--ux-ink);
+  min-width: max-content;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.property-panel .requirements-scope input[type="radio"] {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--ux-teal);
+}
+
+.requirements-table-wrap {
+  overflow-x: auto;
+}
+
+.requirements-table {
+  width: 100%;
+  min-width: 260px;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.requirements-table th,
+.requirements-table td {
+  padding: 6px 4px;
+  border-bottom: 1px solid rgba(207, 215, 209, 0.72);
+  text-align: left;
+  vertical-align: top;
+}
+
+.requirements-table thead th {
+  color: var(--ux-muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.requirements-table tbody th {
+  color: var(--ux-ink);
+  font-weight: 800;
+}
+
+.requirements-table td {
+  color: #5e6b6d;
+}
+
+.requirements-table .requirements-count {
+  width: 52px;
+  color: var(--ux-ink);
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.requirements-total {
+  margin: 9px 0 0;
+  color: var(--ux-teal-dark);
+  font-size: 11px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.requirements-empty {
+  margin: 8px 0 0;
+  color: var(--ux-muted);
+  font-size: 11px;
 }
 
 .property-panel h2 {
@@ -652,22 +903,26 @@ svg.canvas-stage .scene-object .symbol-label-light {
 }
 
 .selection-marquee {
-  fill: rgba(198, 93, 69, 0.12);
-  stroke: var(--ux-coral);
-  stroke-width: 18;
-  stroke-dasharray: 60 45;
+  fill: transparent;
+  stroke: #171717;
+  stroke-width: 2.5px;
+  stroke-dasharray: 10px 8px;
+  stroke-linecap: round;
   vector-effect: non-scaling-stroke;
 }
 
 .rotate-handle line {
-  stroke: #c65d45;
-  stroke-width: 18;
+  stroke: #1f5b60;
+  stroke-width: 2.5px;
+  stroke-dasharray: none;
+  vector-effect: non-scaling-stroke;
 }
 
 .rotate-handle circle {
-  fill: #fff8ed;
-  stroke: #c65d45;
-  stroke-width: 22;
+  fill: #fffdf8;
+  stroke: #1f5b60;
+  stroke-width: 2.5px;
+  vector-effect: non-scaling-stroke;
 }
 
 .status-bar {
@@ -684,6 +939,14 @@ svg.canvas-stage .scene-object .symbol-label-light {
 
 .status-bar .warning {
   color: #f2ce87;
+}
+.status-bar .autosave-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.status-bar .status-retry {
+  min-height: 24px;
 }
 
 .dialog-backdrop {
@@ -755,6 +1018,50 @@ svg.canvas-stage .scene-object .symbol-label-light {
   .panel-close {
     display: inline-grid;
     place-items: center;
+    width: 44px;
+    min-height: 44px;
+  }
+  .library-panel .panel-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    min-width: 44px;
+    padding-inline: 10px;
+    border-radius: 8px;
+    gap: 4px;
+  }
+  .library-panel .panel-close-label {
+    display: inline;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .toolbar.app-toolbar button,
+  .toolbar.app-toolbar .display-settings-control > summary {
+    min-height: 44px;
+  }
+  .toolbar.app-toolbar .display-settings-control > summary {
+    display: inline-flex;
+    align-items: center;
+  }
+  .toolbar.app-toolbar .history-actions button {
+    min-width: 44px;
+    padding-inline: 10px;
+  }
+  .property-panel button:not(.panel-close),
+  .library-panel button {
+    min-height: 44px;
+  }
+  .toolbar-mode-status {
+    min-height: 44px;
+    position: sticky;
+    right: 0;
+    z-index: 2;
+    padding-inline: 10px;
+    background: #203c42;
+  }
+  .status-bar .status-retry {
+    min-height: 44px;
   }
 }
 
@@ -767,6 +1074,11 @@ svg.canvas-stage .scene-object .symbol-label-light {
 
   .brand-lockup {
     flex: 0 0 165px;
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    padding-inline: 6px;
+    background: #18353b;
   }
 
   .brand-mark {
@@ -826,7 +1138,7 @@ svg.canvas-stage .scene-object .symbol-label-light {
 
   .file-actions button:first-child,
   .file-actions button:nth-child(2) {
-    display: none;
+    display: inline-flex;
   }
 }
 
@@ -847,3 +1159,189 @@ svg.canvas-stage .scene-object .symbol-label-light {
   pointer-events: all;
 }
 
+
+
+/* Keep global label settings separate from object properties. */
+.display-settings-control {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.toolbar.app-toolbar .display-settings-control > summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 29px;
+  padding: 5px 9px;
+  border: 1px solid rgba(198, 220, 213, 0.26);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f7faf5;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  list-style: none;
+}
+
+.toolbar.app-toolbar .display-settings-control > summary::-webkit-details-marker {
+  display: none;
+}
+
+.toolbar.app-toolbar .display-settings-control[open] > summary,
+.toolbar.app-toolbar .display-settings-control > summary:hover {
+  border-color: rgba(239, 218, 162, 0.8);
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.display-settings-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 50;
+  min-width: 220px;
+  padding: 11px;
+  border: 1px solid #c9c2b4;
+  border-radius: 8px;
+  background: #fffdf8;
+  box-shadow: 0 12px 28px rgba(26, 43, 43, 0.22);
+  color: #203438;
+}
+
+.display-settings-popover fieldset {
+  margin: 0 0 9px;
+  padding: 0;
+  border: 0;
+}
+
+.display-settings-popover legend {
+  margin-bottom: 5px;
+  color: #3d595d;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.display-settings-popover label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 27px;
+  white-space: nowrap;
+}
+
+.display-settings-popover input[type="radio"],
+.display-settings-popover input[type="checkbox"] {
+  accent-color: var(--ux-coral);
+}
+
+.display-setting-check {
+  padding-top: 8px;
+  border-top: 1px solid #e3dfd4;
+  font-weight: 700;
+}
+
+.symbol-variant-editor {
+  margin: 10px 0 12px;
+  padding: 10px;
+  border: 1px solid #ded8ca;
+  border-radius: 8px;
+  background: #fbfaf5;
+}
+
+.symbol-variant-editor h3 {
+  margin: 0 0 8px;
+  color: #3d595d;
+  font-size: 12px;
+}
+
+.symbol-variant-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.property-panel .symbol-variant-option {
+  display: flex;
+  min-width: 0;
+  min-height: 92px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid #d0ccc0;
+  border-radius: 7px;
+  background: #fffdf8;
+  color: #203438;
+  text-align: left;
+}
+
+.property-panel .symbol-variant-option.selected {
+  border-color: var(--ux-coral);
+  box-shadow: 0 0 0 2px rgba(198, 93, 69, 0.18);
+}
+
+.symbol-variant-preview {
+  display: grid;
+  min-height: 52px;
+  place-items: center;
+  color: var(--ux-teal-dark);
+}
+
+.symbol-variant-preview svg {
+  display: block;
+  width: 100%;
+  height: 52px;
+}
+
+.symbol-variant-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 5px;
+  font-size: 11px;
+}
+
+.symbol-variant-label small {
+  overflow: hidden;
+  color: var(--ux-muted);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.symbol-variant-editor .hint {
+  margin: 7px 0 0;
+}
+.multi-orientation-editor {
+  margin: 10px 0 12px;
+  padding: 10px;
+  border: 1px solid #ded8ca;
+  border-radius: 8px;
+  background: #fbfaf5;
+}
+.multi-orientation-editor h3 {
+  margin: 0 0 8px;
+  color: #3d595d;
+  font-size: 12px;
+}
+.multi-orientation-editor .hint {
+  margin: 7px 0 0;
+}
+.multi-orientation-editor .wide {
+  grid-column: 1 / -1;
+}
+.aim-point-preview {
+  pointer-events: none;
+}
+.aim-point-preview circle,
+.aim-point-preview line {
+  fill: none;
+  stroke: #c65d45;
+  stroke-width: 22;
+  vector-effect: non-scaling-stroke;
+}
+.aim-point-preview text {
+  fill: #c65d45;
+  font-weight: 800;
+  paint-order: stroke;
+  stroke: #fffdf8;
+  stroke-width: 18;
+}

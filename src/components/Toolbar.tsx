@@ -1,18 +1,23 @@
 // 図面作業の主導線を、ファイル操作・履歴・表示・ツールの順に整理したヘッダー。
 // 画面幅が狭い場合も、キャンバスを優先してサイドパネルを開閉できるようにする。
 
-import { useEffect, useState, type Dispatch } from "react";
+import { useEffect, useRef, useState, type Dispatch } from "react";
 import type { PointMm } from "../types/project";
+import type { EditCommand } from "../core/editCommands";
 import type { Action, AppState, ToolMode } from "../state/appState";
 import { toolModeLabel } from "../state/appState";
 import { fitViewToProject, zoomAt } from "../core/transform";
 import { findPreset } from "../core/presets";
+import { useDialogFocus } from "./useDialogFocus";
+import { EditMenu } from "./EditMenu";
 import { appServices, isPdfFile, isSupportedBackgroundFile, type PdfPageImage } from "../services";
 
 interface Props {
   state: AppState;
   dispatch: Dispatch<Action>;
   onNotice: (message: string) => void;
+  onEditCommand: (command: EditCommand) => void;
+  clipboardAvailable: boolean;
   onExport: () => void;
   onToggle3d: () => void;
   is3dOpen: boolean;
@@ -36,6 +41,8 @@ export function Toolbar({
   state,
   dispatch,
   onNotice,
+  onEditCommand,
+  clipboardAvailable,
   onExport,
   onToggle3d,
   is3dOpen,
@@ -53,8 +60,10 @@ export function Toolbar({
   const [wallHeightMm, setWallHeightMm] = useState(6000);
   const [projectNameDraft, setProjectNameDraft] = useState(state.project.name);
   const { project, mode, saveState } = state;
+  const pdfDialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => setProjectNameDraft(project.name), [project.name]);
+  useDialogFocus(pdfDialogRef, { open: pdfPages.length > 0, onClose: () => setPdfPages([]) });
 
   function commitProjectName() {
     const name = projectNameDraft.trim() || "新規プロジェクト";
@@ -77,7 +86,7 @@ export function Toolbar({
       sourcePage: sourceType === "pdf" ? page.pageNumber : null,
     });
     setPdfPages([]);
-    onNotice(sourceType === "pdf" ? `PDF ${page.pageNumber}ページを背景として読み込みました。` : "背景を読み込みました。「校正」で2点と実距離を指定してください。");
+    onNotice(sourceType === "pdf" ? `PDF ${page.pageNumber}ページを背景として読み込みました。` : "背景を読み込みました。「縮尺合わせ」で2点と実距離を指定してください。");
   }
 
   async function handleBackgroundOpen() {
@@ -143,7 +152,7 @@ export function Toolbar({
 
   function setMode(next: ToolMode) {
     if (next === "verifyCalibration" && project.calibration.mmPerPixel === null) {
-      onNotice("校正済みのプロジェクトで校正確認を実行してください");
+      onNotice("縮尺設定済みの図面で縮尺確認を実行してください");
       return;
     }
     const nextMode = mode === next ? "select" : next;
@@ -164,13 +173,16 @@ export function Toolbar({
   }
 
   const pendingPreset = state.pendingPresetId ? findPreset(state.pendingPresetId) : null;
+  const pendingUserTemplate = state.pendingUserTemplateId
+    ? state.userTemplates.find((template) => template.id === state.pendingUserTemplateId) ?? null
+    : null;
   const modeButton = (m: ToolMode, label: string, disabled = false) => (
     <button
       type="button"
       className={`tool-button${mode === m ? " active" : ""}`}
       aria-pressed={mode === m}
       disabled={disabled}
-      title={disabled ? `${label}（校正済みのプロジェクトで使用できます）` : `${toolModeLabel(m)}モード`}
+      title={disabled ? `${label}（縮尺設定済みの図面で使用できます）` : `${toolModeLabel(m)}モード`}
       onClick={() => setMode(m)}
     >
       {label}
@@ -196,7 +208,7 @@ export function Toolbar({
                 aria-label="プロジェクト名"
               />
               <span className={`save-chip ${saveState === "dirty" ? "dirty" : "saved"}`}>
-                {saveState === "dirty" ? "未保存" : "保存済み"}
+                {saveState === "dirty" ? "ファイル未保存" : "ファイル保存済み"}
               </span>
             </div>
           </div>
@@ -204,13 +216,15 @@ export function Toolbar({
           <div className="toolbar-group file-actions" aria-label="ファイル操作">
             <button type="button" onClick={handleNew}>新規</button>
             <button type="button" onClick={handleOpen}>開く</button>
-            <button type="button" className="primary-action" onClick={handleSave} disabled={fileSaving}>{fileSaving ? "保存中…" : "保存"}</button>
+            <button type="button" className="primary-action" onClick={handleSave} disabled={fileSaving}>{fileSaving ? "ファイル保存中…" : "ファイル保存"}</button>
             <button type="button" onClick={onExport} disabled={project.calibration.mmPerPixel === null}>出力</button>
           </div>
 
+          <EditMenu state={state} clipboardAvailable={clipboardAvailable} onCommand={onEditCommand} />
+
           <div className="toolbar-group history-actions" aria-label="編集履歴">
-            <button type="button" onClick={() => dispatch({ type: "UNDO" })} disabled={state.past.length === 0} title="Ctrl/Cmd+Z">↶</button>
-            <button type="button" onClick={() => dispatch({ type: "REDO" })} disabled={state.future.length === 0} title="Ctrl/Cmd+Shift+Z">↷</button>
+            <button type="button" onClick={() => dispatch({ type: "UNDO" })} disabled={state.past.length === 0} title="Ctrl/Cmd+Z" aria-label="元に戻す（Ctrl/Cmd+Z）">↶</button>
+            <button type="button" onClick={() => dispatch({ type: "REDO" })} disabled={state.future.length === 0} title="Ctrl/Cmd+Shift+Z" aria-label="やり直す（Ctrl/Cmd+Shift+Z）">↷</button>
           </div>
 
           <div className="toolbar-group viewport-actions" aria-label="表示操作">
@@ -219,6 +233,18 @@ export function Toolbar({
             <span className="zoom-readout" aria-label={`ズーム ${Math.round(project.view.zoom * 100)}パーセント`}>{Math.round(project.view.zoom * 100)}%</span>
             <button type="button" onClick={() => zoomBy(1.25)} aria-label="拡大">＋</button>
           </div>
+
+          <details className="display-settings-control">
+            <summary aria-label={"\u8868\u793a\u8a2d\u5b9a"}>{"\u8868\u793a\u8a2d\u5b9a"}</summary>
+            <div className="display-settings-popover">
+              <fieldset>
+                <legend>{"\u697d\u5668\u540d\u306e\u8a00\u8a9e"}</legend>
+                <label><input type="radio" name="instrument-label-language" value="ja" checked={project.displaySettings.instrumentLabelLanguage === "ja"} onChange={() => dispatch({ type: "SET_DISPLAY_SETTINGS", settings: { ...project.displaySettings, instrumentLabelLanguage: "ja" } })} />{"\u65e5\u672c\u8a9e"}</label>
+                <label><input type="radio" name="instrument-label-language" value="enShort" checked={project.displaySettings.instrumentLabelLanguage === "enShort"} onChange={() => dispatch({ type: "SET_DISPLAY_SETTINGS", settings: { ...project.displaySettings, instrumentLabelLanguage: "enShort" } })} />{"\u82f1\u8a9e\u7565\u79f0"}</label>
+              </fieldset>
+              <label className="display-setting-check"><input type="checkbox" checked={project.displaySettings.instrumentLabelsVisible} onChange={(event) => dispatch({ type: "SET_DISPLAY_SETTINGS", settings: { ...project.displaySettings, instrumentLabelsVisible: event.target.checked } })} />{"\u697d\u5668\u540d\u3092\u8868\u793a"}</label>
+            </div>
+          </details>
 
           <div className="toolbar-group panel-actions" aria-label="パネル表示">
             {onToggleLibrary && <button type="button" className="panel-toggle" aria-pressed={libraryOpen} onClick={onToggleLibrary}>ライブラリ</button>}
@@ -230,9 +256,9 @@ export function Toolbar({
           <div className="tool-cluster">
             <span className="tool-cluster-label">図面</span>
             <button type="button" onClick={handleBackgroundOpen} disabled={pdfLoading}>{pdfLoading ? "読込中…" : "背景読込"}</button>
-            {modeButton("calibrate", "校正")}
-            {modeButton("verifyCalibration", "校正確認", project.calibration.mmPerPixel === null)}
-            {modeButton("measure", "測定")}
+            {modeButton("calibrate", "縮尺合わせ")}
+            {modeButton("verifyCalibration", "縮尺確認", project.calibration.mmPerPixel === null)}
+            {modeButton("measure", "距離を測る")}
           </div>
           <div className="tool-cluster">
             <span className="tool-cluster-label">編集</span>
@@ -252,7 +278,7 @@ export function Toolbar({
           <div className="toolbar-mode-status" role="status" aria-label={`現在のモード: ${toolModeLabel(mode)}`}>
             <span className="mode-dot" aria-hidden="true" />
             <span>{toolModeLabel(mode)}</span>
-            {pendingPreset && <small>配置待機中: {pendingPreset.name}</small>}
+            {(pendingPreset || pendingUserTemplate) && <small>配置待機中: {pendingPreset?.name ?? pendingUserTemplate?.name}</small>}
             {state.placementContinuous && <span className="continuous-badge">連続配置</span>}
           </div>
         </div>
@@ -269,7 +295,7 @@ export function Toolbar({
 
       {pdfPages.length > 0 && (
         <div className="dialog-backdrop">
-          <div className="dialog pdf-page-dialog" role="dialog" aria-label="PDFページ選択">
+          <div ref={pdfDialogRef} className="dialog pdf-page-dialog" role="dialog" aria-modal="true" aria-label="PDFページ選択" tabIndex={-1}>
             <h2>背景にするPDFページを選択</h2>
             <div className="pdf-page-grid">
               {pdfPages.map((page) => (

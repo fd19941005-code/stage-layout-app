@@ -117,6 +117,19 @@
   border-radius: 4px;
 }
 
+.guide-panel { padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid #e1e4e8; }
+.guide-panel h2 { margin: 0 0 6px; font-size: 14px; }
+.guide-add-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.guide-add-buttons button, .guide-advanced-add > button, .guide-item > button { min-height: 28px; padding: 4px 6px; border: 1px solid #b9d5ed; border-radius: 4px; background: #f1f8ff; color: #214b70; font-size: 11px; }
+.guide-add-buttons label, .guide-fields label { color: #555; font-size: 11px; }
+.guide-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; margin: 6px 0; }
+.guide-fields input, .guide-fields select, .guide-add-buttons input { display: block; width: 100%; padding: 4px 5px; margin-top: 2px; border: 1px solid #ccc; border-radius: 4px; }
+.guide-list { display: grid; gap: 7px; margin-top: 9px; }
+.guide-item { padding: 7px; border: 1px solid #d5dde4; border-radius: 6px; background: #fafbfc; }
+.guide-item header { display: flex; align-items: center; justify-content: space-between; gap: 4px; font-size: 11px; }
+.guide-item header label { font-size: 10px; font-weight: 400; }
+.guide-item.locked { background: #f1f2f4; }
+.guide-item > button.danger { border-color: #dfb5b5; background: #fff4f4; color: #9b2226; }
 .arrangement-tools > button {
   width: 100%;
   padding: 7px;
@@ -131,6 +144,16 @@
   background: #dcecfb;
 }
 
+.editing-guide-line { fill: none; stroke: #2b8b88; stroke-width: 22; stroke-dasharray: 100 48; pointer-events: none; }
+.editing-guide-hit { fill: none; stroke: transparent; pointer-events: stroke; cursor: move; }
+.editing-guide-anchor { fill: #fff; stroke: #2b8b88; stroke-width: 18; pointer-events: none; }
+.editing-guide.locked .editing-guide-line { stroke: #7f8c8b; stroke-dasharray: 38 34; }
+.editing-guide.locked .editing-guide-hit { cursor: not-allowed; }
+.snap-grid { pointer-events: none; }
+.snap-grid line { stroke: rgba(31, 91, 96, 0.18); vector-effect: non-scaling-stroke; }
+.smart-alignment-guides { pointer-events: none; }
+.smart-alignment-guide-line { fill: none; stroke: #c2415b; stroke-width: 1.5; stroke-dasharray: 8 4; vector-effect: non-scaling-stroke; pointer-events: none; }
+.smart-alignment-guide-label { fill: #8b1e3f; font-weight: 700; paint-order: stroke fill; stroke: #fff; stroke-width: 6px; stroke-linejoin: round; vector-effect: non-scaling-stroke; pointer-events: none; }
 .annotation-object .annotation-line,
 .annotation-preview {
   fill: none;
@@ -164,8 +187,8 @@
 
 .annotation-object.selected .annotation-line,
 .annotation-object.selected .annotation-shape {
-  stroke: #e07b00;
-  stroke-width: 45;
+  stroke: #1f5b60;
+  stroke-width: 20;
 }
 
 .annotation-object.locked .annotation-line,
@@ -243,3 +266,536 @@
   font-size: 13px;
 }
 
+
+/* 椅子多列円弧配置(FR-064)。キャンバス操作を残すため非モーダルの浮動パネルにする */
+.chair-arc-panel,
+.string-template-panel {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 90;
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 140px);
+  overflow: auto;
+  padding: 14px 16px;
+  border: 1px solid #d9d5c8;
+  border-radius: 12px;
+  background: #fffdf8;
+  box-shadow: 0 20px 55px rgba(27, 43, 44, 0.28);
+  font-size: 12px;
+}
+
+.chair-arc-panel-head,
+.string-template-panel .chair-arc-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.chair-arc-panel h2,
+.string-template-panel h2 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.chair-arc-panel .hint,
+.string-template-panel .hint {
+  margin: 6px 0 10px;
+  color: #55605f;
+  line-height: 1.5;
+}
+
+.chair-arc-close {
+  min-width: 32px;
+  min-height: 32px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fafbfc;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.chair-arc-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 8px;
+}
+
+.chair-arc-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.chair-arc-stand-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  white-space: nowrap;
+}
+
+.chair-arc-stand-option input {
+  min-height: auto;
+}
+
+.chair-arc-grid input {
+  min-height: 34px;
+  padding: 4px 6px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.chair-arc-preset {
+  min-height: 34px;
+  padding: 4px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fafbfc;
+  white-space: nowrap;
+}
+
+.chair-arc-preset.active {
+  border-color: #e07b00;
+  background: #fff2dd;
+  font-weight: 700;
+}
+
+.chair-arc-rows-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+
+.chair-arc-rows-head button {
+  min-height: 32px;
+  padding: 2px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fafbfc;
+}
+
+.chair-arc-rows ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 168px;
+  overflow: auto;
+}
+
+.chair-arc-rows li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+}
+
+.chair-arc-row-name {
+  min-width: 48px;
+}
+
+.chair-arc-rows li input {
+  width: 68px;
+  min-height: 32px;
+  padding: 3px 5px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.chair-arc-row-unit {
+  color: #55605f;
+}
+
+.chair-arc-rows li button {
+  margin-left: auto;
+  min-height: 32px;
+  padding: 2px 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fafbfc;
+}
+
+.chair-arc-errors,
+.chair-arc-warnings {
+  margin: 10px 0 0;
+  padding: 8px 10px 8px 26px;
+  border-radius: 8px;
+  line-height: 1.5;
+}
+
+.chair-arc-errors {
+  border: 1px solid #d9a0a0;
+  background: #fdf1f1;
+  color: #a52020;
+}
+
+.chair-arc-warnings {
+  border: 1px solid #dcbb7a;
+  background: #fdf7e8;
+  color: #8a5c05;
+}
+
+.chair-arc-panel .dialog-buttons button,
+.string-template-panel .dialog-buttons button {
+  min-height: 40px;
+}
+
+/* プレビュー描画。出力には含めず、キャンバス上でだけ表示する */
+.chair-arc-preview .chair-arc-center {
+  fill: #e07b00;
+  stroke: none;
+}
+
+.chair-arc-preview .chair-arc-direction-line {
+  fill: none;
+  stroke: #e07b00;
+  stroke-width: 40;
+  stroke-dasharray: 260 160;
+}
+
+.chair-arc-preview .chair-arc-guide {
+  fill: none;
+  stroke: #2f7f86;
+  stroke-width: 30;
+  stroke-dasharray: 200 140;
+}
+
+.chair-arc-preview .chair-arc-chair {
+  color: #2f7f86;
+  opacity: 0.72;
+}
+
+.chair-arc-preview .chair-arc-stand {
+  color: #7b6a9e;
+  opacity: 0.86;
+}
+
+.chair-arc-preview .chair-arc-chair.overlapping {
+  color: #c0392b;
+  opacity: 0.9;
+}
+
+.chair-arc-preview .chair-arc-chair-warning {
+  fill: none;
+  stroke: #c0392b;
+  stroke-width: 46;
+  stroke-dasharray: 150 110;
+}
+
+.chair-arc-preview .chair-arc-distance-grip {
+  fill: #fffdf8;
+  stroke: #2f7f86;
+  stroke-width: 40;
+}
+
+.chair-arc-handles .chair-arc-guide-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-linecap: round;
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+.chair-arc-handles .chair-arc-hit {
+  fill: transparent;
+  stroke: none;
+  cursor: grab;
+  touch-action: none;
+}
+
+.chair-arc-handles .chair-arc-handle {
+  fill: #fffdf8;
+  stroke: #e07b00;
+  stroke-width: 48;
+}
+
+/* 弦楽器テンプレ配置(FR-062)。プレビューを見ながら操作するため非モーダルの浮動パネルにする。
+   主要なタップ領域はiPad Safariを想定して44px以上を確保する(21.3) */
+.string-template-panel {
+  width: 360px;
+}
+
+.string-template-group {
+  margin: 10px 0 0;
+  padding: 8px 10px 10px;
+  border: 1px solid #e2ded1;
+  border-radius: 8px;
+}
+
+.string-template-group legend {
+  padding: 0 4px;
+  font-weight: 700;
+}
+
+.string-template-group .hint {
+  margin: 6px 0 0;
+}
+
+.string-template-radio-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}
+
+.string-template-radio-row label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+}
+
+.string-template-radio-row input {
+  width: 20px;
+  height: 20px;
+}
+
+.string-template-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.string-template-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.string-template-grid input,
+.string-template-select select {
+  min-height: 44px;
+  padding: 4px 6px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.string-template-select {
+  display: block;
+}
+
+.string-template-select select {
+  width: 100%;
+}
+
+.string-template-preset-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.string-template-preset-row .chair-arc-preset {
+  min-height: 44px;
+  min-width: 56px;
+}
+
+.string-template-preset-state {
+  min-width: 56px;
+  color: #8a5c05;
+  font-weight: 700;
+}
+
+.string-template-counts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 10px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.string-template-counts label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+}
+
+.string-template-part {
+  min-width: 52px;
+  font-weight: 700;
+}
+
+.string-template-counts input {
+  width: 68px;
+  min-height: 40px;
+  padding: 3px 5px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.string-template-unit {
+  color: #55605f;
+}
+
+.string-template-order {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.string-template-order li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+}
+
+.string-template-order-index {
+  min-width: 20px;
+  color: #55605f;
+}
+
+.string-template-order-name {
+  min-width: 62px;
+  font-weight: 700;
+}
+
+.string-template-order button {
+  min-height: 44px;
+  min-width: 72px;
+  padding: 2px 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fafbfc;
+}
+
+.string-template-order button:disabled {
+  opacity: 0.45;
+}
+
+.string-template-summary {
+  font-weight: 700;
+}
+
+/* 確定前プレビュー。半透明かつ破線で確定オブジェクトと区別し、ポインター判定から外す(15.2) */
+.template-preview {
+  pointer-events: none;
+}
+
+.template-preview .template-preview-object {
+  color: #2f7f86;
+  opacity: 0.6;
+}
+
+.template-preview .template-preview-object .symbol-use {
+  stroke-dasharray: 120 90;
+}
+
+.template-preview .template-preview-object rect {
+  fill: none;
+  stroke: #2f7f86;
+  stroke-width: 40;
+  stroke-dasharray: 120 90;
+}
+
+/* 弦楽器テンプレ配置: 列(同心の輪)の補助線。
+   輪そのものをドラッグの当たり判定にして、1列目は距離、2列目以降は列間隔を変える。 */
+.string-row-guides .string-row-guide {
+  fill: none;
+  stroke: #7a5cc4;
+  stroke-width: 30;
+  stroke-dasharray: 220 160;
+  opacity: 0.75;
+}
+
+.string-row-guides .string-row-center {
+  fill: #7a5cc4;
+  opacity: 0.75;
+}
+
+.string-row-guides .string-row-guide-hit {
+  stroke-linecap: round;
+  fill: none;
+  stroke: transparent;
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+
+/* Selection outline is canvas-only and never part of export output. */
+.selection-bounds-overlay { pointer-events: none; }
+.selection-bounds {
+  fill: transparent;
+  stroke: #1f5b60;
+  stroke-width: 2.5px;
+  stroke-dasharray: 10px 8px;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.riser-group-preview { pointer-events: none; opacity: 0.56; }
+.riser-group-preview .riser-group-preview-object { color: #168a80; }
+.riser-group-preview .riser-group-preview-object rect { fill: rgba(22,138,128,0.08); stroke: #168a80; stroke-width: 36; stroke-dasharray: 110 90; }
+.riser-group-preview .riser-group-preview-object .symbol-use { stroke-dasharray: 110 90; }
+.chair-line-preview { pointer-events: none; opacity: 0.62; }
+.chair-line-preview .chair-line-preview-object { color: #2f7f86; }
+.chair-line-preview .chair-line-preview-object .symbol-use { stroke-dasharray: 120 90; }
+.chair-line-preview .chair-line-preview-object rect { fill: none; stroke: #2f7f86; stroke-width: 40; stroke-dasharray: 120 90; }
+
+.chair-line-stand-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  white-space: nowrap;
+}
+
+.chair-line-stand-option input {
+  min-height: auto;
+}
+.chair-line-panel { position: fixed; right: 16px; bottom: 16px; z-index: 90; width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 140px); overflow: auto; }
+.chair-line-dialog { width: min(560px, calc(100vw - 32px)); box-sizing: border-box; }
+.chair-line-anchor-actions { margin-top: 8px; }
+.chair-line-anchor-actions button { width: 100%; min-height: 40px; }
+.chair-line-summary { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 10px; font-weight: 700; }
+
+.line-arrangement-guide { pointer-events: none; }
+.line-arrangement-axis { stroke: #e07b00; stroke-width: 26; stroke-dasharray: 150 100; vector-effect: non-scaling-stroke; }
+.line-arrangement-hit { fill: transparent; stroke: transparent; pointer-events: all; cursor: ew-resize; touch-action: none; }
+.line-arrangement-guide:has([cx]) .line-arrangement-hit { cursor: ew-resize; }
+.line-arrangement-guide.vertical .line-arrangement-hit { cursor: ns-resize; }
+.line-arrangement-handle { fill: #fff; stroke: #e07b00; stroke-width: 26; vector-effect: non-scaling-stroke; }
+.line-arrangement-guide [data-line-arrangement-handle]:focus-visible .line-arrangement-handle { stroke: #1769aa; stroke-width: 38; }
+
+.riser-group-panel, .line-arrangement-panel { position: fixed; right: 16px; bottom: 16px; z-index: 90; width: min(720px, calc(100vw - 32px)); max-height: calc(100vh - 140px); overflow: auto; }
+.riser-group-dialog, .line-arrangement-dialog { max-width: 720px; } .riser-group-dialog { width: min(720px, calc(100vw - 32px)); box-sizing: border-box; }
+.riser-segment-editor { display: grid; gap: 8px; }
+.riser-segment-editor .section-heading { display: flex; justify-content: space-between; align-items: center; }
+.riser-segment-row { display: grid; grid-template-columns: 28px minmax(0,1.15fr) minmax(90px,.6fr) minmax(120px,.9fr) auto; gap: 8px; align-items: end; padding: 8px; border: 1px solid #d8dddc; border-radius: 8px; background: #f8faf9; }
+.riser-segment-row > label { min-width: 0; }
+.riser-segment-row select,
+.riser-segment-row input { display: block; width: 100%; min-width: 0; box-sizing: border-box; }
+.riser-segment-index { align-self: center; color: #55605f; font-weight: 700; text-align: center; }
+.riser-segment-actions { display: flex; gap: 4px; }
+.riser-segment-actions button { min-width: 44px; min-height: 40px; }
+.riser-global-fields { margin-top: 12px; }
+.riser-anchor-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 12px; }
+.riser-anchor-actions button.active { background: #e07b00; color: #fff; }
+.riser-summary, .line-arrangement-summary { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; padding: 10px; border-radius: 8px; background: #eef3f1; font-weight: 700; }
+.riser-background-controls { margin-top: 12px; }
+
+@media (max-width: 640px) {
+  .riser-segment-row { grid-template-columns: 26px minmax(0,1fr) minmax(78px,.6fr) minmax(110px,.8fr); }
+  .riser-segment-actions { grid-column: 2 / -1; justify-content: flex-end; }
+}
+
+/* 弦楽器テンプレ配置: 位置補正の中心ハンドル。ドラッグで左右・前後補正を同時に変える。 */
+.string-row-guides .string-center-hit {
+  fill: transparent;
+  cursor: move;
+  touch-action: none;
+}
+
+.string-row-guides .string-center-cross {
+  stroke: #7a5cc4;
+  stroke-width: 45;
+  opacity: 0.75;
+}

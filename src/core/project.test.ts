@@ -62,6 +62,18 @@ describe("プロジェクト保存・復元 (FR-003、AC-009)", () => {
     expect(o.label).toBe("Vn1-1");
   });
 
+  it("背景化状態を保存・復元し、旧JSONではfalseにする", () => {
+    const project = createEmptyProject("背景化");
+    project.objects.push(sampleObject({ backgroundFixed: true }));
+
+    const restored = deserializeProject(serializeProject(project));
+    expect(restored.objects[0].backgroundFixed).toBe(true);
+
+    const raw = JSON.parse(serializeProject(project)) as { objects: Array<Record<string, unknown>> };
+    delete raw.objects[0].backgroundFixed;
+    expect(deserializeProject(JSON.stringify(raw)).objects[0].backgroundFixed).toBe(false);
+  });
+
   it("style round-trip persists", () => {
     const project = createEmptyProject("Style");
     project.objects.push(sampleObject({

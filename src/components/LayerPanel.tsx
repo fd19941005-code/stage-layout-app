@@ -10,7 +10,6 @@ interface Props {
 export function LayerPanel({ state, dispatch }: Props) {
   return (
     <section className="layer-panel">
-      <h2>レイヤー</h2>
       <div className="layer-list">
         {state.project.layers.map((layer) => (
           <div key={layer.id} className={`layer-row${state.activeLayerId === layer.id ? " active" : ""}`}>

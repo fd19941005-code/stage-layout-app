@@ -29,6 +29,8 @@ jobs:
         run: npm ci
       - name: Build
         run: npm run build
+        env:
+          VITE_BETA_PASSWORD: ${{ secrets.VITE_BETA_PASSWORD }}
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload Pages artifact

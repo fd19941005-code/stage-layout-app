@@ -15,6 +15,7 @@ export type {
   PdfService,
   ProjectService,
   SettingsService,
+  UserTemplateService,
 } from "./contracts";
 export { isPdfFile, isSupportedBackgroundFile } from "./fileTypes";
 export { DEFAULT_EXPORT_LAYERS } from "../core/export";

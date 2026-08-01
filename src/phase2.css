@@ -1,17 +1,19 @@
 /* Phase 2編集UI: 回転ハンドル、矩形選択、一括編集 */
 
 .rotate-handle line {
-  stroke: #d46a00;
-  stroke-width: 24;
-  stroke-dasharray: 50 30;
+  stroke: #1f5b60;
+  stroke-width: 2.5px;
+  stroke-dasharray: none;
   pointer-events: none;
+  vector-effect: non-scaling-stroke;
 }
 
 .rotate-handle circle {
-  fill: #fff4df;
-  stroke: #d46a00;
-  stroke-width: 28;
+  fill: #fffdf8;
+  stroke: #1f5b60;
+  stroke-width: 2.5px;
   cursor: grab;
+  vector-effect: non-scaling-stroke;
 }
 
 .rotate-handle circle:active {
@@ -19,11 +21,13 @@
 }
 
 .selection-marquee {
-  fill: rgba(47, 127, 209, 0.12);
-  stroke: #2f7fd1;
-  stroke-width: 20;
-  stroke-dasharray: 90 50;
+  fill: transparent;
+  stroke: #171717;
+  stroke-width: 2.5px;
+  stroke-dasharray: 10px 8px;
+  stroke-linecap: round;
   pointer-events: none;
+  vector-effect: non-scaling-stroke;
 }
 
 .property-button-grid {

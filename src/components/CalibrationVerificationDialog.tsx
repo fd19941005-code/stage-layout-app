@@ -1,8 +1,9 @@
 // 校正確認(FR-024)。保存済みの基準線を再度打点し、入力値との誤差を表示する。
 
-import type { Dispatch } from "react";
+import { useRef, type Dispatch } from "react";
 import type { Action, AppState } from "../state/appState";
 import { measuredCalibrationDistanceMm, sourcePxToDisplayedPx } from "../core/transform";
+import { useDialogFocus } from "./useDialogFocus";
 
 interface Props {
   state: AppState;
@@ -10,6 +11,8 @@ interface Props {
 }
 
 export function CalibrationVerificationDialog({ state, dispatch }: Props) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(dialogRef, { onClose: () => dispatch({ type: "CANCEL_CALIBRATION" }) });
   const [a, b] = state.calibPointsPx;
   const mmPerPixel = state.project.calibration.mmPerPixel;
   const expected = state.project.calibration.realDistanceMm;
@@ -21,11 +24,11 @@ export function CalibrationVerificationDialog({ state, dispatch }: Props) {
 
   return (
     <div className="dialog-backdrop">
-      <div className="dialog" role="dialog" aria-label="校正結果の確認">
-        <h2>校正結果の確認</h2>
+      <div ref={dialogRef} className="dialog" role="dialog" aria-modal="true" aria-label="縮尺設定の確認結果" tabIndex={-1}>
+        <h2>縮尺設定の確認結果</h2>
         <dl className="calibration-result">
           <div><dt>入力した基準距離</dt><dd>{Math.round(expected)} mm</dd></div>
-          <div><dt>再測定結果</dt><dd>{measured.toFixed(1)} mm</dd></div>
+          <div><dt>確認用の距離</dt><dd>{measured.toFixed(1)} mm</dd></div>
           <div><dt>誤差</dt><dd className={withinTarget ? "ok" : "error-value"}>{errorPercent.toFixed(2)}%</dd></div>
         </dl>
         <p className={withinTarget ? "success-message" : "error-message"}>
@@ -35,7 +38,7 @@ export function CalibrationVerificationDialog({ state, dispatch }: Props) {
         </p>
         <div className="dialog-buttons">
           <button type="button" onClick={() => dispatch({ type: "CLEAR_CALIB_POINTS" })}>
-            もう一度測定
+            もう一度測る
           </button>
           <button type="button" onClick={() => dispatch({ type: "CANCEL_CALIBRATION" })}>
             閉じる

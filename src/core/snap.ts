@@ -1,11 +1,12 @@
 // 実寸スナップ計算(FR-059)。画面pxやズームには依存しない。 
 
-import type { PointMm, SceneObject, SnapSettings } from "../types/project";
+import type { Guide, PointMm, SceneObject, SnapSettings } from "../types/project";
+import { nearestGuideSnap, type GuideAnchor } from "./guides";
 
 export const DEFAULT_SNAP_SETTINGS: SnapSettings = {
   grid: false,
   objects: false,
-  stageCenter: false,
+  stageCenter: true,
   gridIntervalMm: 910,
   thresholdMm: 60,
 };
@@ -30,6 +31,8 @@ function stageCenterX(projectWidthMm: number | null | undefined): number | null 
 }
 
 export interface SnapContext {
+  guides?: readonly Guide[];
+  guideAnchors?: readonly GuideAnchor[];
   settings: SnapSettings;
   otherObjects: readonly SceneObject[];
   stageWidthMm?: number | null;
@@ -60,6 +63,12 @@ export function snapPointMm(point: PointMm, context: SnapContext): PointMm {
   if (settings.stageCenter) {
     const center = stageCenterX(context.stageWidthMm);
     if (center !== null && Math.abs(center - xMm) <= threshold) xMm = center;
+  }
+  if (settings.guides && context.guides) {
+    const guideSnap = nearestGuideSnap({ xMm, yMm }, context.guides, settings.guideThresholdMm ?? threshold, context.guideAnchors);
+    if (guideSnap) {
+      ({ xMm, yMm } = guideSnap.point);
+    }
   }
 
   return { xMm, yMm };
