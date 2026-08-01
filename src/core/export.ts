@@ -2,10 +2,11 @@
 // mm正本から再描画する。選択枠・回転ハンドル・測定ガイドは出力しない。
 
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { instrumentLabelForPreset } from "./presets";
 import type { Background, Project, SceneObject } from "../types/project";
 import { effectiveMmPerPixel } from "../state/appState";
 import { getBackgroundDisplaySizePx, getEffectiveCrop, sceneObjectBoundsMm } from "./transform";
-import { getSymbolLabelLayout, renderSymbolDefinitionsSvg, renderSymbolUseSvg, symbolIdForPreset, symbolLabelForPreset, type SymbolLabelLayout } from "./symbols";
+import { concertTomSetLabel, getSymbolLabelLayout, isConcertTomSetGroup, isSingleTimpaniPresetId, timpaniSizeLabelForPreset, renderSymbolDefinitionsSvg, renderSymbolUseSvg, symbolIdForObject, symbolLabelForPreset, type SymbolLabelLayout } from "./symbols";
 import { resolveObjectStyle, type ObjectStyle } from "./visualStyle";
 
 export const PDF_POINTS_PER_INCH = 72;
@@ -163,7 +164,7 @@ function renderGridSvg(bounds: ExportBounds, intervalMm = 910): string {
   return `<g class="export-grid" stroke="#9aa6b2" stroke-width="8" opacity="0.35">${lines.join("")}</g>`;
 }
 
-function renderSvgText(value: string, x: number, y: number, style: ObjectStyle, anchor = "middle", className = "object-label", layout?: SymbolLabelLayout): string {
+function renderSvgText(value: string, x: number, y: number, style: ObjectStyle, anchor = "middle", className = "object-label", layout?: SymbolLabelLayout, rotationDeg = 0): string {
   const lines = layout?.lines ?? value.split(/\r?\n/);
   const lineHeight = layout?.lineHeightMm ?? style.labelFontSizeMm * 1.2;
   const firstY = y - ((lines.length - 1) * lineHeight) / 2;
@@ -171,7 +172,8 @@ function renderSvgText(value: string, x: number, y: number, style: ObjectStyle, 
   const symbolStyle = className === "symbol-label"
     ? ' style="paint-order:stroke;stroke:' + (style.labelColor.toLowerCase() === "#ffffff" ? "rgba(18,21,26,0.65)" : "rgba(255,255,255,0.86)") + ';stroke-width:' + Math.max(8, (layout?.fontSizeMm ?? style.labelFontSizeMm) * 0.08) + '"'
     : "";
-  return '<text class="' + className + '" x="' + x + '" y="' + firstY + '" text-anchor="' + anchor + '" fill="' + style.labelColor + '" font-size="' + (layout?.fontSizeMm ?? style.labelFontSizeMm) + '"' + symbolStyle + '>' + tspans + '</text>';
+  const text = '<text class="' + className + '" x="' + x + '" y="' + firstY + '" text-anchor="' + anchor + '" fill="' + style.labelColor + '" font-size="' + (layout?.fontSizeMm ?? style.labelFontSizeMm) + '"' + symbolStyle + '>' + tspans + '</text>';
+  return rotationDeg === 0 ? text : '<g transform="rotate(' + (-rotationDeg) + ')">' + text + '</g>';
 }
 
 function renderShapeStyle(style: ObjectStyle): string {
@@ -182,13 +184,75 @@ function renderSymbolStyle(style: ObjectStyle): string {
   return 'color="' + style.color + '" style="--symbol-body-opacity:' + style.fillOpacity + ';--symbol-solid-opacity:' + Math.min(1, style.fillOpacity + 0.16) + ';--symbol-stroke-width:' + style.strokeWidthMm + ';--symbol-detail-stroke-width:' + Math.max(6, style.strokeWidthMm * 0.84) + '"';
 }
 
-function renderObjectsSvg(objects: readonly SceneObject[], layers: ExportLayerOptions): string {
-  return objects.map((object) => {
+function renderConcertTomSetLabelsSvg(project: Project, objects: readonly SceneObject[], layers: ExportLayerOptions): string {
+  if (!layers.labels) return "";
+  const groups = new Map<string, SceneObject[]>();
+  for (const object of objects) {
+    if (!object.groupId || isAnnotationObject(object)) continue;
+    const group = groups.get(object.groupId) ?? [];
+    group.push(object);
+    groups.set(object.groupId, group);
+  }
+
+  return [...groups.values()].map((group) => {
+    if (!isConcertTomSetGroup(group)) return "";
+    const firstObject = group[0];
+    if (!firstObject) return "";
+    const bounds = group.reduce(
+      (result, object) => {
+        const objectBounds = sceneObjectBoundsMm(object);
+        return {
+          minXMm: Math.min(result.minXMm, objectBounds.minXMm),
+          minYMm: Math.min(result.minYMm, objectBounds.minYMm),
+          maxXMm: Math.max(result.maxXMm, objectBounds.maxXMm),
+          maxYMm: Math.max(result.maxYMm, objectBounds.maxYMm),
+        };
+      },
+      { minXMm: Number.POSITIVE_INFINITY, minYMm: Number.POSITIVE_INFINITY, maxXMm: Number.NEGATIVE_INFINITY, maxYMm: Number.NEGATIVE_INFINITY },
+    );
+    const style = resolveObjectStyle(firstObject);
+    if (!style.labelVisible || !project.displaySettings.instrumentLabelsVisible) return "";
+    const layout = getSymbolLabelLayout(
+      concertTomSetLabel(project.displaySettings.instrumentLabelLanguage),
+      bounds.maxXMm - bounds.minXMm,
+      bounds.maxYMm - bounds.minYMm,
+      style.labelFontSizeMm,
+    );
+    if (!layout) return "";
+    return renderSvgText(
+      concertTomSetLabel(project.displaySettings.instrumentLabelLanguage),
+      (bounds.minXMm + bounds.maxXMm) / 2,
+      (bounds.minYMm + bounds.maxYMm) / 2,
+      style,
+      "middle",
+      "symbol-label",
+      layout,
+    );
+  }).join("");
+}
+function renderObjectsSvg(project: Project, objects: readonly SceneObject[], layers: ExportLayerOptions): string {
+  const renderedObjects = objects.map((object) => {
     const annotation = object.annotationKind;
     const style = resolveObjectStyle(object);
-    const labelText = object.label || object.name;
-    const symbolId = annotation ? null : symbolIdForPreset(object.presetId);
-    const showLabel = Boolean(layers.labels && labelText && (object.label || style.labelVisible));
+    const customLabel = object.label.trim();
+    const isInstrument = object.type === "instrument";
+    const symbolId = annotation ? null : symbolIdForObject(object);
+    const labelText = customLabel
+      ? symbolId
+        ? symbolLabelForPreset(object.presetId, customLabel, true, project.displaySettings.instrumentLabelLanguage)
+        : customLabel
+      : symbolId
+        ? isSingleTimpaniPresetId(object.presetId) && !project.displaySettings.instrumentLabelsVisible
+          ? timpaniSizeLabelForPreset(object.presetId) ?? symbolLabelForPreset(object.presetId, object.name, false, project.displaySettings.instrumentLabelLanguage)
+          : symbolLabelForPreset(object.presetId, object.name, false, project.displaySettings.instrumentLabelLanguage)
+        : isInstrument
+          ? instrumentLabelForPreset(object.presetId, project.displaySettings.instrumentLabelLanguage) ?? object.name
+          : object.name;
+    const isTimpaniSizeLabel = isSingleTimpaniPresetId(object.presetId);
+    const showCatalogLabel = isInstrument
+      ? (project.displaySettings.instrumentLabelsVisible || isTimpaniSizeLabel) && style.labelVisible
+      : style.labelVisible;
+    const showLabel = Boolean(layers.labels && labelText && (customLabel || showCatalogLabel));
 
     if (annotation === "text") {
       return layers.labels ? renderSvgText(object.label || "注釈", object.xMm, object.yMm, style, "middle", "annotation-text") : "";
@@ -210,21 +274,23 @@ function renderObjectsSvg(objects: readonly SceneObject[], layers: ExportLayerOp
       return '<g transform="translate(' + object.xMm + ' ' + object.yMm + ') rotate(' + object.rotationDeg + ')">' + shape + label + '</g>';
     }
     if (symbolId) {
-      const symbolText = symbolLabelForPreset(object.presetId, labelText, Boolean(object.label));
+      const symbolText = labelText;
       const symbolLayout = getSymbolLabelLayout(symbolText, object.widthMm, object.depthMm, style.labelFontSizeMm);
-      const symbolLabel = showLabel
+      const showSymbolLabel = Boolean(layers.labels && symbolText && showLabel);
+      const symbolLabel = showSymbolLabel
         ? symbolLayout
-          ? renderSvgText(symbolText, 0, 0, style, "middle", "symbol-label", symbolLayout)
-          : renderSvgText(symbolText, 0, object.depthMm / 2 + 320, style)
+          ? renderSvgText(symbolText, 0, 0, style, "middle", "symbol-label", symbolLayout, object.rotationDeg)
+          : renderSvgText(symbolText, 0, object.depthMm / 2 + 320, style, "middle", "object-label", undefined, object.rotationDeg)
         : "";
       return '<g transform="translate(' + object.xMm + ' ' + object.yMm + ') rotate(' + object.rotationDeg + ')" ' + renderSymbolStyle(style) + '>' + renderSymbolUseSvg(symbolId, object.widthMm, object.depthMm) + symbolLabel + '</g>';
     }
     const shape = object.shape === "circle"
       ? '<ellipse rx="' + object.widthMm / 2 + '" ry="' + object.depthMm / 2 + '" ' + renderShapeStyle(style) + ' />'
       : '<rect x="' + (-object.widthMm / 2) + '" y="' + (-object.depthMm / 2) + '" width="' + object.widthMm + '" height="' + object.depthMm + '" ' + renderShapeStyle(style) + ' />';
-    const label = showLabel ? renderSvgText(labelText, 0, object.depthMm / 2 + 260, style) : "";
+    const label = showLabel ? renderSvgText(labelText, 0, object.depthMm / 2 + 260, style, "middle", "object-label", undefined, object.rotationDeg) : "";
     return '<g transform="translate(' + object.xMm + ' ' + object.yMm + ') rotate(' + object.rotationDeg + ')">' + shape + label + '</g>';
   }).join("");
+  return renderedObjects + renderConcertTomSetLabelsSvg(project, objects, layers);
 }
 /** 出力専用SVG。編集UIを含めないためPNGとPDFの共通基盤になる */
 export function renderProjectToSvg(
@@ -238,7 +304,7 @@ export function renderProjectToSvg(
   const widthPx = outputWidthPx ?? Math.max(1, Math.round(bounds.widthMm));
   const heightPx = outputHeightPx ?? Math.max(1, Math.round(bounds.heightMm));
   const grid = layers.grid ? renderGridSvg(bounds) : "";
-  const objects = renderObjectsSvg(selectExportObjects(project, layers), layers);
+  const objects = renderObjectsSvg(project, selectExportObjects(project, layers), layers);
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${widthPx}" height="${heightPx}" viewBox="${bounds.minXMm} ${bounds.minYMm} ${bounds.widthMm} ${bounds.heightMm}"><defs><marker id="annotation-arrow" markerWidth="16" markerHeight="16" refX="12" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#d12f2f" /></marker>${renderSymbolDefinitionsSvg()}</defs><rect x="${bounds.minXMm}" y="${bounds.minYMm}" width="${bounds.widthMm}" height="${bounds.heightMm}" fill="#ffffff" />${renderBackgroundSvg(project, layers, mmPerPixel)}${grid}${objects}</svg>`;
 }
 
@@ -384,9 +450,4 @@ export async function createProjectPdf(project: Project, options: PdfExportOptio
   // pdf-libのUint8ArrayはArrayBufferLikeを保持するため、BlobのDOM型へ明示的に変換する。
   return new Blob([bytes.buffer as ArrayBuffer], { type: "application/pdf" });
 }
-
-
-
-
-
 

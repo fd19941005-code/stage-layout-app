@@ -1,6 +1,7 @@
 // Phase 4のプルト弧状配置。1 Actionで椅子2脚+譜面台1台を生成する。
-import { useState, type Dispatch, type FormEvent } from "react";
+import { useRef, useState, type Dispatch, type FormEvent } from "react";
 import type { Action, AppState } from "../state/appState";
+import { useDialogFocus } from "./useDialogFocus";
 
 interface Props {
   state: AppState;
@@ -18,6 +19,8 @@ export function PultArcDialog({ state, dispatch, onClose }: Props) {
   const [endDeg, setEndDeg] = useState(45);
   const [pultCount, setPultCount] = useState(14);
   const [pultSpacingMm, setPultSpacingMm] = useState(900);
+  const dialogRef = useRef<HTMLFormElement>(null);
+  useDialogFocus(dialogRef, { onClose });
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -38,7 +41,7 @@ export function PultArcDialog({ state, dispatch, onClose }: Props) {
 
   return (
     <div className="dialog-backdrop">
-      <form className="dialog pult-dialog" onSubmit={submit}>
+      <form ref={dialogRef} className="dialog pult-dialog" role="dialog" aria-modal="true" aria-label="プルトを弧状配置" tabIndex={-1} onSubmit={submit}>
         <h2>プルトを弧状配置</h2>
         <p className="hint">1プルト=椅子2脚+譜面台1台。配置後は個別に編集できます。</p>
         <div className="dialog-form-grid">

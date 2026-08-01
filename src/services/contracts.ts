@@ -4,6 +4,7 @@ import type {
   PngExportOptions,
 } from "../core/export";
 import type { Project } from "../types/project";
+import type { UserTemplate } from "../types/userTemplate";
 
 /**
  * 実行環境に依存しないファイル表現。
@@ -75,6 +76,12 @@ export interface ProjectService {
   saveProject(project: Project): Promise<void>;
 }
 
+/** プロジェクトとは独立したユーザーテンプレートのローカル保存契約。 */
+export interface UserTemplateService {
+  loadTemplates(): Promise<UserTemplate[]>;
+  saveTemplates(templates: readonly UserTemplate[]): Promise<void>;
+}
+
 export interface ExportArtifact {
   data: Uint8Array;
   mimeType: string;
@@ -95,6 +102,7 @@ export interface AppServices {
   autosave: AutosaveService;
   settings: SettingsService;
   project: ProjectService;
+  templates: UserTemplateService;
 }
 
 // UIが出力実装(core/export)へ直接依存しないよう、型と既定値をサービス入口から公開する。

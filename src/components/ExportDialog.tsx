@@ -1,6 +1,6 @@
 // PNG/PDF出力ダイアログ(FR-080〜085)。出力設定と欄外情報をまとめて指定する。
 
-import { useState, type Dispatch } from "react";
+import { useRef, useState, type Dispatch } from "react";
 import type { Action, AppState } from "../state/appState";
 import type { ExportSettings, ProjectMetadata } from "../types/project";
 import {
@@ -8,6 +8,7 @@ import {
   DEFAULT_EXPORT_LAYERS,
   type ExportLayerOptions,
 } from "../services";
+import { useDialogFocus } from "./useDialogFocus";
 
 interface Props {
   state: AppState;
@@ -31,6 +32,8 @@ export function ExportDialog({ state, dispatch, onClose, onNotice }: Props) {
   const [layers, setLayers] = useState<ExportLayerOptions>({ ...DEFAULT_EXPORT_LAYERS });
   const [metadata, setMetadata] = useState<ProjectMetadata>({ ...state.project.metadata });
   const [busy, setBusy] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(dialogRef, { onClose });
 
   function setMetadataField<K extends keyof ProjectMetadata>(key: K, value: ProjectMetadata[K]) {
     setMetadata((current) => ({ ...current, [key]: value }));
@@ -70,7 +73,7 @@ export function ExportDialog({ state, dispatch, onClose, onNotice }: Props) {
 
   return (
     <div className="dialog-backdrop">
-      <div className="dialog export-dialog" role="dialog" aria-label="図面出力">
+      <div ref={dialogRef} className="dialog export-dialog" role="dialog" aria-modal="true" aria-label="図面出力" tabIndex={-1}>
         <h2>図面を出力</h2>
         {state.project.calibration.mmPerPixel === null && <p className="error-message">未校正のため出力できません。</p>}
 

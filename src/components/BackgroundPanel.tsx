@@ -36,7 +36,6 @@ export function BackgroundPanel({ state, dispatch }: Props) {
 
   return (
     <section className="background-panel">
-      <h2>背景</h2>
       {!background.imageDataUrl ? (
         <p className="hint">PNG/JPEGまたはPDFを読み込むと編集できます。</p>
       ) : (

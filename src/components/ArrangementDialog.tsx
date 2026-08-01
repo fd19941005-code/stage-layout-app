@@ -1,6 +1,7 @@
 // Phase 4の行列配置。計算結果はreducerの1 Actionとして履歴へ入る。
-import { useState, type Dispatch, type FormEvent } from "react";
+import { useRef, useState, type Dispatch, type FormEvent } from "react";
 import type { Action, AppState } from "../state/appState";
+import { useDialogFocus } from "./useDialogFocus";
 
 interface Props {
   state: AppState;
@@ -15,6 +16,8 @@ export function ArrangementDialog({ state, dispatch, sourceId, onClose }: Props)
   const [columns, setColumns] = useState(2);
   const [gapXMm, setGapXMm] = useState(0);
   const [gapYMm, setGapYMm] = useState(0);
+  const dialogRef = useRef<HTMLFormElement>(null);
+  useDialogFocus(dialogRef, { onClose });
   if (!source) return null;
 
   function submit(event: FormEvent) {
@@ -25,7 +28,7 @@ export function ArrangementDialog({ state, dispatch, sourceId, onClose }: Props)
 
   return (
     <div className="dialog-backdrop">
-      <form className="dialog arrangement-dialog" onSubmit={submit}>
+      <form ref={dialogRef} className="dialog arrangement-dialog" role="dialog" aria-modal="true" aria-label="行列配置" tabIndex={-1} onSubmit={submit}>
         <h2>行列配置</h2>
         <p className="hint">基準: {source.label || source.name} ({source.widthMm}×{source.depthMm}mm)</p>
         <div className="dialog-form-grid">

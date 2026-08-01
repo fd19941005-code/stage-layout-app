@@ -33,7 +33,7 @@ describe("Phase 4プロジェクト互換性", () => {
   it("注釈のmm終点とスナップ設定を保存・復元する", () => {
     const project = createEmptyProject("Phase 4");
     project.objects.push(annotation());
-    project.snapSettings = { grid: true, objects: true, stageCenter: true, gridIntervalMm: 910, thresholdMm: 80 };
+    project.snapSettings = { grid: true, objects: true, stageCenter: true, gridIntervalMm: 910, thresholdMm: 80, guides: false, guideThresholdMm: 45 };
 
     const restored = deserializeProject(serializeProject(project));
 
@@ -52,7 +52,8 @@ describe("Phase 4プロジェクト互換性", () => {
 
     const restored = deserializeProject(JSON.stringify(raw));
 
-    expect(restored.snapSettings).toMatchObject({ grid: false, objects: false, stageCenter: false, gridIntervalMm: 910 });
+    // 既定値はcreateEmptyProjectのsnapSettings。舞台中央線と編集ガイドだけ初期ON。
+    expect(restored.snapSettings).toMatchObject({ grid: false, objects: false, stageCenter: true, gridIntervalMm: 910, guides: true });
     expect("futurePhase" in restored).toBe(false);
   });
 });

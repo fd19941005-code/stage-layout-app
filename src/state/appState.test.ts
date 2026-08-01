@@ -57,6 +57,6 @@ describe("ツールモード表示 (UX-006)", () => {
   it("編集モードを利用者向けの日本語で識別できる", () => {
     expect(toolModeLabel("select")).toBe("選択・移動");
     expect(toolModeLabel("selectRect")).toBe("範囲選択");
-    expect(toolModeLabel("measure")).toBe("測定");
+    expect(toolModeLabel("measure")).toBe("距離を測る");
   });
 });

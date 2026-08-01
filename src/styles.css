@@ -198,7 +198,7 @@ button:disabled {
 }
 
 .scene-object.selected {
-  color: #e07b00;
+  color: #1f5b60;
 }
 
 .scene-object .symbol-use {
@@ -214,14 +214,20 @@ button:disabled {
 
 .scene-object.selected rect,
 .scene-object.selected ellipse {
-  fill: rgba(240, 140, 0, 0.2);
-  stroke: #e07b00;
-  stroke-width: 40;
+  fill: rgba(31, 91, 96, 0.08);
+  stroke: #1f5b60;
+  stroke-width: 20;
 }
 
 .scene-object.locked rect,
 .scene-object.locked ellipse {
   stroke-dasharray: 60 60;
+}
+
+/* 背景化は表示・出力を残したまま通常操作から外す状態。透明度は変更しない。 */
+.scene-object.background-fixed rect,
+.scene-object.background-fixed ellipse {
+  stroke-dasharray: 18 30;
 }
 
 .scene-object .facing {

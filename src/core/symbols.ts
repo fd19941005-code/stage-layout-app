@@ -1,13 +1,16 @@
 import { STAGE_OPEN_TEMPLATE_ASSETS, type StageOpenTemplateAsset } from "./stageOpenTemplateSymbols";
-import { INSTRUMENT_BODY_MASTERS, TIMPANI_SET_BODY_SIZE, TIMPANI_SET_LAYOUT } from "./instrumentCatalog";
+import { CONCERT_TOM_BODY_MASTERS, CONCERT_TOM_SET_BODY_SIZE, CONCERT_TOM_SET_LAYOUT, INSTRUMENT_BODY_MASTERS, TIMPANI_SET_BODY_SIZE, TIMPANI_SET_LAYOUT } from "./instrumentCatalog";
+import type { ContentBox } from "./symbolAssets";
+import { instrumentLabelForPreset } from "./presets";
+import type { InstrumentLabelLanguage, SceneObject } from "../types/project";
 
 // 配置物の上面図シンボル定義。
 // 寸法・位置・回転はSceneObjectのmm値を正本とし、ここでは表示用の
-// 1000 x 1000座標系だけを定義する。SVGのsymbol/useで画面と出力へ共有する。
+// 1000 x 1000座標系、または寸法カタログと一致するmm viewBoxを定義する。SVGのsymbol/useで画面と出力へ共有する。
 
 export const SYMBOL_VIEW_BOX = "0 0 1000 1000";
 
-export type SymbolPaint = "body" | "detail" | "solid";
+export type SymbolPaint = "body" | "detail" | "solid" | "whiteBody";
 
 export type SymbolNode =
   | { kind: "rect"; x: number; y: number; width: number; height: number; rx?: number; paint?: SymbolPaint }
@@ -19,6 +22,9 @@ export type SymbolNode =
 
 export interface SymbolDefinition {
   id: string;
+  /** stableな表示資産ID。物理寸法・配置座標は保持しない。 */
+  assetId?: string;
+  contentBox?: ContentBox;
   nodes: readonly SymbolNode[];
   viewBox?: string;
   rawSvg?: string;
@@ -41,6 +47,16 @@ export function symbolPaintProps(paint: SymbolPaint = "detail") {
     return {
       fill: "currentColor",
       fillOpacity: "var(--symbol-solid-opacity, 0.24)",
+      stroke: "currentColor",
+      strokeWidth: "var(--symbol-stroke-width, 16)",
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const,
+    };
+  }
+  if (paint === "whiteBody") {
+    return {
+      fill: "#ffffff",
+      fillOpacity: "1",
       stroke: "currentColor",
       strokeWidth: "var(--symbol-stroke-width, 16)",
       strokeLinecap: "round" as const,
@@ -76,18 +92,13 @@ function path(d: string, paint: SymbolPaint = "detail"): SymbolNode {
   return { kind: "path", d, paint };
 }
 
+// 普通の椅子は向きを持たない。正円1個だけで表し、背もたれ・脚・座面方向は描かない。
+// assetIdは保存済みJSONのassetVariantId逆引きを保つため原本アセット(椅子A上.svg)のIDを引き継ぐ。
 const chair: SymbolDefinition = {
   id: "stage-symbol-chair",
-  nodes: [
-    // 四角い座面と背の二重線で、縮小時も「椅子」と判別できる形にする。
-    rect(145, 135, 710, 730, "body", 42),
-    rect(220, 205, 560, 230, "solid", 28),
-    line(220, 500, 780, 500),
-    line(300, 865, 245, 940),
-    line(700, 865, 755, 940),
-    line(390, 865, 350, 940),
-    line(610, 865, 650, 940),
-  ],
+  assetId: STAGE_OPEN_TEMPLATE_ASSETS.chair.id,
+  preserveAspectRatio: "xMidYMid meet",
+  nodes: [circle(500, 500, 500, "whiteBody")],
 };
 
 const chairBack: SymbolDefinition = {
@@ -119,6 +130,17 @@ const musicStand: SymbolDefinition = {
     line(500, 470, 500, 820),
     line(380, 860, 620, 860),
     line(410, 820, 590, 820),
+  ],
+};
+
+// ホール図面で一般的な、譜面台を×印だけで示す略記号。細線2本で描く。
+const musicStandCross: SymbolDefinition = {
+  id: "stage-symbol-music-stand-cross",
+  assetId: "generated/music-stand-cross",
+  preserveAspectRatio: "xMidYMid meet",
+  nodes: [
+    line(160, 160, 840, 840),
+    line(840, 160, 160, 840),
   ],
 };
 
@@ -226,56 +248,54 @@ const celesta: SymbolDefinition = {
   ],
 };
 
-function normalizedTimpaniBodyNodes(
-  diameterMm: number,
-  centerXMm: number,
-  centerYMm: number,
-  envelopeWidthMm: number,
-  envelopeDepthMm: number,
-  includeStand: boolean,
-): SymbolNode[] {
-  const cx = centerXMm / envelopeWidthMm * 1000;
-  const cy = centerYMm / envelopeDepthMm * 1000;
-  const rx = diameterMm / envelopeWidthMm * 500;
-  const ry = diameterMm / envelopeDepthMm * 500;
-  const nodes: SymbolNode[] = [
-    // The outer ellipse is the physical bowl diameter; the remaining nodes are decorative.
-    ellipse(cx, cy, rx, ry, "body"),
-    ellipse(cx, cy - ry * 0.16, rx * 0.83, ry * 0.78, "detail"),
-    ellipse(cx, cy - ry * 0.16, rx * 0.875, ry * 0.83, "detail"),
-    ellipse(cx, cy - ry * 0.16, rx * 0.07, ry * 0.07, "solid"),
-    line(cx - rx * 0.74, cy - ry * 0.16, cx + rx * 0.74, cy - ry * 0.16),
-    line(cx - rx * 0.53, cy - ry * 0.57, cx + rx * 0.53, cy - ry * 0.57),
-  ];
-  if (includeStand) {
-    const baseY = Math.min(980, cy + ry * 0.98);
-    nodes.push(
-      line(cx, cy + ry * 0.50, cx, baseY),
-      line(cx - rx * 0.30, baseY, cx + rx * 0.30, baseY),
-      line(cx - rx * 0.25, cy + ry * 0.50, cx - rx * 0.42, baseY - 18),
-      line(cx + rx * 0.25, cy + ry * 0.50, cx + rx * 0.42, baseY - 18),
-    );
-  }
-  return nodes;
-}
-
 const timpani: SymbolDefinition = {
   id: "stage-symbol-timpani",
-  nodes: normalizedTimpaniBodyNodes(1000, 500, 500, 1000, 1000, true),
+  assetId: "generated/timpani-circle",
+  preserveAspectRatio: "xMidYMid meet",
+  nodes: [circle(500, 500, 500, "body")],
 };
 
 const timpaniSet: SymbolDefinition = {
   id: "stage-symbol-timpani-set",
+  assetId: "generated/timpani-set-4",
+  viewBox: `0 0 ${TIMPANI_SET_BODY_SIZE.widthMm} ${TIMPANI_SET_BODY_SIZE.depthMm}`,
+  preserveAspectRatio: "xMidYMid meet",
   nodes: TIMPANI_SET_LAYOUT.flatMap((part) => {
     const body = INSTRUMENT_BODY_MASTERS[part.presetId];
-    return normalizedTimpaniBodyNodes(
-      body.diameterMm ?? body.widthMm,
-      part.centerXMm,
-      part.centerYMm,
-      TIMPANI_SET_BODY_SIZE.widthMm,
-      TIMPANI_SET_BODY_SIZE.depthMm,
-      false,
-    );
+    const diameter = body.diameterMm ?? body.widthMm;
+    return [ellipse(part.centerXMm, part.centerYMm, diameter / 2, diameter / 2, "body")];
+  }),
+};
+
+function concertTomSymbol(id: string, assetId: string): SymbolDefinition {
+  return {
+    id,
+    assetId,
+    preserveAspectRatio: "xMidYMid meet",
+    nodes: [circle(500, 500, 500, "body")],
+  };
+}
+
+const concertTom16: SymbolDefinition = concertTomSymbol("stage-symbol-concert-tom-16", "generated/concert-tom-16");
+const concertTom14: SymbolDefinition = concertTomSymbol("stage-symbol-concert-tom-14", "generated/concert-tom-14");
+const concertTom12: SymbolDefinition = concertTomSymbol("stage-symbol-concert-tom-12", "generated/concert-tom-12");
+const concertTom10: SymbolDefinition = concertTomSymbol("stage-symbol-concert-tom-10", "generated/concert-tom-10");
+
+const concertTomSetMinY = Math.min(...CONCERT_TOM_SET_LAYOUT.map((part) => {
+  const body = CONCERT_TOM_BODY_MASTERS[part.presetId];
+  const diameter = body.diameterMm ?? body.widthMm;
+  return part.centerYMm - diameter / 2;
+}));
+
+const concertTomSet: SymbolDefinition = {
+  id: "stage-symbol-concert-tom-set",
+  assetId: "generated/concert-tom-set-4",
+  viewBox: `0 0 ${CONCERT_TOM_SET_BODY_SIZE.widthMm} ${CONCERT_TOM_SET_BODY_SIZE.depthMm}`,
+  preserveAspectRatio: "xMidYMid meet",
+  nodes: CONCERT_TOM_SET_LAYOUT.flatMap((part) => {
+    const body = CONCERT_TOM_BODY_MASTERS[part.presetId];
+    const diameter = body.diameterMm ?? body.widthMm;
+    return [ellipse(part.centerXMm, part.centerYMm - concertTomSetMinY, diameter / 2, diameter / 2, "body")];
   }),
 };
 
@@ -316,6 +336,7 @@ const keyboardPercussion: SymbolDefinition = {
   ],
 };
 
+
 const bassDrum: SymbolDefinition = {
   id: "stage-symbol-bass-drum",
   nodes: [
@@ -328,6 +349,25 @@ const bassDrum: SymbolDefinition = {
     line(780, 300, 220, 630),
     line(500, 785, 500, 890),
   ],
+};
+
+const concertBassDrumPhysical: SymbolDefinition = {
+  id: "stage-symbol-concert-bass-drum",
+  assetId: "generated/concert-bass-drum-36x22",
+  // 旧保存データの直接参照だけを支える互換定義。現行表示・出力には使用しない。
+  viewBox: "0 0 559 914",
+  preserveAspectRatio: "xMidYMid meet",
+  nodes: (() => {
+    const widthMm = 559;
+    const depthMm = 914;
+    const edge = Math.max(12, Math.round(Math.min(widthMm, depthMm) * 0.035));
+    return [
+      ellipse(widthMm / 2, depthMm / 2, widthMm / 2 - edge, depthMm / 2 - edge, "body"),
+      ellipse(widthMm / 2, depthMm / 2, widthMm * 0.34, depthMm * 0.34, "detail"),
+      line(edge, depthMm / 2, widthMm - edge, depthMm / 2),
+      line(widthMm / 2, edge, widthMm / 2, depthMm - edge),
+    ];
+  })(),
 };
 
 const vibraphone: SymbolDefinition = {
@@ -344,6 +384,7 @@ const vibraphone: SymbolDefinition = {
     line(500, 790, 500, 900),
   ],
 };
+
 
 const chimes: SymbolDefinition = {
   id: "stage-symbol-chimes",
@@ -424,19 +465,34 @@ function withStageAsset(
   asset: StageOpenTemplateAsset,
   preserveAspectRatio: "none" | "xMidYMid meet" = "xMidYMid meet",
 ): SymbolDefinition {
-  return { ...definition, nodes: [], viewBox: asset.viewBox, rawSvg: asset.rawSvg, preserveAspectRatio };
+  return {
+    ...definition,
+    assetId: asset.id,
+    contentBox: asset.contentBox,
+    nodes: [],
+    viewBox: asset.viewBox,
+    rawSvg: asset.rawSvg,
+    preserveAspectRatio,
+  };
 }
 
 function withPhysicalStageAsset(definition: SymbolDefinition, asset: StageOpenTemplateAsset): SymbolDefinition {
-  // Physical body assets fill the mm footprint; there is no symbol-specific px scale.
-  return withStageAsset(definition, asset, "none");
+  // SVGの原本比率を維持し、物理枠への非均等拡大を避ける。
+  return withStageAsset(definition, asset, "xMidYMid meet");
 }
 
 function namedStageAssetSymbol(id: string, asset: StageOpenTemplateAsset): SymbolDefinition {
-  return { id, nodes: [], viewBox: asset.viewBox, rawSvg: asset.rawSvg, preserveAspectRatio: "xMidYMid meet" };
+  return {
+    id,
+    assetId: asset.id,
+    contentBox: asset.contentBox,
+    nodes: [],
+    viewBox: asset.viewBox,
+    rawSvg: asset.rawSvg,
+    preserveAspectRatio: "xMidYMid meet",
+  };
 }
 
-const stageChair = withStageAsset(chair, STAGE_OPEN_TEMPLATE_ASSETS.chair);
 const stageChairBack = withStageAsset(chairBack, STAGE_OPEN_TEMPLATE_ASSETS.chairBack);
 const stagePianoBench = withStageAsset(pianoBench, STAGE_OPEN_TEMPLATE_ASSETS.pianoBench);
 const stageMusicStand = withStageAsset(musicStand, STAGE_OPEN_TEMPLATE_ASSETS.musicStand);
@@ -454,19 +510,39 @@ const stageUprightPiano = withPhysicalStageAsset(uprightPiano, STAGE_OPEN_TEMPLA
 const stageCelesta = withPhysicalStageAsset(celesta, STAGE_OPEN_TEMPLATE_ASSETS.celesta);
 const stageMarimba = withPhysicalStageAsset(marimba, STAGE_OPEN_TEMPLATE_ASSETS.marimba);
 const stageKeyboardPercussion = withPhysicalStageAsset(keyboardPercussion, STAGE_OPEN_TEMPLATE_ASSETS.xylophone);
+const stageGlockenspiel = withPhysicalStageAsset({ id: "stage-symbol-glockenspiel", nodes: [] }, STAGE_OPEN_TEMPLATE_ASSETS.glockenspiel);
 const stageBassDrum = withPhysicalStageAsset(bassDrum, STAGE_OPEN_TEMPLATE_ASSETS.bassDrum);
 const stageVibraphone = withPhysicalStageAsset(vibraphone, STAGE_OPEN_TEMPLATE_ASSETS.vibraphone);
+const stageMarimbaB = withPhysicalStageAsset({ id: "stage-symbol-marimba-b", nodes: [] }, STAGE_OPEN_TEMPLATE_ASSETS.marimbaB);
+const stageMarimba4Oct = withPhysicalStageAsset({ id: "stage-symbol-marimba-4oct", nodes: [] }, STAGE_OPEN_TEMPLATE_ASSETS.marimba4Oct);
+const stageVibraphoneB = withPhysicalStageAsset({ id: "stage-symbol-vibraphone-b", nodes: [] }, STAGE_OPEN_TEMPLATE_ASSETS.vibraphoneB);
+const stageXylophoneB = withPhysicalStageAsset({ id: "stage-symbol-xylophone-b", nodes: [] }, STAGE_OPEN_TEMPLATE_ASSETS.xylophoneB);
+const stageGlockenspielB = withPhysicalStageAsset({ id: "stage-symbol-glockenspiel-b", nodes: [] }, STAGE_OPEN_TEMPLATE_ASSETS.glockenspielB);
 const stageChimes = withPhysicalStageAsset(chimes, STAGE_OPEN_TEMPLATE_ASSETS.chimes);
 const stageDrumSet = withPhysicalStageAsset(drumSet, STAGE_OPEN_TEMPLATE_ASSETS.drumSet);
 const stageHarp = withPhysicalStageAsset(harp, STAGE_OPEN_TEMPLATE_ASSETS.harp);
 const stageContrabass = withPhysicalStageAsset(contrabass, STAGE_OPEN_TEMPLATE_ASSETS.contrabass);
 const stageAmpSpeaker = withPhysicalStageAsset(ampSpeaker, STAGE_OPEN_TEMPLATE_ASSETS.ampSpeaker);
+const stageSnareA = namedStageAssetSymbol("stage-symbol-snare-drum-a", STAGE_OPEN_TEMPLATE_ASSETS.snareA);
+const stageSnareB = namedStageAssetSymbol("stage-symbol-snare-drum-b", STAGE_OPEN_TEMPLATE_ASSETS.snareB);
+const stageSuspendedCymbalAG = namedStageAssetSymbol("stage-symbol-suspended-cymbal-ag", STAGE_OPEN_TEMPLATE_ASSETS.suspendedCymbalAG);
+const stageSuspendedCymbalAW = namedStageAssetSymbol("stage-symbol-suspended-cymbal-aw", STAGE_OPEN_TEMPLATE_ASSETS.suspendedCymbalAW);
+const stageCrashCymbalPair = namedStageAssetSymbol("stage-symbol-crash-cymbal-pair", STAGE_OPEN_TEMPLATE_ASSETS.crashCymbalPair);
+const stageGongTamTamAG = namedStageAssetSymbol("stage-symbol-gong-tam-tam-ag", STAGE_OPEN_TEMPLATE_ASSETS.gongTamTamAG);
+const stageGongTamTamAW = namedStageAssetSymbol("stage-symbol-gong-tam-tam-aw", STAGE_OPEN_TEMPLATE_ASSETS.gongTamTamAW);
+const stageConga2AG = namedStageAssetSymbol("stage-symbol-conga-2-ag", STAGE_OPEN_TEMPLATE_ASSETS.conga2AG);
+const stageConga2AW = namedStageAssetSymbol("stage-symbol-conga-2-aw", STAGE_OPEN_TEMPLATE_ASSETS.conga2AW);
+const stageConga2B = namedStageAssetSymbol("stage-symbol-conga-2-b", STAGE_OPEN_TEMPLATE_ASSETS.conga2B);
+const stageBongoA = namedStageAssetSymbol("stage-symbol-bongo-a", STAGE_OPEN_TEMPLATE_ASSETS.bongoA);
+const stageBongoB = namedStageAssetSymbol("stage-symbol-bongo-b", STAGE_OPEN_TEMPLATE_ASSETS.bongoB);
+const stageWindChime = namedStageAssetSymbol("stage-symbol-wind-chime", STAGE_OPEN_TEMPLATE_ASSETS.windChime);
 
 export const SYMBOL_DEFINITIONS: readonly SymbolDefinition[] = [
-  stageChair,
+  chair,
   stageChairBack,
   stagePianoBench,
   stageMusicStand,
+  musicStandCross,
   stageLectern,
   stageConductorStand,
   stagePodium,
@@ -481,8 +557,19 @@ export const SYMBOL_DEFINITIONS: readonly SymbolDefinition[] = [
   stageCelesta,
   timpani,
   timpaniSet,
+  concertTom16,
+  concertTom14,
+  concertTom12,
+  concertTom10,
+  concertTomSet,
   stageMarimba,
   stageKeyboardPercussion,
+  stageGlockenspiel,
+  stageMarimbaB,
+  stageMarimba4Oct,
+  stageVibraphoneB,
+  stageXylophoneB,
+  stageGlockenspielB,
   stageBassDrum,
   stageVibraphone,
   stageChimes,
@@ -490,6 +577,19 @@ export const SYMBOL_DEFINITIONS: readonly SymbolDefinition[] = [
   stageHarp,
   stageContrabass,
   stageAmpSpeaker,
+  stageSnareA,
+  stageSnareB,
+  stageSuspendedCymbalAG,
+  stageSuspendedCymbalAW,
+  stageCrashCymbalPair,
+  stageGongTamTamAG,
+  stageGongTamTamAW,
+  stageConga2AG,
+  stageConga2AW,
+  stageConga2B,
+  stageBongoA,
+  stageBongoB,
+  stageWindChime,
 ];
 
 const PRESET_SYMBOL_IDS: Readonly<Record<string, string>> = {
@@ -514,18 +614,69 @@ const PRESET_SYMBOL_IDS: Readonly<Record<string, string>> = {
   "timpani-29": timpani.id,
   "timpani-32": timpani.id,
   "timpani-set-4": timpaniSet.id,
+  "concert-tom-16": concertTom16.id,
+  "concert-tom-14": concertTom14.id,
+  "concert-tom-12": concertTom12.id,
+  "concert-tom-10": concertTom10.id,
+  "concert-tom-set-4": concertTomSet.id,
   marimba: marimba.id,
+  "marimba-5oct": stageMarimba.id,
+  "marimba-4oct": stageMarimba4Oct.id,
   "bass-drum": bassDrum.id,
   vibraphone: vibraphone.id,
+  "vibraphone-standard": stageVibraphone.id,
   xylophone: stageKeyboardPercussion.id,
+  "xylophone-concert": stageKeyboardPercussion.id,
+  "glockenspiel-concert": stageGlockenspiel.id,
   chimes: chimes.id,
+  "tubular-bells-concert": stageChimes.id,
+  "snare-drum": stageSnareA.id,
+  "suspended-cymbal": stageSuspendedCymbalAG.id,
+  "crash-cymbal-pair": stageCrashCymbalPair.id,
+  "gong-tam-tam": stageGongTamTamAG.id,
+  "conga-2": stageConga2AG.id,
+  bongo: stageBongoA.id,
+  "wind-chime": stageWindChime.id,
   "drum-set": drumSet.id,
+  "drum-set-compact": stageDrumSet.id,
+  "drum-set-standard": stageDrumSet.id,
+  "drum-set-large": stageDrumSet.id,
   harp: harp.id,
+  "grand-harp-47": stageHarp.id,
   "contrabass-stool": contrabass.id,
   "amp-speaker": ampSpeaker.id,
+  "legacy-xylophone-glockenspiel": stageKeyboardPercussion.id,
+  "legacy-drum-set": stageDrumSet.id,
 };
 
 const SYMBOL_BY_ID = new Map(SYMBOL_DEFINITIONS.map((definition) => [definition.id, definition]));
+const SYMBOL_BY_ASSET_ID = new Map(
+  SYMBOL_DEFINITIONS
+    .filter((definition): definition is SymbolDefinition & { assetId: string } => typeof definition.assetId === "string")
+    .map((definition) => [definition.assetId, definition]),
+);
+
+const LEGACY_ASSET_TO_SYMBOL_ID: Readonly<Record<string, string>> = {
+  "stage-open-template/grand-piano-full-ab": "stage-symbol-grand-piano",
+  "stage-open-template/grand-piano-semi-a": "stage-symbol-grand-piano-semi",
+  "generated/grand-piano-full-outline": "stage-symbol-grand-piano",
+  "generated/grand-piano-semi-outline": "stage-symbol-grand-piano-semi",
+  "generated/concert-bass-drum-36x22": "stage-symbol-bass-drum",
+};
+
+// 旧バスドラム定義は保存済みIDの直接参照を壊さないためだけに保持し、defsへは出力しない。
+const LEGACY_SYMBOL_BY_ID = new Map([[concertBassDrumPhysical.id, concertBassDrumPhysical]]);
+
+/** stable assetVariantIdから表示用シンボルIDを得る。未知IDはnull。 */
+export function symbolIdForAssetVariantId(assetVariantId: string | null | undefined): string | null {
+  if (!assetVariantId) return null;
+  return LEGACY_ASSET_TO_SYMBOL_ID[assetVariantId] ?? SYMBOL_BY_ASSET_ID.get(assetVariantId)?.id ?? null;
+}
+
+/** assetVariantIdを優先し、旧JSONはpresetIdで表示を維持する。 */
+export function symbolIdForObject(object: Pick<SceneObject, "presetId" | "assetVariantId">): string | null {
+  return symbolIdForAssetVariantId(object.assetVariantId) ?? symbolIdForPreset(object.presetId);
+}
 
 /** 既存SceneObjectのpresetIdから表示用シンボルIDを得る。汎用図形はnull。 */
 export function symbolIdForPreset(presetId: string | null): string | null {
@@ -535,7 +686,22 @@ export function symbolIdForPreset(presetId: string | null): string | null {
 }
 
 export function getSymbolDefinition(symbolId: string): SymbolDefinition | undefined {
-  return SYMBOL_BY_ID.get(symbolId);
+  return SYMBOL_BY_ID.get(symbolId) ?? LEGACY_SYMBOL_BY_ID.get(symbolId);
+}
+
+export const CONCERT_TOM_SET_LABEL = "トムトム";
+
+export function concertTomSetLabel(language: InstrumentLabelLanguage = "ja"): string {
+  return language === "enShort" ? instrumentLabelForPreset("concert-tom-set-4", language) ?? "Tom Set" : CONCERT_TOM_SET_LABEL;
+}
+
+export function isSingleTimpaniPresetId(presetId: string | null): boolean {
+  return presetId !== null && SINGLE_TIMPANI_PRESET_IDS.has(presetId);
+}
+
+export function timpaniSizeLabelForPreset(presetId: string | null): string | null {
+  if (!presetId || !SINGLE_TIMPANI_PRESET_IDS.has(presetId)) return null;
+  return PRESET_SYMBOL_LABELS[presetId] ?? null;
 }
 
 const PRESET_SYMBOL_LABELS: Readonly<Record<string, string>> = {
@@ -555,26 +721,79 @@ const PRESET_SYMBOL_LABELS: Readonly<Record<string, string>> = {
   "grand-piano-semi": "ピアノ",
   "upright-piano": "アップライト",
   "celesta": "チェレスタ",
-  "timpani-23": "ティンパニ\n23\"",
-  "timpani-26": "ティンパニ\n26\"",
-  "timpani-29": "ティンパニ\n29\"",
-  "timpani-32": "ティンパニ\n32\"",
+  "timpani-23": "23",
+  "timpani-26": "26",
+  "timpani-29": "29",
+  "timpani-32": "32",
+  "concert-tom-16": "",
+  "concert-tom-14": "",
+  "concert-tom-12": "",
+  "concert-tom-10": "",
   "timpani-set-4": "ティンパニ\n4個セット",
+  "concert-tom-set-4": CONCERT_TOM_SET_LABEL,
   "marimba": "マリンバ",
+  "marimba-5oct": "マリンバ",
+  "marimba-4oct": "マリンバ",
   "bass-drum": "バスドラム",
   "vibraphone": "ヴィブラフォン",
+  "vibraphone-standard": "ヴィブラフォン",
   "xylophone": "シロフォン",
+  "xylophone-concert": "シロフォン",
+  "glockenspiel-concert": "グロッケンシュピール",
   "chimes": "チャイム",
+  "tubular-bells-concert": "チャイム",
+  "snare-drum": "スネアドラム",
+  "suspended-cymbal": "サスペンデッドシンバル",
+  "crash-cymbal-pair": "クラッシュシンバル一対",
+  "gong-tam-tam": "銅鑼／タムタム",
+  "conga-2": "コンガ（2本）",
+  bongo: "ボンゴ",
+  "wind-chime": "ウィンドチャイム",
   "drum-set": "ドラムセット",
+  "drum-set-compact": "ドラムセット（コンパクト）",
+  "drum-set-standard": "ドラムセット（標準）",
+  "drum-set-large": "ドラムセット（大型）",
   "harp": "ハープ",
+  "grand-harp-47": "ハープ",
+  "legacy-xylophone-glockenspiel": "シロフォン/グロッケン",
+  "legacy-drum-set": "ドラムセット",
   "contrabass-stool": "コントラバス",
   "amp-speaker": "アンプ"
 };
 
+const SINGLE_TIMPANI_PRESET_IDS = new Set([
+  "timpani-23",
+  "timpani-26",
+  "timpani-29",
+  "timpani-32",
+]);
+
+const CONCERT_TOM_SET_PRESET_KEY = CONCERT_TOM_SET_LAYOUT.map((part) => part.presetId).sort().join("|");
+
+export function isConcertTomSetGroup(objects: readonly Pick<SceneObject, "groupId" | "presetId">[]): boolean {
+  if (objects.length !== CONCERT_TOM_SET_LAYOUT.length) return false;
+  const groupId = objects[0]?.groupId;
+  if (!groupId || objects.some((object) => object.groupId !== groupId)) return false;
+  return objects.map((object) => object.presetId).sort().join("|") === CONCERT_TOM_SET_PRESET_KEY;
+}
+
 /** シンボル内に収めるための短い既定名。任意ラベルは原文を優先する。 */
-export function symbolLabelForPreset(presetId: string | null, fallback: string, custom = false): string {
+export function symbolLabelForPreset(
+  presetId: string | null,
+  fallback: string,
+  custom = false,
+  language: InstrumentLabelLanguage = "ja",
+): string {
   const value = fallback.trim();
-  if (custom && value) return value;
+  if (custom && value) {
+    const sizeLabel = timpaniSizeLabelForPreset(presetId);
+    return sizeLabel && value !== sizeLabel ? value + "\n" + sizeLabel : value;
+  }
+  if (isSingleTimpaniPresetId(presetId)) {
+    if (language === "enShort") return instrumentLabelForPreset(presetId, language) ?? timpaniSizeLabelForPreset(presetId) ?? value;
+    return timpaniSizeLabelForPreset(presetId) ?? value;
+  }
+  if (language === "enShort") return instrumentLabelForPreset(presetId, language) ?? value;
   return PRESET_SYMBOL_LABELS[presetId ?? ""] ?? value;
 }
 
@@ -644,7 +863,7 @@ export function renderSymbolDefinitionsSvg(): string {
   return SYMBOL_DEFINITIONS
     .map((definition) => {
       const content = definition.rawSvg ?? definition.nodes.map(renderSymbolNodeSvg).join("");
-      return `<symbol id="${definition.id}" viewBox="${definition.viewBox ?? SYMBOL_VIEW_BOX}" preserveAspectRatio="${definition.preserveAspectRatio ?? "none"}">${content}</symbol>`;
+      return `<symbol id="${definition.id}" viewBox="${definition.viewBox ?? SYMBOL_VIEW_BOX}" preserveAspectRatio="${definition.preserveAspectRatio ?? "xMidYMid meet"}">${content}</symbol>`;
     })
     .join("");
 }

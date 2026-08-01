@@ -1,0 +1,2980 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="19.958317mm"
+   height="5.9139972mm"
+   viewBox="0 0 19.958316 5.9139973"
+   version="1.1"
+   id="svg185"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <!-- Master Definitions -->
+  <style
+     id="style1">
+text { white-space: pre; }
+</style>
+  <defs
+     id="defs1" />
+  <!-- グループ部品 ID=6383 -->
+  <g
+     id="Group-6383"
+     style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1"
+     transform="translate(-0.302083,-0.302083)">
+    <!-- 矩形部品 ID=6273 -->
+    <g
+       id="Group-6273"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs2">
+        <symbol
+           id="ObjectBody-0">
+          <path
+             d="m 0.422525,4.43956 c 0,0 0.021785,-0.29629 0.021785,-0.29629 0,0 19.55509,1.4378 19.55509,1.4378 0,0 -0.0218,0.29628 -0.0218,0.29628 0,0 -19.555075,-1.43779 -19.555075,-1.43779"
+             id="path1" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-0"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use2"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-0"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use3"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6273 -->
+    <!-- 矩形部品 ID=6274 -->
+    <g
+       id="Group-6274"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs3">
+        <symbol
+           id="ObjectBody-1">
+          <path
+             d="m 19.9776,0.763379 c 0,0 0.0218,0.296291 0.0218,0.296291 0,0 -19.55509,1.4378 -19.55509,1.4378 0,0 -0.021785,-0.29629 -0.021785,-0.29629 0,0 19.555075,-1.437801 19.555075,-1.437801"
+             id="path3" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-1"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use4"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-1"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use5"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6274 -->
+    <!-- 矩形部品 ID=6275 -->
+    <g
+       id="Group-6275"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs5">
+        <symbol
+           id="ObjectBody-2">
+          <path
+             d="m 20.0149,3.7262 c 0,0 0,0.29708 0,0.29708 0,0 -19.607875,0 -19.607875,0 0,0 0,-0.29708 0,-0.29708 0,0 19.607875,0 19.607875,0"
+             id="path5" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-2"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use6"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-2"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use7"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6275 -->
+    <!-- 矩形部品 ID=6276 -->
+    <g
+       id="Group-6276"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs7">
+        <symbol
+           id="ObjectBody-3">
+          <path
+             d="m 20.0149,2.91981 c 0,0 0,0.29709 0,0.29709 0,0 -19.607875,0 -19.607875,0 0,0 0,-0.29709 0,-0.29709 0,0 19.607875,0 19.607875,0"
+             id="path7" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-3"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use8"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-3"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use9"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6276 -->
+    <!-- グループ部品 ID=6298 -->
+    <g
+       id="Group-6298"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <!-- 円弧部品 ID=6277 -->
+      <g
+         id="Group-6277"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs9">
+          <symbol
+             id="ObjectBody-4">
+            <path
+               d="M 19.0468,2.04818 C 19.0402,1.88014 19.1711,1.73856 19.3391,1.73193 19.5071,1.72531 19.6487,1.85615 19.6553,2.02418 19.662,2.19221 19.5311,2.3338 19.3631,2.34042 19.1951,2.34705 19.0535,2.21621 19.0468,2.04818"
+               id="path9" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-4"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use10"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-4"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use11"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 円弧部品 ID=6277 -->
+      <!-- 円弧部品 ID=6278 -->
+      <g
+         id="Group-6278"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs11">
+          <symbol
+             id="ObjectBody-5">
+            <path
+               d="M 18.3978,2.07377 C 18.3912,1.90574 18.522,1.76415 18.69,1.75753 18.8581,1.7509 18.9996,1.88174 19.0063,2.04977 19.0129,2.21781 18.8821,2.35939 18.714,2.36602 18.546,2.37264 18.4044,2.2418 18.3978,2.07377"
+               id="path11" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-5"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use12"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-5"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use13"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 円弧部品 ID=6278 -->
+      <!-- 円弧部品 ID=6279 -->
+      <g
+         id="Group-6279"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs13">
+          <symbol
+             id="ObjectBody-6">
+            <path
+               d="M 17.7487,2.09936 C 17.7421,1.93133 17.8729,1.78974 18.041,1.78312 18.209,1.77649 18.3506,1.90734 18.3572,2.07537 18.3638,2.2434 18.233,2.38499 18.065,2.39161 17.8969,2.39824 17.7553,2.26739 17.7487,2.09936"
+               id="path13" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-6"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use14"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-6"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use15"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 円弧部品 ID=6279 -->
+      <!-- 円弧部品 ID=6280 -->
+      <g
+         id="Group-6280"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs15">
+          <symbol
+             id="ObjectBody-7">
+            <path
+               d="m 17.0997,2.12496 c -0.0067,-0.16803 0.1242,-0.30962 0.2922,-0.31625 0.168,-0.00662 0.3096,0.12422 0.3163,0.29225 0.0066,0.16803 -0.1243,0.30962 -0.2923,0.31625 -0.168,0.00662 -0.3096,-0.12422 -0.3162,-0.29225"
+               id="path15" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-7"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use16"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-7"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use17"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 円弧部品 ID=6280 -->
+      <!-- 円弧部品 ID=6281 -->
+      <g
+         id="Group-6281"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs17">
+          <symbol
+             id="ObjectBody-8">
+            <path
+               d="M 16.4506,2.15055 C 16.444,1.98252 16.5748,1.84093 16.7429,1.83431 16.9109,1.82768 17.0525,1.95852 17.0591,2.12656 17.0657,2.29459 16.9349,2.43617 16.7668,2.4428 16.5988,2.44942 16.4572,2.31858 16.4506,2.15055"
+               id="path17" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-8"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use18"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-8"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use19"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 円弧部品 ID=6281 -->
+      <!-- 円弧部品 ID=6282 -->
+      <g
+         id="Group-6282"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs19">
+          <symbol
+             id="ObjectBody-9">
+            <path
+               d="M 15.8015,2.17614 C 15.7949,2.00811 15.9258,1.86653 16.0938,1.8599 16.2618,1.85327 16.4034,1.98412 16.41,2.15215 16.4167,2.32018 16.2858,2.46177 16.1178,2.46839 15.9498,2.47502 15.8082,2.34417 15.8015,2.17614"
+               id="path19" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-9"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use20"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-9"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use21"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 円弧部品 ID=6282 -->
+      <!-- 円弧部品 ID=6283 -->
+      <g
+         id="Group-6283"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs21">
+          <symbol
+             id="ObjectBody-10">
+            <path
+               d="M 15.1525,2.20174 C 15.1459,2.03371 15.2767,1.89212 15.4447,1.88549 15.6128,1.87887 15.7543,2.00971 15.761,2.17774 15.7676,2.34577 15.6368,2.48736 15.4687,2.49399 15.3007,2.50061 15.1591,2.36977 15.1525,2.20174"
+               id="path21" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-10"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use22"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-10"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use23"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 円弧部品 ID=6283 -->
+      <!-- 円弧部品 ID=6284 -->
+      <g
+         id="Group-6284"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs23">
+          <symbol
+             id="ObjectBody-11">
+            <path
+               d="M 14.5034,2.22733 C 14.4968,2.0593 14.6276,1.91771 14.7957,1.91109 14.9637,1.90446 15.1053,2.03531 15.1119,2.20334 15.1185,2.37137 14.9877,2.51295 14.8197,2.51958 14.6516,2.52621 14.51,2.39536 14.5034,2.22733"
+               id="path23" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-11"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use24"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-11"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use25"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 円弧部品 ID=6284 -->
+      <!-- 円弧部品 ID=6285 -->
+      <g
+         id="Group-6285"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs25">
+          <symbol
+             id="ObjectBody-12">
+            <path
+               d="M 13.8544,2.25292 C 13.8477,2.08489 13.9786,1.94331 14.1466,1.93668 14.3146,1.93005 14.4562,2.0609 14.4629,2.22893 14.4695,2.39696 14.3386,2.53855 14.1706,2.54517 14.0026,2.5518 13.861,2.42095 13.8544,2.25292"
+               id="path25" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-12"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use26"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-12"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use27"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 円弧部品 ID=6285 -->
+      <!-- 円弧部品 ID=6286 -->
+      <g
+         id="Group-6286"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs27">
+          <symbol
+             id="ObjectBody-13">
+            <path
+               d="m 13.2053,2.27852 c -0.0066,-0.16803 0.1242,-0.30962 0.2923,-0.31625 0.168,-0.00662 0.3096,0.12422 0.3162,0.29225 0.0066,0.16803 -0.1242,0.30962 -0.2923,0.31625 -0.168,0.00662 -0.3096,-0.12422 -0.3162,-0.29225"
+               id="path27" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-13"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use28"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-13"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use29"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 円弧部品 ID=6286 -->
+      <!-- 円弧部品 ID=6287 -->
+      <g
+         id="Group-6287"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs29">
+          <symbol
+             id="ObjectBody-14">
+            <path
+               d="m 12.5562,2.30411 c -0.0066,-0.16803 0.1243,-0.30962 0.2923,-0.31624 0.168,-0.00663 0.3096,0.12422 0.3162,0.29225 0.0067,0.16803 -0.1242,0.30961 -0.2922,0.31624 -0.168,0.00663 -0.3096,-0.12422 -0.3163,-0.29225"
+               id="path29" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-14"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use30"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-14"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use31"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 円弧部品 ID=6287 -->
+      <!-- 円弧部品 ID=6288 -->
+      <g
+         id="Group-6288"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs31">
+          <symbol
+             id="ObjectBody-15">
+            <path
+               d="M 11.9072,2.3297 C 11.9006,2.16167 12.0314,2.02009 12.1994,2.01346 12.3675,2.00684 12.5091,2.13768 12.5157,2.30571 12.5223,2.47374 12.3915,2.61533 12.2234,2.62195 12.0554,2.62858 11.9138,2.49774 11.9072,2.3297"
+               id="path31" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-15"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use32"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-15"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use33"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 円弧部品 ID=6288 -->
+      <!-- 円弧部品 ID=6289 -->
+      <g
+         id="Group-6289"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs33">
+          <symbol
+             id="ObjectBody-16">
+            <path
+               d="M 11.2581,2.3553 C 11.2515,2.18727 11.3823,2.04568 11.5504,2.03905 11.7184,2.03243 11.86,2.16327 11.8666,2.3313 11.8732,2.49933 11.7424,2.64092 11.5744,2.64755 11.4063,2.65417 11.2648,2.52333 11.2581,2.3553"
+               id="path33" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-16"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use34"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-16"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use35"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 円弧部品 ID=6289 -->
+      <!-- 円弧部品 ID=6290 -->
+      <g
+         id="Group-6290"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs35">
+          <symbol
+             id="ObjectBody-17">
+            <path
+               d="m 10.6091,2.38089 c -0.0067,-0.16803 0.1242,-0.30962 0.2922,-0.31624 0.168,-0.00663 0.3096,0.12422 0.3163,0.29225 0.0066,0.16803 -0.1243,0.30962 -0.2923,0.31624 -0.168,0.00663 -0.3096,-0.12422 -0.3162,-0.29225"
+               id="path35" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-17"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use36"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-17"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use37"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 円弧部品 ID=6290 -->
+      <!-- 円弧部品 ID=6291 -->
+      <g
+         id="Group-6291"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs37">
+          <symbol
+             id="ObjectBody-18">
+            <path
+               d="M 9.96001,2.40649 C 9.95338,2.23845 10.0842,2.09687 10.2523,2.09024 10.4203,2.08362 10.5619,2.21446 10.5685,2.38249 10.5751,2.55052 10.4443,2.69211 10.2763,2.69873 10.1082,2.70536 9.96663,2.57452 9.96001,2.40649"
+               id="path37" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-18"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use38"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-18"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use39"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 円弧部品 ID=6291 -->
+      <!-- 円弧部品 ID=6292 -->
+      <g
+         id="Group-6292"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs39">
+          <symbol
+             id="ObjectBody-19">
+            <path
+               d="M 9.31095,2.43208 C 9.30432,2.26405 9.43517,2.12246 9.6032,2.11584 9.77123,2.10921 9.91281,2.24005 9.91944,2.40808 9.92607,2.57612 9.79522,2.7177 9.62719,2.72433 9.45916,2.73095 9.31757,2.60011 9.31095,2.43208"
+               id="path39" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-19"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use40"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-19"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use41"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 円弧部品 ID=6292 -->
+      <!-- 円弧部品 ID=6293 -->
+      <g
+         id="Group-6293"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs41">
+          <symbol
+             id="ObjectBody-20">
+            <path
+               d="M 8.62132,2.45927 C 8.6147,2.29124 8.74554,2.14965 8.91357,2.14303 9.0816,2.1364 9.22319,2.26725 9.22981,2.43528 9.23644,2.60331 9.1056,2.7449 8.93756,2.75152 8.76953,2.75815 8.62795,2.6273 8.62132,2.45927"
+               id="path41" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-20"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use42"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-20"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use43"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 円弧部品 ID=6293 -->
+      <!-- 円弧部品 ID=6294 -->
+      <g
+         id="Group-6294"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs43">
+          <symbol
+             id="ObjectBody-21">
+            <path
+               d="M 7.97226,2.48487 C 7.96564,2.31683 8.09648,2.17525 8.26451,2.16862 8.43254,2.162 8.57413,2.29284 8.58076,2.46087 8.58738,2.6289 8.45654,2.77049 8.28851,2.77712 8.12047,2.78374 7.97889,2.6529 7.97226,2.48487"
+               id="path43" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-21"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use44"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-21"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use45"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 円弧部品 ID=6294 -->
+      <!-- 円弧部品 ID=6295 -->
+      <g
+         id="Group-6295"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs45">
+          <symbol
+             id="ObjectBody-22">
+            <path
+               d="M 7.3232,2.51046 C 7.31658,2.34243 7.44742,2.20084 7.61545,2.19422 7.78348,2.18759 7.92507,2.31843 7.9317,2.48647 7.93832,2.6545 7.80748,2.79608 7.63945,2.80271 7.47142,2.80933 7.32983,2.67849 7.3232,2.51046"
+               id="path45" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-22"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use46"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-22"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use47"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 円弧部品 ID=6295 -->
+      <!-- 円弧部品 ID=6296 -->
+      <g
+         id="Group-6296"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs47">
+          <symbol
+             id="ObjectBody-23">
+            <path
+               d="M 6.67414,2.53605 C 6.66752,2.36802 6.79836,2.22643 6.96639,2.21981 7.13442,2.21318 7.27601,2.34403 7.28264,2.51206 7.28926,2.68009 7.15842,2.82168 6.99039,2.8283 6.82236,2.83493 6.68077,2.70408 6.67414,2.53605"
+               id="path47" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-23"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use48"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-23"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use49"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 円弧部品 ID=6296 -->
+      <!-- 円弧部品 ID=6297 -->
+      <g
+         id="Group-6297"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs49">
+          <symbol
+             id="ObjectBody-24">
+            <path
+               d="M 6.02508,2.56165 C 6.01846,2.39362 6.1493,2.25203 6.31733,2.2454 6.48536,2.23878 6.62695,2.36962 6.63358,2.53765 6.6402,2.70568 6.50936,2.84727 6.34133,2.8539 6.1733,2.86052 6.03171,2.72968 6.02508,2.56165"
+               id="path49" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-24"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use50"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-24"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use51"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 円弧部品 ID=6297 -->
+    </g>
+    <!-- End of グループ部品 ID=6298 -->
+    <!-- 矩形部品 ID=6299 -->
+    <g
+       id="Group-6299"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs51">
+        <symbol
+           id="ObjectBody-25">
+          <path
+             d="m 19.7178,3.30178 c 0,0 0,0.20241 0,0.20241 0,0 -19.225893,0 -19.225893,0 0,0 0,-0.20241 0,-0.20241 0,0 19.225893,0 19.225893,0"
+             id="path51" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-25"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use52"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-25"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use53"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6299 -->
+    <!-- 円弧部品 ID=6300 -->
+    <g
+       id="Group-6300"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs53">
+        <symbol
+           id="ObjectBody-26">
+          <path
+             d="M 18.7059,4.87651 C 18.7125,4.70848 18.8541,4.57763 19.0221,4.58426 19.1902,4.59088 19.321,4.73247 19.3144,4.9005 19.3078,5.06853 19.1662,5.19938 18.9981,5.19275 18.8301,5.18612 18.6993,5.04454 18.7059,4.87651"
+             id="path53" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-26"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use54"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-26"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use55"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 円弧部品 ID=6300 -->
+    <!-- 円弧部品 ID=6301 -->
+    <g
+       id="Group-6301"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs55">
+        <symbol
+           id="ObjectBody-27">
+          <path
+             d="m 18.0568,4.85091 c 0.0067,-0.16803 0.1482,-0.29887 0.3163,-0.29225 0.168,0.00663 0.2988,0.14822 0.2922,0.31625 C 18.6587,5.04294 18.5171,5.17378 18.3491,5.16716 18.181,5.16053 18.0502,5.01894 18.0568,4.85091"
+             id="path55" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-27"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use56"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-27"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use57"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 円弧部品 ID=6301 -->
+    <!-- 円弧部品 ID=6302 -->
+    <g
+       id="Group-6302"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs57">
+        <symbol
+           id="ObjectBody-28">
+          <path
+             d="M 16.7587,4.79973 C 16.7653,4.63169 16.9069,4.50085 17.075,4.50748 17.243,4.5141 17.3738,4.65569 17.3672,4.82372 17.3606,4.99175 17.219,5.12259 17.051,5.11597 16.8829,5.10934 16.7521,4.96776 16.7587,4.79973"
+             id="path57" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-28"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use58"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-28"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use59"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 円弧部品 ID=6302 -->
+    <!-- 円弧部品 ID=6303 -->
+    <g
+       id="Group-6303"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs59">
+        <symbol
+           id="ObjectBody-29">
+          <path
+             d="M 16.1096,4.77413 C 16.1163,4.6061 16.2579,4.47526 16.4259,4.48188 16.5939,4.48851 16.7248,4.6301 16.7181,4.79813 16.7115,4.96616 16.5699,5.097 16.4019,5.09038 16.2339,5.08375 16.103,4.94216 16.1096,4.77413"
+             id="path59" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-29"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use60"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-29"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use61"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 円弧部品 ID=6303 -->
+    <!-- 円弧部品 ID=6304 -->
+    <g
+       id="Group-6304"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs61">
+        <symbol
+           id="ObjectBody-30">
+          <path
+             d="M 15.4606,4.74854 C 15.4672,4.58051 15.6088,4.44966 15.7768,4.45629 15.9449,4.46291 16.0757,4.6045 16.0691,4.77253 16.0625,4.94056 15.9209,5.07141 15.7528,5.06478 15.5848,5.05816 15.454,4.91657 15.4606,4.74854"
+             id="path61" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-30"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use62"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-30"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use63"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 円弧部品 ID=6304 -->
+    <!-- 円弧部品 ID=6305 -->
+    <g
+       id="Group-6305"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs63">
+        <symbol
+           id="ObjectBody-31">
+          <path
+             d="M 14.1625,4.69735 C 14.1691,4.52932 14.3107,4.39848 14.4787,4.4051 14.6467,4.41173 14.7776,4.55331 14.771,4.72135 14.7643,4.88938 14.6227,5.02022 14.4547,5.01359 14.2867,5.00697 14.1558,4.86538 14.1625,4.69735"
+             id="path63" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-31"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use64"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-31"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use65"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 円弧部品 ID=6305 -->
+    <!-- 円弧部品 ID=6306 -->
+    <g
+       id="Group-6306"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs65">
+        <symbol
+           id="ObjectBody-32">
+          <path
+             d="M 13.5134,4.67176 C 13.52,4.50373 13.6616,4.37288 13.8297,4.37951 13.9977,4.38613 14.1285,4.52772 14.1219,4.69575 14.1153,4.86378 13.9737,4.99463 13.8057,4.988 13.6376,4.98138 13.5068,4.83979 13.5134,4.67176"
+             id="path65" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-32"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use66"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-32"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use67"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 円弧部品 ID=6306 -->
+    <!-- 円弧部品 ID=6307 -->
+    <g
+       id="Group-6307"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs67">
+        <symbol
+           id="ObjectBody-33">
+          <path
+             d="M 12.2153,4.62057 C 12.2219,4.45254 12.3635,4.3217 12.5315,4.32832 12.6996,4.33495 12.8304,4.47653 12.8238,4.64456 12.8172,4.8126 12.6756,4.94344 12.5075,4.93681 12.3395,4.93019 12.2087,4.7886 12.2153,4.62057"
+             id="path67" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-33"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use68"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-33"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use69"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 円弧部品 ID=6307 -->
+    <!-- 円弧部品 ID=6308 -->
+    <g
+       id="Group-6308"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs69">
+        <symbol
+           id="ObjectBody-34">
+          <path
+             d="m 11.5662,4.59498 c 0.0067,-0.16803 0.1482,-0.29888 0.3163,-0.29225 0.168,0.00662 0.2989,0.14821 0.2922,0.31624 C 12.1681,4.787 12.0265,4.91785 11.8585,4.91122 11.6904,4.90459 11.5596,4.76301 11.5662,4.59498"
+             id="path69" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-34"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use70"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-34"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use71"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 円弧部品 ID=6308 -->
+    <!-- 円弧部品 ID=6309 -->
+    <g
+       id="Group-6309"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs71">
+        <symbol
+           id="ObjectBody-35">
+          <path
+             d="m 10.9172,4.56938 c 0.0066,-0.16803 0.1482,-0.29887 0.3162,-0.29225 0.168,0.00663 0.2989,0.14822 0.2923,0.31625 C 11.519,4.76141 11.3775,4.89225 11.2094,4.88563 11.0414,4.879 10.9105,4.73741 10.9172,4.56938"
+             id="path71" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-35"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use72"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-35"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use73"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 円弧部品 ID=6309 -->
+    <!-- 円弧部品 ID=6310 -->
+    <g
+       id="Group-6310"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs73">
+        <symbol
+           id="ObjectBody-36">
+          <path
+             d="M 9.61905,4.5182 C 9.62568,4.35017 9.76727,4.21932 9.9353,4.22595 10.1033,4.23257 10.2342,4.37416 10.2275,4.54219 10.2209,4.71022 10.0793,4.84107 9.9113,4.83444 9.74327,4.82781 9.61243,4.68623 9.61905,4.5182"
+             id="path73" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-36"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use74"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-36"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use75"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 円弧部品 ID=6310 -->
+    <!-- 円弧部品 ID=6311 -->
+    <g
+       id="Group-6311"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs75">
+        <symbol
+           id="ObjectBody-37">
+          <path
+             d="M 8.96999,4.4926 C 8.97662,4.32457 9.11821,4.19373 9.28624,4.20035 9.45427,4.20698 9.58511,4.34857 9.57849,4.5166 9.57186,4.68463 9.43027,4.81547 9.26224,4.80885 9.09421,4.80222 8.96337,4.66063 8.96999,4.4926"
+             id="path75" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-37"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use76"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-37"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use77"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 円弧部品 ID=6311 -->
+    <!-- 円弧部品 ID=6312 -->
+    <g
+       id="Group-6312"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs77">
+        <symbol
+           id="ObjectBody-38">
+          <path
+             d="M 7.63131,4.43982 C 7.63793,4.27179 7.77952,4.14094 7.94755,4.14757 8.11558,4.15419 8.24643,4.29578 8.2398,4.46381 8.23318,4.63184 8.09159,4.76269 7.92356,4.75606 7.75553,4.74943 7.62468,4.60785 7.63131,4.43982"
+             id="path77" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-38"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use78"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-38"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use79"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 円弧部品 ID=6312 -->
+    <!-- 円弧部品 ID=6313 -->
+    <g
+       id="Group-6313"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs79">
+        <symbol
+           id="ObjectBody-39">
+          <path
+             d="M 6.98225,4.41422 C 6.98887,4.24619 7.13046,4.11535 7.29849,4.12197 7.46652,4.1286 7.59737,4.27019 7.59074,4.43822 7.58412,4.60625 7.44253,4.73709 7.2745,4.73047 7.10647,4.72384 6.97562,4.58225 6.98225,4.41422"
+             id="path79" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-39"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use80"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-39"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use81"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 円弧部品 ID=6313 -->
+    <!-- 円弧部品 ID=6314 -->
+    <g
+       id="Group-6314"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs81">
+        <symbol
+           id="ObjectBody-40">
+          <path
+             d="M 6.33319,4.38863 C 6.33981,4.2206 6.4814,4.08975 6.64943,4.09638 6.81746,4.103 6.94831,4.24459 6.94168,4.41262 6.93506,4.58065 6.79347,4.7115 6.62544,4.70487 6.45741,4.69825 6.32656,4.55666 6.33319,4.38863"
+             id="path81" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-40"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use82"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-40"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use83"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 円弧部品 ID=6314 -->
+    <!-- 矩形部品 ID=6315 -->
+    <g
+       id="Group-6315"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs83">
+        <symbol
+           id="ObjectBody-41">
+          <path
+             d="m 19.8583,0.610352 c 0,0 0.3396,0 0.3396,0 0,0 0,5.432478 0,5.432478 0,0 -0.3396,0 -0.3396,0 0,0 0,-5.432478 0,-5.432478"
+             id="path83" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-41"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use84"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-41"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use85"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6315 -->
+    <!-- 矩形部品 ID=6316 -->
+    <g
+       id="Group-6316"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs85">
+        <symbol
+           id="ObjectBody-42">
+          <path
+             d="m 0.364583,2.07099 c 0,0 0.297089,0 0.297089,0 0,0 0,2.46159 0,2.46159 0,0 -0.297089,0 -0.297089,0 0,0 0,-2.46159 0,-2.46159"
+             id="path85" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-42"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use86"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-42"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use87"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6316 -->
+    <!-- 矩形部品 ID=6317 -->
+    <g
+       id="Group-6317"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs87">
+        <symbol
+           id="ObjectBody-43">
+          <path
+             d="m 18.4445,3.67395 c 0,0 0,-3.242458 0,-3.242458 0,0 0.5093,0 0.5093,0 0,0 0,3.242458 0,3.242458 0,0 -0.5093,0 -0.5093,0"
+             id="path87" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-43"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use88"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-43"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use89"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6317 -->
+    <!-- 矩形部品 ID=6318 -->
+    <g
+       id="Group-6318"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs89">
+        <symbol
+           id="ObjectBody-44">
+          <path
+             d="m 17.7938,3.67395 c 0,0 0,-3.174766 0,-3.174766 0,0 0.5093,0 0.5093,0 0,0 0,3.174766 0,3.174766 0,0 -0.5093,0 -0.5093,0"
+             id="path89" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-44"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use90"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-44"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use91"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6318 -->
+    <!-- 矩形部品 ID=6319 -->
+    <g
+       id="Group-6319"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs91">
+        <symbol
+           id="ObjectBody-45">
+          <path
+             d="m 17.143,3.67395 c 0,0 0,-3.104543 0,-3.104543 0,0 0.5093,0 0.5093,0 0,0 0,3.104543 0,3.104543 0,0 -0.5093,0 -0.5093,0"
+             id="path91" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-45"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use92"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-45"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use93"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6319 -->
+    <!-- 矩形部品 ID=6320 -->
+    <g
+       id="Group-6320"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs93">
+        <symbol
+           id="ObjectBody-46">
+          <path
+             d="m 16.4922,3.67395 c 0,0 0,-3.040459 0,-3.040459 0,0 0.5093,0 0.5093,0 0,0 0,3.040459 0,3.040459 0,0 -0.5093,0 -0.5093,0"
+             id="path93" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-46"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use94"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-46"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use95"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6320 -->
+    <!-- 矩形部品 ID=6321 -->
+    <g
+       id="Group-6321"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs95">
+        <symbol
+           id="ObjectBody-47">
+          <path
+             d="m 15.8415,3.67395 c 0,0 0,-2.974632 0,-2.974632 0,0 0.5093,0 0.5093,0 0,0 0,2.974632 0,2.974632 0,0 -0.5093,0 -0.5093,0"
+             id="path95" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-47"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use96"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-47"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use97"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6321 -->
+    <!-- 矩形部品 ID=6322 -->
+    <g
+       id="Group-6322"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs97">
+        <symbol
+           id="ObjectBody-48">
+          <path
+             d="m 19.0953,3.67395 c 0,0 0,-3.309367 0,-3.309367 0,0 0.5093,0 0.5093,0 0,0 0,3.309367 0,3.309367 0,0 -0.5093,0 -0.5093,0"
+             id="path97" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-48"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use98"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-48"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use99"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6322 -->
+    <!-- 矩形部品 ID=6323 -->
+    <g
+       id="Group-6323"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs99">
+        <symbol
+           id="ObjectBody-49">
+          <path
+             d="m 11.9369,3.67395 c 0,0 0,-2.59335 0,-2.59335 0,0 0.5093,0 0.5093,0 0,0 0,2.59335 0,2.59335 0,0 -0.5093,0 -0.5093,0"
+             id="path99" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-49"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use100"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-49"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use101"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6323 -->
+    <!-- 矩形部品 ID=6324 -->
+    <g
+       id="Group-6324"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs101">
+        <symbol
+           id="ObjectBody-50">
+          <path
+             d="m 11.2861,3.67395 c 0,0 0,-2.5301 0,-2.5301 0,0 0.5093,0 0.5093,0 0,0 0,2.5301 0,2.5301 0,0 -0.5093,0 -0.5093,0"
+             id="path101" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-50"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use102"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-50"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use103"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6324 -->
+    <!-- 矩形部品 ID=6325 -->
+    <g
+       id="Group-6325"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs103">
+        <symbol
+           id="ObjectBody-51">
+          <path
+             d="m 10.6354,3.67395 c 0,0 0,-2.46331 0,-2.46331 0,0 0.5093,0 0.5093,0 0,0 0,2.46331 0,2.46331 0,0 -0.5093,0 -0.5093,0"
+             id="path103" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-51"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use104"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-51"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use105"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6325 -->
+    <!-- 矩形部品 ID=6326 -->
+    <g
+       id="Group-6326"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs105">
+        <symbol
+           id="ObjectBody-52">
+          <path
+             d="m 9.98459,3.67395 c 0,0 0,-2.39823 0,-2.39823 0,0 0.50931,0 0.50931,0 0,0 0,2.39823 0,2.39823 0,0 -0.50931,0 -0.50931,0"
+             id="path105" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-52"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use106"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-52"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use107"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6326 -->
+    <!-- 矩形部品 ID=6327 -->
+    <g
+       id="Group-6327"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs107">
+        <symbol
+           id="ObjectBody-53">
+          <path
+             d="m 9.33383,3.67395 c 0,0 0,-2.33166 0,-2.33166 0,0 0.50929,0 0.50929,0 0,0 0,2.33166 0,2.33166 0,0 -0.50929,0 -0.50929,0"
+             id="path107" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-53"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use108"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-53"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use109"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6327 -->
+    <!-- 矩形部品 ID=6328 -->
+    <g
+       id="Group-6328"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs109">
+        <symbol
+           id="ObjectBody-54">
+          <path
+             d="m 15.1907,3.67395 c 0,0 0,-2.911696 0,-2.911696 0,0 0.5093,0 0.5093,0 0,0 0,2.911696 0,2.911696 0,0 -0.5093,0 -0.5093,0"
+             id="path109" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-54"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use110"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-54"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use111"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6328 -->
+    <!-- 矩形部品 ID=6329 -->
+    <g
+       id="Group-6329"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs111">
+        <symbol
+           id="ObjectBody-55">
+          <path
+             d="m 14.5399,3.67395 c 0,0 0,-2.857264 0,-2.857264 0,0 0.5093,0 0.5093,0 0,0 0,2.857264 0,2.857264 0,0 -0.5093,0 -0.5093,0"
+             id="path111" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-55"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use112"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-55"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use113"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6329 -->
+    <!-- 矩形部品 ID=6330 -->
+    <g
+       id="Group-6330"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs113">
+        <symbol
+           id="ObjectBody-56">
+          <path
+             d="m 13.8892,3.67395 c 0,0 0,-2.785686 0,-2.785686 0,0 0.5093,0 0.5093,0 0,0 0,2.785686 0,2.785686 0,0 -0.5093,0 -0.5093,0"
+             id="path113" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-56"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use114"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-56"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use115"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6330 -->
+    <!-- 矩形部品 ID=6331 -->
+    <g
+       id="Group-6331"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs115">
+        <symbol
+           id="ObjectBody-57">
+          <path
+             d="m 13.2384,3.67395 c 0,0 0,-2.720295 0,-2.720295 0,0 0.5093,0 0.5093,0 0,0 0,2.720295 0,2.720295 0,0 -0.5093,0 -0.5093,0"
+             id="path115" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-57"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use116"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-57"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use117"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6331 -->
+    <!-- 矩形部品 ID=6332 -->
+    <g
+       id="Group-6332"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs117">
+        <symbol
+           id="ObjectBody-58">
+          <path
+             d="m 12.5877,3.67395 c 0,0 0,-2.65675 0,-2.65675 0,0 0.5092,0 0.5092,0 0,0 0,2.65675 0,2.65675 0,0 -0.5092,0 -0.5092,0"
+             id="path117" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-58"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use118"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-58"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use119"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6332 -->
+    <!-- 矩形部品 ID=6333 -->
+    <g
+       id="Group-6333"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs119">
+        <symbol
+           id="ObjectBody-59">
+          <path
+             d="m 8.68306,3.67395 c 0,0 0,-2.2587 0,-2.2587 0,0 0.5093,0 0.5093,0 0,0 0,2.2587 0,2.2587 0,0 -0.5093,0 -0.5093,0"
+             id="path119" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-59"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use120"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-59"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use121"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6333 -->
+    <!-- 矩形部品 ID=6334 -->
+    <g
+       id="Group-6334"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs121">
+        <symbol
+           id="ObjectBody-60">
+          <path
+             d="m 8.0323,3.67395 c 0,0 0,-2.18984 0,-2.18984 0,0 0.50929,0 0.50929,0 0,0 0,2.18984 0,2.18984 0,0 -0.50929,0 -0.50929,0"
+             id="path121" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-60"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use122"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-60"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use123"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6334 -->
+    <!-- 矩形部品 ID=6335 -->
+    <g
+       id="Group-6335"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs123">
+        <symbol
+           id="ObjectBody-61">
+          <path
+             d="m 4.77847,3.67395 c 0,0 0,-1.9622 0,-1.9622 0,0 0.50929,0 0.50929,0 0,0 0,1.9622 0,1.9622 0,0 -0.50929,0 -0.50929,0"
+             id="path123" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-61"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use124"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-61"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use125"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6335 -->
+    <!-- 矩形部品 ID=6336 -->
+    <g
+       id="Group-6336"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs125">
+        <symbol
+           id="ObjectBody-62">
+          <path
+             d="m 4.1277,3.67395 c 0,0 0,-1.92123 0,-1.92123 0,0 0.5093,0 0.5093,0 0,0 0,1.92123 0,1.92123 0,0 -0.5093,0 -0.5093,0"
+             id="path125" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-62"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use126"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-62"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use127"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6336 -->
+    <!-- 矩形部品 ID=6337 -->
+    <g
+       id="Group-6337"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs127">
+        <symbol
+           id="ObjectBody-63">
+          <path
+             d="m 3.47694,3.67395 c 0,0 0,-1.87874 0,-1.87874 0,0 0.50929,0 0.50929,0 0,0 0,1.87874 0,1.87874 0,0 -0.50929,0 -0.50929,0"
+             id="path127" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-63"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use128"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-63"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use129"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6337 -->
+    <!-- 矩形部品 ID=6338 -->
+    <g
+       id="Group-6338"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs129">
+        <symbol
+           id="ObjectBody-64">
+          <path
+             d="m 2.82617,3.67395 c 0,0 0,-1.83996 0,-1.83996 0,0 0.5093,0 0.5093,0 0,0 0,1.83996 0,1.83996 0,0 -0.5093,0 -0.5093,0"
+             id="path129" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-64"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use130"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-64"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use131"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6338 -->
+    <!-- 矩形部品 ID=6339 -->
+    <g
+       id="Group-6339"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs131">
+        <symbol
+           id="ObjectBody-65">
+          <path
+             d="m 2.17541,3.67395 c 0,0 0,-1.80012 0,-1.80012 0,0 0.50929,0 0.50929,0 0,0 0,1.80012 0,1.80012 0,0 -0.50929,0 -0.50929,0"
+             id="path131" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-65"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use132"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-65"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use133"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6339 -->
+    <!-- 矩形部品 ID=6340 -->
+    <g
+       id="Group-6340"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs133">
+        <symbol
+           id="ObjectBody-66">
+          <path
+             d="m 7.38153,3.67395 c 0,0 0,-2.13568 0,-2.13568 0,0 0.50929,0 0.50929,0 0,0 0,2.13568 0,2.13568 0,0 -0.50929,0 -0.50929,0"
+             id="path133" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-66"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use134"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-66"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use135"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6340 -->
+    <!-- 矩形部品 ID=6341 -->
+    <g
+       id="Group-6341"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs135">
+        <symbol
+           id="ObjectBody-67">
+          <path
+             d="m 6.73076,3.67395 c 0,0 0,-2.08886 0,-2.08886 0,0 0.5093,0 0.5093,0 0,0 0,2.08886 0,2.08886 0,0 -0.5093,0 -0.5093,0"
+             id="path135" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-67"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use136"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-67"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use137"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6341 -->
+    <!-- 矩形部品 ID=6342 -->
+    <g
+       id="Group-6342"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs137">
+        <symbol
+           id="ObjectBody-68">
+          <path
+             d="m 6.08,3.67395 c 0,0 0,-2.04621 0,-2.04621 0,0 0.50929,0 0.50929,0 0,0 0,2.04621 0,2.04621 0,0 -0.50929,0 -0.50929,0"
+             id="path137" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-68"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use138"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-68"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use139"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6342 -->
+    <!-- 矩形部品 ID=6343 -->
+    <g
+       id="Group-6343"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs139">
+        <symbol
+           id="ObjectBody-69">
+          <path
+             d="m 5.42923,3.67395 c 0,0 0,-2.00269 0,-2.00269 0,0 0.5093,0 0.5093,0 0,0 0,2.00269 0,2.00269 0,0 -0.5093,0 -0.5093,0"
+             id="path139" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-69"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use140"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-69"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use141"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6343 -->
+    <!-- 矩形部品 ID=6344 -->
+    <g
+       id="Group-6344"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs141">
+        <symbol
+           id="ObjectBody-70">
+          <path
+             d="m 1.52464,3.67395 c 0,0 0,-1.76203 0,-1.76203 0,0 0.5093,0 0.5093,0 0,0 0,1.76203 0,1.76203 0,0 -0.5093,0 -0.5093,0"
+             id="path141" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-70"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use142"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-70"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use143"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6344 -->
+    <!-- 矩形部品 ID=6345 -->
+    <g
+       id="Group-6345"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <defs
+         id="defs143">
+        <symbol
+           id="ObjectBody-71">
+          <path
+             d="m 0.873878,3.67395 c 0,0 0,-1.76029 0,-1.76029 0,0 0.509292,0 0.509292,0 0,0 0,1.76029 0,1.76029 0,0 -0.509292,0 -0.509292,0"
+             id="path143" />
+        </symbol>
+      </defs>
+      <use
+         href="#ObjectBody-71"
+         fill="#ffffffff"
+         stroke="transparent"
+         shape-rendering="crispEdges"
+         id="use144"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      <use
+         href="#ObjectBody-71"
+         fill="none"
+         stroke="#000000ff"
+         stroke-width="0.125"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         shape-rendering="crispEdges"
+         id="use145"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <!-- End of 矩形部品 ID=6345 -->
+    <!-- グループ部品 ID=6382 -->
+    <g
+       id="Group-6382"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+      <!-- 矩形部品 ID=6346 -->
+      <g
+         id="Group-6346"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs145">
+          <symbol
+             id="ObjectBody-72">
+            <path
+               d="m 18.6143,3.4669 c 0,0 0,2.61342 0,2.61342 0,0 -0.5093,0 -0.5093,0 0,0 0,-2.61342 0,-2.61342 0,0 0.5093,0 0.5093,0"
+               id="path145" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-72"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use146"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-72"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use147"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 矩形部品 ID=6346 -->
+      <!-- 矩形部品 ID=6347 -->
+      <g
+         id="Group-6347"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs147">
+          <symbol
+             id="ObjectBody-73">
+            <path
+               d="m 17.3128,3.4669 c 0,0 0,2.48243 0,2.48243 0,0 -0.5093,0 -0.5093,0 0,0 0,-2.48243 0,-2.48243 0,0 0.5093,0 0.5093,0"
+               id="path147" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-73"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use148"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-73"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use149"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 矩形部品 ID=6347 -->
+      <!-- 矩形部品 ID=6348 -->
+      <g
+         id="Group-6348"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs149">
+          <symbol
+             id="ObjectBody-74">
+            <path
+               d="m 16.662,3.4669 c 0,0 0,2.41683 0,2.41683 0,0 -0.5093,0 -0.5093,0 0,0 0,-2.41683 0,-2.41683 0,0 0.5093,0 0.5093,0"
+               id="path149" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-74"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use150"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-74"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use151"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 矩形部品 ID=6348 -->
+      <!-- 矩形部品 ID=6365 -->
+      <g
+         id="Group-6365"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs151">
+          <symbol
+             id="ObjectBody-75">
+            <path
+               d="m 16.0112,3.4669 c 0,0 0,2.33911 0,2.33911 0,0 -0.5093,0 -0.5093,0 0,0 0,-2.33911 0,-2.33911 0,0 0.5093,0 0.5093,0"
+               id="path151" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-75"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use152"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-75"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use153"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 矩形部品 ID=6365 -->
+      <!-- 矩形部品 ID=6366 -->
+      <g
+         id="Group-6366"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs153">
+          <symbol
+             id="ObjectBody-76">
+            <path
+               d="m 19.2651,3.4669 c 0,0 0,2.68668 0,2.68668 0,0 -0.5093,0 -0.5093,0 0,0 0,-2.68668 0,-2.68668 0,0 0.5093,0 0.5093,0"
+               id="path153" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-76"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use154"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-76"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use155"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 矩形部品 ID=6366 -->
+      <!-- 矩形部品 ID=6367 -->
+      <g
+         id="Group-6367"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs155">
+          <symbol
+             id="ObjectBody-77">
+            <path
+               d="m 12.1067,3.4669 c 0,0 0,1.96998 0,1.96998 0,0 -0.5093,0 -0.5093,0 0,0 0,-1.96998 0,-1.96998 0,0 0.5093,0 0.5093,0"
+               id="path155" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-77"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use156"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-77"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use157"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 矩形部品 ID=6367 -->
+      <!-- 矩形部品 ID=6368 -->
+      <g
+         id="Group-6368"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs157">
+          <symbol
+             id="ObjectBody-78">
+            <path
+               d="m 11.4559,3.4669 c 0,0 0,1.90093 0,1.90093 0,0 -0.5093,0 -0.5093,0 0,0 0,-1.90093 0,-1.90093 0,0 0.5093,0 0.5093,0"
+               id="path157" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-78"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use158"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-78"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use159"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 矩形部品 ID=6368 -->
+      <!-- 矩形部品 ID=6369 -->
+      <g
+         id="Group-6369"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs159">
+          <symbol
+             id="ObjectBody-79">
+            <path
+               d="m 10.1544,3.4669 c 0,0 0,1.7678 0,1.7678 0,0 -0.50934,0 -0.50934,0 0,0 0,-1.7678 0,-1.7678 0,0 0.50934,0 0.50934,0"
+               id="path159" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-79"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use160"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-79"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use161"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 矩形部品 ID=6369 -->
+      <!-- 矩形部品 ID=6370 -->
+      <g
+         id="Group-6370"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs161">
+          <symbol
+             id="ObjectBody-80">
+            <path
+               d="m 9.50359,3.4669 c 0,0 0,1.69132 0,1.69132 0,0 -0.50929,0 -0.50929,0 0,0 0,-1.69132 0,-1.69132 0,0 0.50929,0 0.50929,0"
+               id="path161" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-80"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use162"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-80"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use163"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 矩形部品 ID=6370 -->
+      <!-- 矩形部品 ID=6371 -->
+      <g
+         id="Group-6371"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs163">
+          <symbol
+             id="ObjectBody-81">
+            <path
+               d="m 14.7097,3.4669 c 0,0 0,2.21594 0,2.21594 0,0 -0.5093,0 -0.5093,0 0,0 0,-2.21594 0,-2.21594 0,0 0.5093,0 0.5093,0"
+               id="path163" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-81"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use164"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-81"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use165"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 矩形部品 ID=6371 -->
+      <!-- 矩形部品 ID=6372 -->
+      <g
+         id="Group-6372"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs165">
+          <symbol
+             id="ObjectBody-82">
+            <path
+               d="m 14.0589,3.4669 c 0,0 0,2.1541 0,2.1541 0,0 -0.5092,0 -0.5092,0 0,0 0,-2.1541 0,-2.1541 0,0 0.5092,0 0.5092,0"
+               id="path165" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-82"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use166"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-82"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use167"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 矩形部品 ID=6372 -->
+      <!-- 矩形部品 ID=6373 -->
+      <g
+         id="Group-6373"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs167">
+          <symbol
+             id="ObjectBody-83">
+            <path
+               d="m 12.7574,3.4669 c 0,0 0,2.03202 0,2.03202 0,0 -0.5093,0 -0.5093,0 0,0 0,-2.03202 0,-2.03202 0,0 0.5093,0 0.5093,0"
+               id="path167" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-83"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use168"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-83"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use169"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 矩形部品 ID=6373 -->
+      <!-- 矩形部品 ID=6374 -->
+      <g
+         id="Group-6374"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs169">
+          <symbol
+             id="ObjectBody-84">
+            <path
+               d="m 8.18791,3.4669 c 0,0 0,1.57617 0,1.57617 0,0 -0.50929,0 -0.50929,0 0,0 0,-1.57617 0,-1.57617 0,0 0.50929,0 0.50929,0"
+               id="path169" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-84"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use170"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-84"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use171"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 矩形部品 ID=6374 -->
+      <!-- 矩形部品 ID=6375 -->
+      <g
+         id="Group-6375"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs171">
+          <symbol
+             id="ObjectBody-85">
+            <path
+               d="m 7.53715,3.4669 c 0,0 0,1.53452 0,1.53452 0,0 -0.5093,0 -0.5093,0 0,0 0,-1.53452 0,-1.53452 0,0 0.5093,0 0.5093,0"
+               id="path171" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-85"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use172"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-85"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use173"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 矩形部品 ID=6375 -->
+      <!-- 矩形部品 ID=6376 -->
+      <g
+         id="Group-6376"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs173">
+          <symbol
+             id="ObjectBody-86">
+            <path
+               d="m 6.88638,3.4669 c 0,0 0,1.48518 0,1.48518 0,0 -0.50929,0 -0.50929,0 0,0 0,-1.48518 0,-1.48518 0,0 0.50929,0 0.50929,0"
+               id="path173" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-86"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use174"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-86"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use175"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 矩形部品 ID=6376 -->
+      <!-- 矩形部品 ID=6377 -->
+      <g
+         id="Group-6377"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs175">
+          <symbol
+             id="ObjectBody-87">
+            <path
+               d="m 2.98179,3.4669 c 0,0 0,1.2508 0,1.2508 0,0 -0.50929,0 -0.50929,0 0,0 0,-1.2508 0,-1.2508 0,0 0.50929,0 0.50929,0"
+               id="path175" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-87"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use176"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-87"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use177"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 矩形部品 ID=6377 -->
+      <!-- 矩形部品 ID=6378 -->
+      <g
+         id="Group-6378"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs177">
+          <symbol
+             id="ObjectBody-88">
+            <path
+               d="m 2.33103,3.4669 c 0,0 0,1.20696 0,1.20696 0,0 -0.5093,0 -0.5093,0 0,0 0,-1.20696 0,-1.20696 0,0 0.5093,0 0.5093,0"
+               id="path177" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-88"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use178"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-88"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use179"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 矩形部品 ID=6378 -->
+      <!-- 矩形部品 ID=6379 -->
+      <g
+         id="Group-6379"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs179">
+          <symbol
+             id="ObjectBody-89">
+            <path
+               d="m 5.58485,3.4669 c 0,0 0,1.40697 0,1.40697 0,0 -0.50929,0 -0.50929,0 0,0 0,-1.40697 0,-1.40697 0,0 0.50929,0 0.50929,0"
+               id="path179" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-89"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use180"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-89"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use181"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 矩形部品 ID=6379 -->
+      <!-- 矩形部品 ID=6380 -->
+      <g
+         id="Group-6380"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs181">
+          <symbol
+             id="ObjectBody-90">
+            <path
+               d="m 4.93409,3.4669 c 0,0 0,1.3677 0,1.3677 0,0 -0.5093,0 -0.5093,0 0,0 0,-1.3677 0,-1.3677 0,0 0.5093,0 0.5093,0"
+               id="path181" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-90"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use182"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-90"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use183"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 矩形部品 ID=6380 -->
+      <!-- 矩形部品 ID=6381 -->
+      <g
+         id="Group-6381"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">
+        <defs
+           id="defs183">
+          <symbol
+             id="ObjectBody-91">
+            <path
+               d="m 3.63256,3.4669 c 0,0 0,1.2902 0,1.2902 0,0 -0.5093,0 -0.5093,0 0,0 0,-1.2902 0,-1.2902 0,0 0.5093,0 0.5093,0"
+               id="path183" />
+          </symbol>
+        </defs>
+        <use
+           href="#ObjectBody-91"
+           fill="#ffffffff"
+           stroke="transparent"
+           shape-rendering="crispEdges"
+           id="use184"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+        <use
+           href="#ObjectBody-91"
+           fill="none"
+           stroke="#000000ff"
+           stroke-width="0.125"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           shape-rendering="crispEdges"
+           id="use185"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <!-- End of 矩形部品 ID=6381 -->
+    </g>
+    <!-- End of グループ部品 ID=6382 -->
+  </g>
+  <!-- End of グループ部品 ID=6383 -->
+</svg>
