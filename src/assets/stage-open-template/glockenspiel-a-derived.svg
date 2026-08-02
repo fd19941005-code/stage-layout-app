@@ -7,83 +7,23 @@
    id="svg3"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
-  <!-- Master Definitions -->
-  <style
-     id="style1">
-text { white-space: pre; }
-.sfont-3 { font-style:normal; font-weight:400; font-size:2.46944px; font-family:游ゴシック; }
-</style>
-  <defs
-     id="defs1" />
-  <!-- 矩形部品 ID=3209 -->
-  <!-- End of 矩形部品 ID=3209 -->
+  <!--
+    グロッケンシュピールA原本の外形(矩形)。頂点座標は原本のまま。
+    原本の translate(-0.302083,-0.302083) を各頂点へ畳み込み、viewBox内へ収めてある。
+    全長11.000017単位、奥行5.962167単位。
+
+    原本のような symbol/use 経由では描かない。symbolは参照時に独自のビューポートを作り
+    既定でその外側を切り取るため、右辺と下辺が欠けて補完線を2本(right-edge-repair /
+    bottom-edge-repair)足してあった。補完線は本来の辺よりわずかに内側を通るため、
+    外形がその分だけ小さく描かれていた。
+    ここでは外形を単一のclosed pathで直接描き、四辺を原本どおりの位置で出す。
+  -->
   <g
-     id="g3">
-    <g
-       id="Group-3209"
-       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1"
-       transform="translate(-0.302083,-0.302083)">
-      <defs
-         id="defs2">
-        <symbol
-           id="ObjectBody-0">
-          <path
-             d="m 0.364583,6.32675 c 0,0 0,-5.962167 0,-5.962167 0,0 11.000017,0 11.000017,0 0,0 0,5.962167 0,5.962167 0,0 -11.000017,0 -11.000017,0"
-             id="path1" />
-        </symbol>
-      </defs>
-      <use
-         href="#ObjectBody-0"
-         fill="#ffffffff"
-         stroke="transparent"
-         shape-rendering="crispEdges"
-         id="use2"
-         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
-      <text
-         class="sfont-3"
-         fill="#000000ff"
-         id="text2"
-         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1"><tspan
-           x="0.94378102"
-           y="4.2990398"
-           id="tspan2"
-           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">Glocken.</tspan></text>
-      <use
-         href="#ObjectBody-0"
-         fill="none"
-         stroke="#000000ff"
-         stroke-width="0.125"
-         stroke-linecap="round"
-         stroke-linejoin="round"
-         shape-rendering="crispEdges"
-         id="use3"
-         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
-      <path
-         d="M 11.33335 0.364583 V 6.32675"
-         fill="none"
-         stroke="#000000"
-         stroke-width="0.125"
-         stroke-linecap="round"
-         stroke-linejoin="round"
-         id="right-edge-repair" />
-      <path
-         d="M 0.364583 6.26425 H 11.33335"
-         fill="none"
-         stroke="#000000"
-         stroke-width="0.125"
-         stroke-linecap="round"
-         stroke-linejoin="round"
-         id="bottom-edge-repair" />
-    </g>
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.46944px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;white-space:pre;stroke-width:0.264583"
-       x="5.5760903"
-       y="3.9646864"
-       id="text3"><tspan
-         id="tspan3"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.46944px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583"
-         x="5.5760903"
-         y="3.9646864">Glocken.</tspan></text>
+     id="Group-glockenspiel-a"
+     style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1">
+    <path
+       id="glockenspiel-a-body"
+       shape-rendering="crispEdges"
+       d="M 0.0625,6.024667 L 0.0625,0.0625 L 11.062517,0.0625 L 11.062517,6.024667 Z" />
   </g>
 </svg>

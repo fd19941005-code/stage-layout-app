@@ -16,7 +16,31 @@ export type KeyboardShortcut =
   | "arrowLeft"
   | "arrowRight"
   | "arrowUp"
-  | "arrowDown";
+  | "arrowDown"
+  | "modeSelect"
+  | "modeSelectRect"
+  | "modeMeasure"
+  | "modeTraceWall"
+  | "modeCalibrate"
+  | "modeAimPoint"
+  | "modeAnnotationText"
+  | "modeAnnotationLine"
+  | "modeAnnotationArrow"
+  | "modeAnnotationRect"
+  | "modeAnnotationCircle"
+  | "modeAnnotationDimension"
+  | "rotateCw"
+  | "rotateCcw"
+  | "rotateCwFine"
+  | "rotateCcwFine"
+  | "zoomFit"
+  | "zoomSelection"
+  | "zoomIn"
+  | "zoomOut"
+  | "repeatLastPreset"
+  | "favoritePreset"
+  | "nextSelection"
+  | "previousSelection";
 
 export interface KeyboardShortcutInput {
   readonly key: string;
@@ -24,6 +48,8 @@ export interface KeyboardShortcutInput {
   readonly metaKey: boolean;
   readonly shiftKey: boolean;
   readonly altKey: boolean;
+  readonly isComposing?: boolean;
+  readonly keyCode?: number;
 }
 
 export interface KeyboardTargetInfo {
@@ -34,9 +60,19 @@ export interface KeyboardTargetInfo {
   readonly hasTextboxRoleAncestor: boolean;
   readonly tabIndex: number | null;
   readonly hasInteractiveAncestor: boolean;
+  readonly isCanvas?: boolean;
+}
+
+/** Map digits 1-9 to favorite preset ids without changing stored preferences. */
+export function getFavoritePresetDigit(input: KeyboardShortcutInput): number | null {
+  if (input.ctrlKey || input.metaKey || input.shiftKey || input.altKey) return null;
+  if (!/^[1-9]$/.test(input.key)) return null;
+  return Number(input.key);
 }
 
 export function getKeyboardShortcut(input: KeyboardShortcutInput): KeyboardShortcut | null {
+  if (input.isComposing || input.keyCode === 229) return null;
+
   const modifier = input.ctrlKey || input.metaKey;
   const key = input.key.toLowerCase();
 
@@ -63,8 +99,34 @@ export function getKeyboardShortcut(input: KeyboardShortcutInput): KeyboardShort
     case "Backspace":
       return "delete";
     default:
-      return null;
+      break;
   }
+
+  // Keep IME and modifier keys out of the plain-key command map.
+  if (input.altKey || (input.shiftKey && !["f", "[", "]", "{", "}", "tab", "+"].includes(key))) return null;
+
+  if (key === "v") return "modeSelect";
+  if (key === "b") return "modeSelectRect";
+  if (key === "m") return "modeMeasure";
+  if (key === "w") return "modeTraceWall";
+  if (key === "k") return "modeCalibrate";
+  if (key === "p") return "modeAimPoint";
+  if (key === "t") return "modeAnnotationText";
+  if (key === "l") return "modeAnnotationLine";
+  if (key === "a") return "modeAnnotationArrow";
+  if (key === "r") return "modeAnnotationRect";
+  if (key === "o") return "modeAnnotationCircle";
+  if (key === "n") return "modeAnnotationDimension";
+
+  if (key === "]" || key === "}") return input.shiftKey ? "rotateCwFine" : "rotateCw";
+  if (key === "[" || key === "{") return input.shiftKey ? "rotateCcwFine" : "rotateCcw";
+  if (key === "f") return input.shiftKey ? "zoomSelection" : "zoomFit";
+  if (key === "=" || key === "+") return "zoomIn";
+  if (key === "-") return "zoomOut";
+  if (key === "q") return "repeatLastPreset";
+  if (getFavoritePresetDigit(input) !== null) return "favoritePreset";
+  if (input.key === "Tab") return input.shiftKey ? "previousSelection" : "nextSelection";
+  return null;
 }
 
 /** 押しっぱなしで複製・クリップボード操作・グループ操作を連続実行しない。 */
@@ -75,7 +137,20 @@ export function suppressesKeyRepeat(shortcut: KeyboardShortcut): boolean {
     || shortcut === "pasteInPlace"
     || shortcut === "duplicate"
     || shortcut === "group"
-    || shortcut === "ungroup";
+    || shortcut === "ungroup"
+    || shortcut === "modeSelect"
+    || shortcut === "modeSelectRect"
+    || shortcut === "modeMeasure"
+    || shortcut === "modeTraceWall"
+    || shortcut === "modeCalibrate"
+    || shortcut === "modeAimPoint"
+    || shortcut.startsWith("modeAnnotation")
+    || shortcut.startsWith("rotate")
+    || shortcut.startsWith("zoom")
+    || shortcut === "repeatLastPreset"
+    || shortcut === "favoritePreset"
+    || shortcut === "nextSelection"
+    || shortcut === "previousSelection";
 }
 
 export function blocksCanvasShortcut(target: KeyboardTargetInfo, shortcut?: KeyboardShortcut): boolean {
@@ -133,6 +208,7 @@ export function getKeyboardTargetInfo(target: EventTarget | null): KeyboardTarge
       hasTextboxRoleAncestor: false,
       tabIndex: null,
       hasInteractiveAncestor: false,
+      isCanvas: false,
     };
   }
   const htmlTarget = typeof HTMLElement !== "undefined" && target instanceof HTMLElement ? target : null;
@@ -148,5 +224,6 @@ export function getKeyboardTargetInfo(target: EventTarget | null): KeyboardTarge
     hasTextboxRoleAncestor: target.closest('[role="textbox"]') !== null,
     tabIndex: tabIndexAttribute === null ? null : Number(tabIndexAttribute),
     hasInteractiveAncestor: interactiveAncestor !== null && interactiveAncestor !== target,
+    isCanvas: target.closest("svg.canvas-stage") !== null,
   };
 }

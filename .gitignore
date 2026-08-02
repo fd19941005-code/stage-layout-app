@@ -4,3 +4,9 @@ dist/
 scripts/.env.access-setup.ps1
 .wrangler/
 .DS_Store
+
+# ローカル作業用のスナップショット
+*.zip
+
+# 第三者画像を含む調査資料（公開リポジトリへ同梱しないこと）
+docs/orchestra_string_layout_8_to_16_collection/

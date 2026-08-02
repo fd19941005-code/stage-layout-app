@@ -286,3 +286,32 @@ export function fitViewToProject(
     panY: viewportHeight / 2 - centerYMm * zoom,
   };
 }
+
+/** Center the selected mm bounds in the viewport; null means no selection. */
+export function fitViewToObjects(
+  objects: readonly SceneObject[],
+  ids: readonly string[],
+  viewportWidth: number,
+  viewportHeight: number,
+  marginPx = 48,
+): ViewState | null {
+  const idSet = new Set(ids);
+  const selected = objects.filter((object) => idSet.has(object.id));
+  if (selected.length === 0) return null;
+
+  const bounds = selected.map(sceneObjectBoundsMm);
+  const minXMm = Math.min(...bounds.map((bound) => bound.minXMm));
+  const minYMm = Math.min(...bounds.map((bound) => bound.minYMm));
+  const maxXMm = Math.max(...bounds.map((bound) => bound.maxXMm));
+  const maxYMm = Math.max(...bounds.map((bound) => bound.maxYMm));
+  const widthMm = Math.max(1, maxXMm - minXMm);
+  const heightMm = Math.max(1, maxYMm - minYMm);
+  const availableWidthPx = Math.max(160, viewportWidth - marginPx * 2);
+  const availableHeightPx = Math.max(160, viewportHeight - marginPx * 2);
+  const zoom = Math.min(2, Math.max(0.005, Math.min(availableWidthPx / widthMm, availableHeightPx / heightMm)));
+  return {
+    zoom,
+    panX: viewportWidth / 2 - ((minXMm + maxXMm) / 2) * zoom,
+    panY: viewportHeight / 2 - ((minYMm + maxYMm) / 2) * zoom,
+  };
+}

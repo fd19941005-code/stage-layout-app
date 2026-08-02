@@ -297,6 +297,7 @@
 .symbol-library .library-favorite-toggle.active { border-color: #c48a42; background: #fff4d9; color: #a96c13; }
 
 .symbol-library .library-preset-card {
+  position: relative;
   display: grid;
   grid-template-columns: 48px minmax(0, 1fr) auto;
   gap: 8px;
@@ -312,6 +313,24 @@
   color: #24484c;
   text-align: left;
   transition: border-color 120ms ease, background 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+}
+
+.symbol-library .library-favorite-shortcut-badge {
+  position: absolute;
+  top: 4px;
+  right: 30px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border: 1px solid #c48a42;
+  border-radius: 5px;
+  background: #fff4d9;
+  color: #8c5c1d;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 14px;
+  text-align: center;
+  pointer-events: none;
 }
 
 .symbol-library .library-preset-card:hover:not(:disabled) {
@@ -521,6 +540,9 @@
     grid-template-columns: 42px minmax(0, 1fr);
     min-height: 58px;
     padding: 6px;
+  }
+  .symbol-library .library-favorite-shortcut-badge {
+    right: 4px;
   }
 
   .symbol-library .symbol-preview {

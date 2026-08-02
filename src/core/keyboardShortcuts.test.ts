@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   blocksCanvasShortcut,
+  getFavoritePresetDigit,
   getKeyboardShortcut,
   suppressesKeyRepeat,
   type KeyboardShortcutInput,
@@ -58,6 +59,50 @@ describe("キーボードショートカット判定", () => {
     expect(suppressesKeyRepeat("duplicate")).toBe(true);
     expect(suppressesKeyRepeat("undo")).toBe(false);
     expect(suppressesKeyRepeat("arrowLeft")).toBe(false);
+  });
+
+  it("Phase Aの操作高速化キーを正しく分類する", () => {
+    expect(getKeyboardShortcut(key("V"))).toBe("modeSelect");
+    expect(getKeyboardShortcut(key("b"))).toBe("modeSelectRect");
+    expect(getKeyboardShortcut(key("m"))).toBe("modeMeasure");
+    expect(getKeyboardShortcut(key("w"))).toBe("modeTraceWall");
+    expect(getKeyboardShortcut(key("k"))).toBe("modeCalibrate");
+    expect(getKeyboardShortcut(key("p"))).toBe("modeAimPoint");
+    expect(getKeyboardShortcut(key("t"))).toBe("modeAnnotationText");
+    expect(getKeyboardShortcut(key("l"))).toBe("modeAnnotationLine");
+    expect(getKeyboardShortcut(key("a"))).toBe("modeAnnotationArrow");
+    expect(getKeyboardShortcut(key("r"))).toBe("modeAnnotationRect");
+    expect(getKeyboardShortcut(key("o"))).toBe("modeAnnotationCircle");
+    expect(getKeyboardShortcut(key("n"))).toBe("modeAnnotationDimension");
+    expect(getKeyboardShortcut(key("]"))).toBe("rotateCw");
+    expect(getKeyboardShortcut(key("["))).toBe("rotateCcw");
+    expect(getKeyboardShortcut(key("}", { shiftKey: true }))).toBe("rotateCwFine");
+    expect(getKeyboardShortcut(key("{", { shiftKey: true }))).toBe("rotateCcwFine");
+    expect(getKeyboardShortcut(key("f"))).toBe("zoomFit");
+    expect(getKeyboardShortcut(key("f", { shiftKey: true }))).toBe("zoomSelection");
+    expect(getKeyboardShortcut(key("="))).toBe("zoomIn");
+    expect(getKeyboardShortcut(key("+", { shiftKey: true }))).toBe("zoomIn");
+    expect(getKeyboardShortcut(key("-"))).toBe("zoomOut");
+    expect(getKeyboardShortcut(key("q"))).toBe("repeatLastPreset");
+    expect(getKeyboardShortcut(key("1"))).toBe("favoritePreset");
+    expect(getKeyboardShortcut(key("Tab"))).toBe("nextSelection");
+    expect(getKeyboardShortcut(key("Tab", { shiftKey: true }))).toBe("previousSelection");
+    expect(getFavoritePresetDigit(key("9"))).toBe(9);
+    expect(getFavoritePresetDigit(key("1", { ctrlKey: true }))).toBeNull();
+  });
+
+  it("IMEと修飾キーによる誤起動を抑止する", () => {
+    expect(getKeyboardShortcut(key("v", { ctrlKey: true }))).toBe("paste");
+    expect(getKeyboardShortcut(key("v", { isComposing: true }))).toBeNull();
+    expect(getKeyboardShortcut(key("v", { keyCode: 229 }))).toBeNull();
+    expect(getKeyboardShortcut(key("v", { shiftKey: true }))).toBeNull();
+    expect(getKeyboardShortcut(key("q", { altKey: true }))).toBeNull();
+  });
+
+  it("新しい一回操作キーのrepeatを抑止する", () => {
+    for (const shortcut of ["modeSelect", "modeAnnotationText", "rotateCw", "zoomFit", "repeatLastPreset", "favoritePreset", "nextSelection"] as const) {
+      expect(suppressesKeyRepeat(shortcut)).toBe(true);
+    }
   });
 
   it("入力欄では編集を優先し、操作可能なUIでは削除・矢印のキャンバス操作を止める", () => {

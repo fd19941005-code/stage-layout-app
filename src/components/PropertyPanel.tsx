@@ -35,6 +35,7 @@ interface Props {
   requirementScope: RequirementScope;
   onRequirementScopeChange: (scope: RequirementScope) => void;
   onClose?: () => void;
+  onFocusCanvas?: () => void;
 }
 
 type NumericField = "xMm" | "yMm" | "widthMm" | "depthMm" | "heightMm" | "rotationDeg";
@@ -274,7 +275,12 @@ function WallPanel({ state, dispatch }: WallPanelProps) {
   );
 }
 
-export function PropertyPanel({ state, dispatch, onOpenSaveUserTemplate, onOpenGrid, onOpenChairArcRows, onOpenChairLine, onOpenStringSectionTemplate, onOpenRiserGroup, onOpenLineArrangement, requirementCounts, requirementScope, onRequirementScopeChange, onClose }: Props) {
+export function PropertyPanel({ state, dispatch, onOpenSaveUserTemplate, onOpenGrid, onOpenChairArcRows, onOpenChairLine, onOpenStringSectionTemplate, onOpenRiserGroup, onOpenLineArrangement, requirementCounts, requirementScope, onRequirementScopeChange, onClose, onFocusCanvas }: Props) {
+  function dispatchAndFocus(action: Action) {
+    dispatch(action);
+    onFocusCanvas?.();
+  }
+
   const chairArcIssue = chairArcLaunchIssue(state.project, state.selectedIds, state.activeLayerId);
   const chairLineIssue = chairLineLaunchIssue(state.project, state.activeLayerId);
   const stringTemplateIssue = stringSectionTemplateLaunchIssue(state.project, state.activeLayerId);
@@ -328,7 +334,7 @@ export function PropertyPanel({ state, dispatch, onOpenSaveUserTemplate, onOpenG
               disabled={!orientationEditEnabled || selectedPodium === null}
               title={selectedPodium === null ? "指揮台が図面にありません" : undefined}
               onClick={() => {
-                if (selectedPodium) dispatch({ type: "ROTATE_SELECTED_TO_PODIUM", podiumId: selectedPodium.id });
+                if (selectedPodium) dispatchAndFocus({ type: "ROTATE_SELECTED_TO_PODIUM", podiumId: selectedPodium.id });
               }}
             >
               {"指揮台へ向ける"}
@@ -336,16 +342,16 @@ export function PropertyPanel({ state, dispatch, onOpenSaveUserTemplate, onOpenG
             <button
               type="button"
               disabled={!orientationEditEnabled}
-              onClick={() => dispatch({ type: "SET_MODE", mode: "aimPoint" })}
+              onClick={() => dispatchAndFocus({ type: "SET_MODE", mode: "aimPoint" })}
             >
               {"指定点へ向ける"}
             </button>
           </div>
           <div className="property-button-grid">
-            <button type="button" disabled={!orientationEditEnabled} onClick={() => dispatch({ type: "ROTATE_SELECTED_DELTA", deltaDeg: -15 })}>{"－15度"}</button>
-            <button type="button" disabled={!orientationEditEnabled} onClick={() => dispatch({ type: "ROTATE_SELECTED_DELTA", deltaDeg: 15 })}>{"＋15度"}</button>
-            <button type="button" disabled={!orientationEditEnabled} onClick={() => dispatch({ type: "ROTATE_SELECTED_DELTA", deltaDeg: -5 })}>{"－5度"}</button>
-            <button type="button" disabled={!orientationEditEnabled} onClick={() => dispatch({ type: "ROTATE_SELECTED_DELTA", deltaDeg: 5 })}>{"＋5度"}</button>
+            <button type="button" disabled={!orientationEditEnabled} onClick={() => dispatchAndFocus({ type: "ROTATE_SELECTED_DELTA", deltaDeg: -15 })}>{"－15度"}</button>
+            <button type="button" disabled={!orientationEditEnabled} onClick={() => dispatchAndFocus({ type: "ROTATE_SELECTED_DELTA", deltaDeg: 15 })}>{"＋15度"}</button>
+            <button type="button" disabled={!orientationEditEnabled} onClick={() => dispatchAndFocus({ type: "ROTATE_SELECTED_DELTA", deltaDeg: -5 })}>{"－5度"}</button>
+            <button type="button" disabled={!orientationEditEnabled} onClick={() => dispatchAndFocus({ type: "ROTATE_SELECTED_DELTA", deltaDeg: 5 })}>{"＋5度"}</button>
           </div>
           <div className="dialog-form-grid">
             <DraftNumberField label={"統一角度 (度)"} value={uniformRotationDeg} disabled={!orientationEditEnabled} onCommit={setUniformRotationDeg} />
@@ -353,7 +359,7 @@ export function PropertyPanel({ state, dispatch, onOpenSaveUserTemplate, onOpenG
               type="button"
               className="wide"
               disabled={!orientationEditEnabled}
-              onClick={() => dispatch({ type: "SET_SELECTED_ROTATION", rotationDeg: uniformRotationDeg })}
+              onClick={() => dispatchAndFocus({ type: "SET_SELECTED_ROTATION", rotationDeg: uniformRotationDeg })}
             >
               {"角度を統一"}
             </button>
@@ -369,7 +375,7 @@ export function PropertyPanel({ state, dispatch, onOpenSaveUserTemplate, onOpenG
                 type="button"
                 className="wide"
                 disabled={!orientationEditEnabled}
-                onClick={() => dispatch({ type: "ROTATE_SELECTED_TO_POINT", point: { xMm: targetXMm, yMm: targetYMm } })}
+                onClick={() => dispatchAndFocus({ type: "ROTATE_SELECTED_TO_POINT", point: { xMm: targetXMm, yMm: targetYMm } })}
               >
                 {"指定X・Yへ向ける"}
               </button>
@@ -380,7 +386,7 @@ export function PropertyPanel({ state, dispatch, onOpenSaveUserTemplate, onOpenG
                 className="wide"
                 disabled={!orientationEditEnabled || projectStageCenterXMm === null}
                 onClick={() => {
-                  if (projectStageCenterXMm !== null) dispatch({ type: "MIRROR_SELECTED", axisXMm: projectStageCenterXMm });
+                  if (projectStageCenterXMm !== null) dispatchAndFocus({ type: "MIRROR_SELECTED", axisXMm: projectStageCenterXMm });
                 }}
               >
                 {"左右対称に複製（舞台中心線）"}
@@ -392,7 +398,7 @@ export function PropertyPanel({ state, dispatch, onOpenSaveUserTemplate, onOpenG
                 type="button"
                 className="wide"
                 disabled={!orientationEditEnabled}
-                onClick={() => dispatch({ type: "MIRROR_SELECTED", axisXMm: mirrorAxisXMm })}
+                onClick={() => dispatchAndFocus({ type: "MIRROR_SELECTED", axisXMm: mirrorAxisXMm })}
               >
                 {"左右対称に複製（指定X）"}
               </button>
@@ -447,13 +453,13 @@ export function PropertyPanel({ state, dispatch, onOpenSaveUserTemplate, onOpenG
         <h3>整列</h3>
         <div className="property-button-grid">
           {ALIGN_BUTTONS.map(({ alignment, label }) => (
-            <button key={alignment} type="button" onClick={() => dispatch({ type: "ALIGN_SELECTED", alignment })}>{label}</button>
+            <button key={alignment} type="button" onClick={() => dispatchAndFocus({ type: "ALIGN_SELECTED", alignment })}>{label}</button>
           ))}
         </div>
         <h3>等間隔</h3>
         <div className="property-button-grid">
-          <button type="button" onClick={() => dispatch({ type: "DISTRIBUTE_SELECTED", axis: "x" })}>水平</button>
-          <button type="button" onClick={() => dispatch({ type: "DISTRIBUTE_SELECTED", axis: "y" })}>垂直</button>
+          <button type="button" onClick={() => dispatchAndFocus({ type: "DISTRIBUTE_SELECTED", axis: "x" })}>水平</button>
+          <button type="button" onClick={() => dispatchAndFocus({ type: "DISTRIBUTE_SELECTED", axis: "y" })}>垂直</button>
         </div>
         <div className="property-button-grid">
           <button type="button" disabled={!lineArrangementEnabled} onClick={onOpenLineArrangement}>一直線配置</button>

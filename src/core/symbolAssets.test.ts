@@ -52,7 +52,7 @@ describe("シンボル資産台帳", () => {
   it("グロッケンは既存シロフォンSVGの暫定派生であることを台帳に残す", () => {
     const asset = REPOSITORY_SYMBOL_ASSETS.find((candidate) => candidate.id === "stage-open-template/glockenspiel-concert-provisional");
     expect(asset).toMatchObject({
-      note: expect.stringContaining("右端"),
+      note: expect.stringContaining("グロッケンシュピールA原本"),
       sourcePath: "src/assets/stage-open-template/glockenspiel-a-derived.svg",
     });
     expect(defaultAssetVariantIdForPreset("glockenspiel-concert")).toBe(asset?.id);

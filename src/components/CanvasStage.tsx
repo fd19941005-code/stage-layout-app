@@ -70,6 +70,7 @@ interface Props {
   onCursorMm: (p: PointMm | null) => void;
   onNotice: (message: string) => void;
   onContextMenu: (position: { x: number; y: number }) => void;
+  onRegisterCanvasController?: (controller: CanvasStageController | null) => void;
   wallDraft: PointMm[];
   onWallDraftChange: (points: PointMm[]) => void;
   /** 確定前の椅子多列円弧配置。nullならプレビューを描画しない。 */
@@ -96,6 +97,11 @@ interface Props {
   chairLinePreviewObjects?: readonly SceneObject[];
 }
 
+
+export interface CanvasStageController {
+  focus: () => void;
+  getViewport: () => { width: number; height: number };
+}
 type DragState =
   | { kind: "pan"; startX: number; startY: number; startPanX: number; startPanY: number }
   | { kind: "point"; pointMode: "traceWall" | "calibrate" | "verifyCalibration" | "measure"; startScreen: ScreenPoint; startMm: PointMm }
@@ -213,9 +219,27 @@ function renderSymbolDefinition(definition: (typeof SYMBOL_DEFINITIONS)[number])
     </symbol>
   );
 }
-export function CanvasStage({ state, dispatch, onCursorMm, onNotice, onContextMenu, wallDraft, onWallDraftChange, chairArc = null, onChairArcChange, chairLine = null, onChairLineChange, stringTemplate = null, onStringTemplateChange, riserGroup = null, onRiserGroupChange, lineArrangement = null, onLineArrangementChange, previewObjects, riserPreviewObjects, chairLinePreviewObjects }: Props) {
+export function CanvasStage({ state, dispatch, onCursorMm, onNotice, onContextMenu, onRegisterCanvasController, wallDraft, onWallDraftChange, chairArc = null, onChairArcChange, chairLine = null, onChairLineChange, stringTemplate = null, onStringTemplateChange, riserGroup = null, onRiserGroupChange, lineArrangement = null, onLineArrangementChange, previewObjects, riserPreviewObjects, chairLinePreviewObjects }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const dragRef = useRef<DragState | null>(null);
+  useEffect(() => {
+    if (!onRegisterCanvasController) return;
+    const controller: CanvasStageController = {
+      focus: () => {
+        window.requestAnimationFrame(() => svgRef.current?.focus());
+      },
+      getViewport: () => {
+        const rect = svgRef.current?.getBoundingClientRect();
+        if (rect && rect.width > 0 && rect.height > 0) return { width: rect.width, height: rect.height };
+        return {
+          width: Math.max(320, window.innerWidth - 520),
+          height: Math.max(240, window.innerHeight - 180),
+        };
+      },
+    };
+    onRegisterCanvasController(controller);
+    return () => onRegisterCanvasController(null);
+  }, [onRegisterCanvasController]);
   const pointersRef = useRef(new Map<number, ScreenPoint>());
   const [marquee, setMarquee] = useState<{ startMm: PointMm; currentMm: PointMm } | null>(null);
   const [alignmentGuides, setAlignmentGuides] = useState<AlignmentGuideLine[]>([]);

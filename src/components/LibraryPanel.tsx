@@ -231,7 +231,7 @@ export function LibraryPanel({ state, dispatch, onClose, onNotice, onExportUserT
             <span className="library-group-count">{favoriteItems.length}</span>
           </div>
           <ul className="library-preset-list">
-            {favoriteItems.map((preset) => <LibraryPresetCard key={preset.id} preset={preset} state={state} dispatch={dispatch} canPlace={canPlace} />)}
+            {favoriteItems.map((preset) => <LibraryPresetCard key={preset.id} preset={preset} state={state} dispatch={dispatch} favoriteNumber={state.libraryPreferences.favoritePresetIds.indexOf(preset.id) < 9 ? state.libraryPreferences.favoritePresetIds.indexOf(preset.id) + 1 : undefined} canPlace={canPlace} />)}
           </ul>
         </section>
       )}
