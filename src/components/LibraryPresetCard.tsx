@@ -8,6 +8,7 @@ interface Props {
   state: AppState;
   dispatch: Dispatch<Action>;
   canPlace: boolean;
+  favoriteNumber?: number;
 }
 
 function ChairMusicStandSetSymbol() {
@@ -23,7 +24,7 @@ function ChairMusicStandSetSymbol() {
   );
 }
 
-export function LibraryPresetCard({ preset, state, dispatch, canPlace }: Props) {
+export function LibraryPresetCard({ preset, state, dispatch, canPlace, favoriteNumber }: Props) {
   const active = state.pendingPresetId === preset.id;
   const favorite = state.libraryPreferences.favoritePresetIds.includes(preset.id);
   const isChairMusicStandSet = preset.id === CHAIR_MUSIC_STAND_SET_PRESET_ID;
@@ -38,8 +39,10 @@ export function LibraryPresetCard({ preset, state, dispatch, canPlace }: Props) 
           aria-pressed={active}
           aria-label={`${preset.name}、${preset.isGroupPreset ? "構成物をまとめて" : `${preset.widthMm}×${preset.depthMm}mmを`}配置`}
           title={`${preset.name}　${preset.widthMm}×${preset.depthMm}mm${preset.isGroupPreset ? "・一括配置" : ""}`}
+          aria-keyshortcuts={favoriteNumber === undefined ? undefined : String(favoriteNumber)}
         >
           {isChairMusicStandSet ? <ChairMusicStandSetSymbol /> : <PresetSymbol preset={preset} />}
+          {favoriteNumber !== undefined && <span className="library-favorite-shortcut-badge" aria-hidden="true">{favoriteNumber}</span>}
           <span className="library-card-copy">
             <strong>{preset.name}</strong>
             <span>{preset.isGroupPreset ? "構成物をまとめて配置" : `${preset.widthMm} × ${preset.depthMm} mm`}</span>

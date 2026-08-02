@@ -26,6 +26,43 @@ describe("custom riser and line actions", () => {
     expect(state.project.objects.slice(0, 4).every((object) => object.type === "riser")).toBe(true);
   });
 
+  it("creates a repeated riser row block as one grouped undoable placement", () => {
+    let state = calibratedState([]);
+    state = appReducer(state, { type: "ADD_RISER_GROUP", layerId: "layer-objects", fixedToBack: false, options: {
+      center: { xMm: 5000, yMm: 3000 },
+      segments: [{ presetId: "riser-3x6", count: 2, rotationDeg: 90 }],
+      heightMm: 300,
+      direction: "horizontal",
+      parallelCount: 2,
+      parallelGapMm: 100,
+    } });
+    const risers = state.project.objects.filter((item) => item.type === "riser");
+    expect(risers).toHaveLength(4);
+    expect(new Set(risers.map((item) => item.groupId)).size).toBe(1);
+    expect(risers.every((item) => item.rotationDeg === 90)).toBe(true);
+    expect(state.selectedIds).toEqual(risers.map((item) => item.id));
+    expect(state.past).toHaveLength(1);
+  });
+
+  it("creates custom compositions for separate riser rows", () => {
+    let state = calibratedState([]);
+    state = appReducer(state, { type: "ADD_RISER_GROUP", layerId: "layer-objects", fixedToBack: false, options: {
+      center: { xMm: 5000, yMm: 3000 },
+      segments: [{ presetId: "riser-6x6", count: 1 }],
+      parallelRows: [
+        { segments: [{ presetId: "riser-6x6", count: 1 }] },
+        { segments: [{ presetId: "riser-4x6", count: 1 }] },
+      ],
+      heightMm: 300,
+      direction: "horizontal",
+      parallelCount: 2,
+      parallelGapMm: 100,
+    } });
+    const risers = state.project.objects.filter((item) => item.type === "riser");
+    expect(risers.map((item) => item.presetId)).toEqual(["riser-6x6", "riser-4x6"]);
+    expect(new Set(risers.map((item) => item.groupId)).size).toBe(1);
+  });
+
   it("preserves fixed riser group state through JSON round trip", () => {
     let state = calibratedState([object("chair", 0)]);
     state = appReducer(state, { type: "ADD_RISER_GROUP", layerId: "layer-objects", fixedToBack: true, options: { center: { xMm: 5000, yMm: 2000 }, segments: [{ presetId: "riser-3x6", count: 2 }], heightMm: 300, direction: "horizontal" } });

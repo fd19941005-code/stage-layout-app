@@ -3,6 +3,7 @@
 import { describe, expect, it } from "vitest";
 import {
   computeMmPerPixel,
+  fitViewToObjects,
   displayedPxToSourcePx,
   fitViewToProject,
   getBackgroundDisplaySizePx,
@@ -20,6 +21,7 @@ import {
 } from "./transform";
 import type { Background, ViewState } from "../types/project";
 import { createEmptyProject } from "./project";
+import type { SceneObject } from "../types/project";
 
 describe("computeMmPerPixel (FR-020 2点校正)", () => {
   it("2点距離と実距離からmm/pxを算出する", () => {
@@ -166,5 +168,38 @@ describe("fitViewToProject (全体表示)", () => {
     expect(screenToMm({ x: 500, y: 300 }, view).xMm).toBeCloseTo(5000);
     expect(screenToMm({ x: 500, y: 300 }, view).yMm).toBeCloseTo(3000);
     expect(view.zoom).toBeCloseTo(0.084, 3);
+  });
+});
+
+describe("fitViewToObjects (選択範囲表示)", () => {
+  it("選択オブジェクトをビューポート中央へ収め、空選択はnullを返す", () => {
+    const objects: SceneObject[] = [{
+      id: "object-a",
+      type: "chair",
+      presetId: "chair",
+      name: "椅子",
+      xMm: 1000,
+      yMm: 2000,
+      widthMm: 400,
+      depthMm: 600,
+      heightMm: 450,
+      rotationDeg: 0,
+      label: "",
+      onRiserId: null,
+      avatar: null,
+      locked: false,
+      visible: true,
+      groupId: null,
+      layerId: "layer-objects",
+      zIndex: 0,
+      shape: "rect",
+    }];
+    const view = fitViewToObjects(objects, ["object-a"], 1000, 600);
+    expect(view).not.toBeNull();
+    if (!view) return;
+    const center = screenToMm({ x: 500, y: 300 }, view);
+    expect(center.xMm).toBeCloseTo(1000);
+    expect(center.yMm).toBeCloseTo(2000);
+    expect(fitViewToObjects(objects, [], 1000, 600)).toBeNull();
   });
 });

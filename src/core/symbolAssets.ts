@@ -93,7 +93,12 @@ function svgAsset(
 const repositorySymbolAssets: readonly RuntimeSymbolAsset[] = [
   svgAsset("stage-open-template/amp-speaker-a", "アンプA", "src/assets/stage-open-template/amp-speaker.svg", "楽器アンプA.svg", "visual", "ampSpeaker"),
   svgAsset("stage-open-template/bass-drum-a", "バスドラムA", "src/assets/stage-open-template/bass-drum.svg", "バスドラムA.svg", "visual", "bassDrum"),
-  svgAsset("stage-open-template/celesta-a", "チェレスタ等鍵盤楽器", "src/assets/stage-open-template/celesta.svg", "アップライトピアノ・チェレスタ等鍵盤楽器.svg", "visual", "celesta"),
+  svgAsset("stage-open-template/celesta-a", "チェレスタ等鍵盤楽器", "src/assets/stage-open-template/celesta.svg", "チェレスタA_アップライトピアノA派生.svg", "visual", "celesta", {
+    usage: "plan",
+    planEnabled: true,
+    derivedFromAssetId: "stage-open-template/upright-piano-a",
+    note: "アップライトピアノA原本の作図をそのまま流用し、viewBoxだけをチェレスタ本体寸法1050×650mm（1:100で10.5×6.5）へ合わせた派生SVG。",
+  }),
   svgAsset("stage-open-template/chair-a", "椅子A", "src/assets/stage-open-template/chair.svg", "椅子A上.svg", "preset", "chair"),
   svgAsset("stage-open-template/chair-back-e", "椅子E", "src/assets/stage-open-template/chair-back.svg", "椅子E上.svg", "preset", "chairBack"),
   svgAsset("stage-open-template/chimes-a", "コンサートチャイムA", "src/assets/stage-open-template/chimes.svg", "チューブラーベル・コンサートチャイムA.svg", "visual", "chimes"),
@@ -121,7 +126,7 @@ const repositorySymbolAssets: readonly RuntimeSymbolAsset[] = [
   svgAsset("stage-open-template/hakouma-a", "箱馬A", "src/assets/stage-open-template/hakouma.svg", "箱馬A上1尺x6寸.svg", "preset", "hakouma"),
   svgAsset("stage-open-template/harp-a", "ハープA", "src/assets/stage-open-template/harp.svg", "ハープA.svg", "visual", "harp"),
   svgAsset("stage-open-template/lectern-c", "演台C", "src/assets/stage-open-template/lectern.svg", "譜面台C.svg", "preset", "lectern"),
-  svgAsset("stage-open-template/marimba-a", "マリンバA", "src/assets/stage-open-template/marimba-a-derived.svg", "マリンバA_右端補完派生.svg", "visual", "marimba", { usage: "plan", planEnabled: true, note: "マリンバA原本を保持し、右端の欠けだけを補完した派生SVG。Bは未変更。" }),
+  svgAsset("stage-open-template/marimba-a", "マリンバA", "src/assets/stage-open-template/marimba-a-derived.svg", "マリンバA_外形closed path派生.svg", "visual", "marimba", { usage: "plan", planEnabled: true, note: "マリンバA原本の頂点座標を保持し、symbolビューポートによる四辺の欠けを避けるため外形を単一のclosed pathへ描き直した派生SVG。Bは未変更。" }),
   svgAsset("stage-open-template/marimba-b", "マリンバB", "src/assets/stage-open-template/marimba-b.svg", "マリンバB.svg", "visual", undefined, { usage: "plan", planEnabled: true, note: "指定配布元のマリンバB.svgを使用する。" }),
   svgAsset("stage-open-template/marimba-4oct-a", "マリンバ（4オクターブ）A", "src/assets/stage-open-template/marimba-4oct-a.svg", "マリンバA_4オクターブ派生.svg", "visual", "marimba4Oct", {
     usage: "plan",
@@ -141,13 +146,13 @@ const repositorySymbolAssets: readonly RuntimeSymbolAsset[] = [
   svgAsset("stage-open-template/upright-piano-a", "アップライトピアノA", "src/assets/stage-open-template/upright-piano.svg", "アップライトピアノA.svg", "visual", "uprightPiano"),
   svgAsset("stage-open-template/vibraphone-b", "ビブラフォンB", "src/assets/stage-open-template/vibraphone-b.svg", "ビブラフォンB.svg", "visual", undefined, { usage: "plan", planEnabled: true, note: "指定配布元のビブラフォンB.svgを使用する。" }),
   svgAsset("stage-open-template/xylophone-b", "シロフォンB", "src/assets/stage-open-template/xylophone-b.svg", "シロフォンB.svg", "visual", undefined, { usage: "plan", planEnabled: true, note: "指定配布元のシロフォンB.svgを使用する。" }),
-  svgAsset("stage-open-template/vibraphone-a", "ビブラフォンA", "src/assets/stage-open-template/vibraphone-a-derived.svg", "ビブラフォンA_右端補完派生.svg", "visual", "vibraphone", { usage: "plan", planEnabled: true, note: "ビブラフォンA原本を保持し、右端の欠けだけを補完した派生SVG。Bは未変更。" }),
-  svgAsset("stage-open-template/xylophone-a", "シロフォンA", "src/assets/stage-open-template/xylophone-a-derived.svg", "シロフォンA_右端補完派生.svg", "visual", "xylophone", { usage: "plan", planEnabled: true, note: "シロフォンA原本を保持し、右端の欠けだけを補完した派生SVG。Bは未変更。" }),
-  svgAsset("stage-open-template/glockenspiel-concert-provisional", "グロッケンシュピール（暫定）", "src/assets/stage-open-template/glockenspiel-a-derived.svg", "グロッケンシュピールA_右端補完派生.svg", "visual", "glockenspiel", {
+  svgAsset("stage-open-template/vibraphone-a", "ビブラフォンA", "src/assets/stage-open-template/vibraphone-a-derived.svg", "ビブラフォンA_外形closed path派生.svg", "visual", "vibraphone", { usage: "plan", planEnabled: true, note: "ビブラフォンA原本の頂点座標を保持し、symbolビューポートによる四辺の欠けを避けるため外形を単一のclosed pathへ描き直した派生SVG。Bは未変更。" }),
+  svgAsset("stage-open-template/xylophone-a", "シロフォンA", "src/assets/stage-open-template/xylophone-a-derived.svg", "シロフォンA_外形closed path派生.svg", "visual", "xylophone", { usage: "plan", planEnabled: true, note: "シロフォンA原本の頂点座標を保持し、symbolビューポートによる四辺の欠けを避けるため外形を単一のclosed pathへ描き直した派生SVG。Bは未変更。" }),
+  svgAsset("stage-open-template/glockenspiel-concert-provisional", "グロッケンシュピール（暫定）", "src/assets/stage-open-template/glockenspiel-a-derived.svg", "グロッケンシュピールA_外形closed path派生.svg", "visual", "glockenspiel", {
     usage: "plan",
     planEnabled: true,
 
-    note: "グロッケンシュピールA原本を保持し、右端の欠けだけを補完した派生SVG。Bは未変更。",
+    note: "グロッケンシュピールA原本の頂点座標を保持し、symbolビューポートによる右辺・下辺の欠けを避けるため外形を単一のclosed pathへ描き直した派生SVG。Bは未変更。",
   }),
   svgAsset("stage-open-template/glockenspiel-b", "グロッケンシュピールB", "src/assets/stage-open-template/glockenspiel-b.svg", "グロッケンシュピールB.svg", "visual", undefined, { usage: "plan", planEnabled: true, note: "指定配布元のグロッケンシュピールB.svgを使用する。" }),
 ];

@@ -69,6 +69,58 @@ describe("custom riser group placement", () => {
     expect(placements.every((placement) => placement.yMm === 3000)).toBe(true);
     expect(riserGroupBoundsMm(options, dimensions)).toEqual({ widthMm: 5460, depthMm: 1220 });
   });
+  it("repeats an ordered riser row into a centered block with a row gap", () => {
+    const options = {
+      center: { xMm: 0, yMm: 0 },
+      segments: [{ presetId: "riser-3x6" as const, count: 2, rotationDeg: 90 as const }],
+      heightMm: 300,
+      direction: "horizontal" as const,
+      parallelCount: 3,
+      parallelGapMm: 100,
+    };
+    const placements = createRiserGroupPlacements(options, dimensions);
+    expect(placements).toHaveLength(6);
+    expect(placements.map((placement) => placement.xMm)).toEqual([-910, 910, -910, 910, -910, 910]);
+    expect(placements.map((placement) => placement.yMm)).toEqual([-1010, -1010, 0, 0, 1010, 1010]);
+    expect(placements.every((placement) => placement.rotationDeg === 90)).toBe(true);
+    expect(riserGroupBoundsMm(options, dimensions)).toEqual({ widthMm: 3640, depthMm: 2930 });
+  });
+
+  it("repeats vertical rows across the X axis", () => {
+    const options = {
+      center: { xMm: 0, yMm: 0 },
+      segments: [{ presetId: "riser-4x6" as const, count: 1 }],
+      heightMm: 300,
+      direction: "vertical" as const,
+      parallelCount: 2,
+      parallelGapMm: 100,
+    };
+    const placements = createRiserGroupPlacements(options, dimensions);
+    expect(placements.map((placement) => placement.xMm)).toEqual([-960, 960]);
+    expect(placements.map((placement) => placement.yMm)).toEqual([0, 0]);
+    expect(placements.every((placement) => placement.rotationDeg === 90)).toBe(true);
+    expect(riserGroupBoundsMm(options, dimensions)).toEqual({ widthMm: 3740, depthMm: 1220 });
+  });
+
+  it("uses a different riser composition for each parallel row", () => {
+    const options = {
+      center: { xMm: 0, yMm: 0 },
+      segments: [{ presetId: "riser-6x6" as const, count: 1 }],
+      parallelRows: [
+        { segments: [{ presetId: "riser-6x6" as const, count: 1 }] },
+        { segments: [{ presetId: "riser-4x6" as const, count: 1 }] },
+      ],
+      heightMm: 300,
+      direction: "horizontal" as const,
+      parallelCount: 2,
+      parallelGapMm: 100,
+    };
+    const placements = createRiserGroupPlacements(options, dimensions);
+    expect(placements.map((placement) => placement.presetId)).toEqual(["riser-6x6", "riser-4x6"]);
+    expect(placements.map((placement) => placement.yMm)).toEqual([-960, 960]);
+    expect(riserGroupBoundsMm(options, dimensions)).toEqual({ widthMm: 1820, depthMm: 3740 });
+  });
+
   it("rejects a segment above the safe count limit", () => {
     const options = { center: { xMm: 0, yMm: 0 }, segments: [{ presetId: "riser-6x6" as const, count: 51 }], heightMm: 300, direction: "horizontal" as const };
     expect(createRiserGroupPlacements(options, dimensions)).toEqual([]);

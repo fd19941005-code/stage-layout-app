@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { SceneObject } from "../types/project";
-import { alignObjects, boundsIntersectMm, distributeObjects, marqueeBoundsMm, selectionBoundsMm } from "./layout";
+import type { Layer, SceneObject } from "../types/project";
+import { alignObjects, boundsIntersectMm, distributeObjects, marqueeBoundsMm, nextSelectionId, selectionBoundsMm } from "./layout";
 
 function object(id: string, xMm: number, yMm: number, overrides: Partial<SceneObject> = {}): SceneObject {
   return {
@@ -58,6 +58,27 @@ describe("整列・等間隔配置(FR-057、FR-058)", () => {
     expect(boundsIntersectMm({ minXMm: 900, minYMm: 100, maxXMm: 1400, maxYMm: 500 }, marquee)).toBe(true);
     expect(boundsIntersectMm({ minXMm: 1000, minYMm: 100, maxXMm: 1400, maxYMm: 500 }, marquee)).toBe(true);
     expect(boundsIntersectMm({ minXMm: 1001, minYMm: 100, maxXMm: 1400, maxYMm: 500 }, marquee)).toBe(false);
+  });
+
+  it("cycles visible objects on unlocked layers by zIndex and wraps", () => {
+    const layers: Layer[] = [
+      { id: "layer-objects", name: "Objects", visible: true, locked: false },
+      { id: "layer-hidden", name: "Hidden", visible: false, locked: false },
+      { id: "layer-locked", name: "Locked", visible: true, locked: true },
+    ];
+    const objects = [
+      object("z5", 0, 0, { zIndex: 5 }),
+      object("z1", 1000, 0, { zIndex: 1 }),
+      object("z1-second", 2000, 0, { zIndex: 1 }),
+      object("hidden", 3000, 0, { layerId: "layer-hidden", zIndex: 0 }),
+      object("locked-layer", 4000, 0, { layerId: "layer-locked", zIndex: 0 }),
+    ];
+    expect(nextSelectionId(objects, layers, null, "next")).toBe("z1");
+    expect(nextSelectionId(objects, layers, "z1", "next")).toBe("z1-second");
+    expect(nextSelectionId(objects, layers, "z1-second", "next")).toBe("z5");
+    expect(nextSelectionId(objects, layers, "z5", "next")).toBe("z1");
+    expect(nextSelectionId(objects, layers, null, "previous")).toBe("z5");
+    expect(nextSelectionId(objects, layers, "hidden", "next")).toBe("z1");
   });
 
 });

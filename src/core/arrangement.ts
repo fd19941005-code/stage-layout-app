@@ -209,6 +209,9 @@ export type RiserPresetId = (typeof RISER_PRESET_IDS)[number];
 export type RiserDirection = "horizontal" | "vertical";
 export type RiserRotationDeg = 0 | 90;
 export const RISER_HEIGHTS_MM = [150, 300, 450, 600] as const;
+export const RISER_DEFAULT_PARALLEL_COUNT = 1;
+export const RISER_DEFAULT_PARALLEL_GAP_MM = 0;
+export const RISER_MAX_PARALLEL_COUNT = 50;
 
 export interface RiserSegment {
   presetId: RiserPresetId;
@@ -217,11 +220,23 @@ export interface RiserSegment {
   rotationDeg?: RiserRotationDeg;
 }
 
+export interface RiserParallelRow {
+  /** Segment sequence for one parallel row, ordered along the row direction. */
+  segments: readonly RiserSegment[];
+}
+
 export interface RiserGroupLayoutOptions {
   center: PointMm;
+  /** Legacy/common row sequence. Kept for one-row and repeated-row callers. */
   segments: readonly RiserSegment[];
   heightMm: number;
   direction: RiserDirection;
+  /** Number of parallel copies when parallelRows is omitted; omitted means one row. */
+  parallelCount?: number;
+  /** Gap in mm between parallel rows; omitted means zero. */
+  parallelGapMm?: number;
+  /** Optional per-row compositions, ordered from the negative cross-axis side to the positive side. */
+  parallelRows?: readonly RiserParallelRow[];
 }
 
 export interface RiserPresetDimensions {
@@ -250,6 +265,17 @@ function rotationForSegment(segment: RiserSegment, direction: RiserDirection): R
   return segment.rotationDeg ?? defaultRiserRotationDeg(direction);
 }
 
+export function riserParallelRows(
+  options: Pick<RiserGroupLayoutOptions, "segments" | "parallelCount" | "parallelRows">,
+): RiserParallelRow[] {
+  if (options.parallelRows !== undefined) {
+    return options.parallelRows.map((row) => ({ segments: row.segments }));
+  }
+  const count = options.parallelCount ?? RISER_DEFAULT_PARALLEL_COUNT;
+  if (!Number.isInteger(count) || count < 1 || count > RISER_MAX_PARALLEL_COUNT) return [];
+  return Array.from({ length: count }, () => ({ segments: options.segments }));
+}
+
 // Use the rotated footprint for adjacency while keeping persisted width/depth unchanged.
 function orientedRiserExtents(
   dimension: RiserPresetDimensions,
@@ -262,65 +288,145 @@ function orientedRiserExtents(
     ? { alongMm: widthMm, crossMm: depthMm }
     : { alongMm: depthMm, crossMm: widthMm };
 }
-export function validateRiserGroupOptions(options: RiserGroupLayoutOptions): string[] {
-  const issues: string[] = [];
-  if (!Number.isFinite(options.center.xMm) || !Number.isFinite(options.center.yMm)) issues.push("配置位置が不正です。");
-  if (!RISER_DIRECTION_VALUES.includes(options.direction)) issues.push("配置方向が不正です。");
-  if (!RISER_HEIGHT_VALUES.includes(options.heightMm)) issues.push("段高は150/300/450/600mmから選択してください。");
-  if (options.segments.length === 0) issues.push("山台セグメントを1つ以上追加してください。");
+
+function validateRiserSegments(
+  segments: readonly RiserSegment[],
+  rowIndex: number,
+  includeRowLabel: boolean,
+  issues: string[],
+): number {
+  if (segments.length === 0) {
+    issues.push(includeRowLabel
+      ? "\u7b2c" + (rowIndex + 1) + "\u5217\u306e\u30bb\u30b0\u30e1\u30f3\u30c8\u30921\u3064\u4ee5\u4e0a\u8ffd\u52a0\u3057\u3066\u304f\u3060\u3055\u3044\u3002"
+      : "\u5c71\u53f0\u30bb\u30b0\u30e1\u30f3\u30c8\u30921\u3064\u4ee5\u4e0a\u8ffd\u52a0\u3057\u3066\u304f\u3060\u3055\u3044\u3002");
+    return 0;
+  }
   let total = 0;
-  options.segments.forEach((segment, index) => {
-    if (!RISER_PRESET_IDS.includes(segment.presetId)) issues.push("セグメント" + (index + 1) + "の種類が不正です。");
-    if (segment.rotationDeg !== undefined && segment.rotationDeg !== 0 && segment.rotationDeg !== 90) issues.push("セグメントの回転は0°または90°で指定してください。");
-    if (!Number.isInteger(segment.count) || segment.count < 1 || segment.count > 50) issues.push("セグメント" + (index + 1) + "の枚数は1〜50枚です。");
+  segments.forEach((segment, index) => {
+    const label = includeRowLabel
+      ? "\u7b2c" + (rowIndex + 1) + "\u5217\u306e\u30bb\u30b0\u30e1\u30f3\u30c8" + (index + 1)
+      : "\u30bb\u30b0\u30e1\u30f3\u30c8" + (index + 1);
+    if (!RISER_PRESET_IDS.includes(segment.presetId)) issues.push(label + "\u306e\u7a2e\u985e\u304c\u4e0d\u6b63\u3067\u3059\u3002");
+    if (segment.rotationDeg !== undefined && segment.rotationDeg !== 0 && segment.rotationDeg !== 90) issues.push(label + "\u306e\u56de\u8ee2\u306f0\u00b0\u307e\u305f\u306f90\u00b0\u3067\u6307\u5b9a\u3057\u3066\u304f\u3060\u3055\u3044\u3002");
+    if (!Number.isInteger(segment.count) || segment.count < 1 || segment.count > 50) issues.push(label + "\u306e\u679a\u6570\u306f1\u301c50\u679a\u3067\u3059\u3002");
     total += Number.isFinite(segment.count) ? Math.max(0, Math.floor(segment.count)) : 0;
   });
-  if (total > 100) issues.push("山台の合計枚数は100枚以内です。");
+  return total;
+}
+
+export function validateRiserGroupOptions(options: RiserGroupLayoutOptions): string[] {
+  const issues: string[] = [];
+  if (!Number.isFinite(options.center.xMm) || !Number.isFinite(options.center.yMm)) issues.push("\u914d\u7f6e\u4f4d\u7f6e\u304c\u4e0d\u6b63\u3067\u3059\u3002");
+  if (!RISER_DIRECTION_VALUES.includes(options.direction)) issues.push("\u914d\u7f6e\u65b9\u5411\u304c\u4e0d\u6b63\u3067\u3059\u3002");
+  if (!RISER_HEIGHT_VALUES.includes(options.heightMm)) issues.push("\u6bb5\u9ad8\u306f150/300/450/600mm\u304b\u3089\u9078\u629e\u3057\u3066\u304f\u3060\u3055\u3044\u3002");
+
+  const hasCustomRows = options.parallelRows !== undefined;
+  const requestedCount = options.parallelCount ?? RISER_DEFAULT_PARALLEL_COUNT;
+  const requestedCountValid = Number.isInteger(requestedCount) && requestedCount >= 1 && requestedCount <= RISER_MAX_PARALLEL_COUNT;
+  if (options.parallelCount !== undefined && !requestedCountValid) {
+    issues.push("\u4e26\u5217\u6570\u306f1\u301c" + RISER_MAX_PARALLEL_COUNT + "\u5217\u3067\u6307\u5b9a\u3057\u3066\u304f\u3060\u3055\u3044\u3002");
+  }
+  const rows = riserParallelRows(options);
+  if (rows.length < 1 || rows.length > RISER_MAX_PARALLEL_COUNT) {
+    issues.push("\u4e26\u5217\u6570\u306f1\u301c" + RISER_MAX_PARALLEL_COUNT + "\u5217\u3067\u6307\u5b9a\u3057\u3066\u304f\u3060\u3055\u3044\u3002");
+  }
+  if (hasCustomRows && options.parallelCount !== undefined && requestedCountValid && requestedCount !== rows.length) {
+    issues.push("\u4e26\u5217\u6570\u3068\u5217\u69cb\u6210\u306e\u6570\u3092\u4e00\u81f4\u3055\u305b\u3066\u304f\u3060\u3055\u3044\u3002");
+  }
+  const parallelGapMm = options.parallelGapMm ?? RISER_DEFAULT_PARALLEL_GAP_MM;
+  if (!Number.isFinite(parallelGapMm) || parallelGapMm < 0) issues.push("\u5217\u9593\u9694\u306f0mm\u4ee5\u4e0a\u3067\u6307\u5b9a\u3057\u3066\u304f\u3060\u3055\u3044\u3002");
+
+  let placementCount = 0;
+  if (hasCustomRows) {
+    rows.forEach((row, rowIndex) => {
+      placementCount += validateRiserSegments(row.segments, rowIndex, true, issues);
+    });
+  } else {
+    const rowTotal = validateRiserSegments(options.segments, 0, false, issues);
+    placementCount = requestedCountValid ? rowTotal * requestedCount : 0;
+  }
+  if (placementCount > 100) issues.push("\u5c71\u53f0\u306e\u5408\u8a08\u679a\u6570\u306f100\u679a\u4ee5\u5185\u3067\u3059\u3002");
   return issues;
 }
 
-/** セグメント列を左から右へ展開する。verticalでも寸法は交換せず、回転だけを与える。 */
-export function createRiserGroupPlacements(
-  options: RiserGroupLayoutOptions,
-  dimensions: RiserDimensions,
-): RiserPlacement[] {
-  if (validateRiserGroupOptions(options).length > 0) return [];
-  const expanded = options.segments.flatMap((segment) =>
+interface ExpandedRiserItem {
+  presetId: RiserPresetId;
+  dimension: RiserPresetDimensions | undefined;
+  rotationDeg: RiserRotationDeg;
+}
+
+interface RiserRowLayout {
+  items: ExpandedRiserItem[];
+  alongMm: number;
+  crossMm: number;
+}
+
+function expandRiserRows(options: RiserGroupLayoutOptions, dimensions: RiserDimensions): ExpandedRiserItem[][] | null {
+  const rows = riserParallelRows(options);
+  const expandedRows = rows.map((row) => row.segments.flatMap((segment) =>
     Array.from({ length: segment.count }, () => ({
       presetId: segment.presetId,
       dimension: dimensions[segment.presetId],
       rotationDeg: rotationForSegment(segment, options.direction),
     })),
-  );
-  if (expanded.some((item) => !item.dimension || item.dimension.widthMm <= 0 || item.dimension.depthMm <= 0)) return [];
-  const totalAlongMm = expanded.reduce(
-    (sum, item) => sum + orientedRiserExtents(item.dimension, item.rotationDeg, options.direction).alongMm,
-    0,
-  );
-  let offsetMm = -totalAlongMm / 2;
-  return expanded.map((item, index) => {
-    const extents = orientedRiserExtents(item.dimension, item.rotationDeg, options.direction);
-    const alongCenterMm = offsetMm + extents.alongMm / 2;
-    offsetMm += extents.alongMm;
-    return options.direction === "horizontal"
-      ? { presetId: item.presetId, xMm: options.center.xMm + alongCenterMm, yMm: options.center.yMm, rotationDeg: item.rotationDeg, index }
-      : { presetId: item.presetId, xMm: options.center.xMm, yMm: options.center.yMm + alongCenterMm, rotationDeg: item.rotationDeg, index };
+  ));
+  if (expandedRows.length === 0 || expandedRows.some((row) => row.length === 0 || row.some((item) => !item.dimension || item.dimension.widthMm <= 0 || item.dimension.depthMm <= 0))) return null;
+  return expandedRows;
+}
+
+function layoutRiserRows(expandedRows: ExpandedRiserItem[][], direction: RiserDirection): RiserRowLayout[] {
+  return expandedRows.map((items) => {
+    const extents = items.map((item) => orientedRiserExtents(item.dimension as RiserPresetDimensions, item.rotationDeg, direction));
+    return {
+      items,
+      alongMm: extents.reduce((sum, extent) => sum + extent.alongMm, 0),
+      crossMm: Math.max(...extents.map((extent) => extent.crossMm)),
+    };
   });
 }
-export function riserGroupBoundsMm(options: RiserGroupLayoutOptions, dimensions: RiserDimensions) {
-  const placements = createRiserGroupPlacements(options, dimensions);
-  if (placements.length === 0) return null;
-  const extents = placements.map((placement) => orientedRiserExtents(
-    dimensions[placement.presetId],
-    placement.rotationDeg,
-    options.direction,
-  ));
-  const totalAlongMm = extents.reduce((sum, extent) => sum + extent.alongMm, 0);
-  const crossMm = Math.max(...extents.map((extent) => extent.crossMm));
-  return options.direction === "horizontal"
-    ? { widthMm: totalAlongMm, depthMm: crossMm }
-    : { widthMm: crossMm, depthMm: totalAlongMm };
+
+/** Expand each configured row along its direction, then place rows across the perpendicular axis. */
+export function createRiserGroupPlacements(
+  options: RiserGroupLayoutOptions,
+  dimensions: RiserDimensions,
+): RiserPlacement[] {
+  if (validateRiserGroupOptions(options).length > 0) return [];
+  const expandedRows = expandRiserRows(options, dimensions);
+  if (!expandedRows) return [];
+  const rowLayouts = layoutRiserRows(expandedRows, options.direction);
+  const parallelGapMm = options.parallelGapMm ?? RISER_DEFAULT_PARALLEL_GAP_MM;
+  const totalCrossMm = rowLayouts.reduce((sum, row) => sum + row.crossMm, 0) + parallelGapMm * Math.max(0, rowLayouts.length - 1);
+  let crossOffsetMm = -totalCrossMm / 2;
+  const placements: RiserPlacement[] = [];
+  rowLayouts.forEach((row) => {
+    const rowCenterOffsetMm = crossOffsetMm + row.crossMm / 2;
+    let alongOffsetMm = -row.alongMm / 2;
+    row.items.forEach((item) => {
+      const extents = orientedRiserExtents(item.dimension as RiserPresetDimensions, item.rotationDeg, options.direction);
+      const alongCenterMm = alongOffsetMm + extents.alongMm / 2;
+      alongOffsetMm += extents.alongMm;
+      placements.push(options.direction === "horizontal"
+        ? { presetId: item.presetId, xMm: options.center.xMm + alongCenterMm, yMm: options.center.yMm + rowCenterOffsetMm, rotationDeg: item.rotationDeg, index: placements.length }
+        : { presetId: item.presetId, xMm: options.center.xMm + rowCenterOffsetMm, yMm: options.center.yMm + alongCenterMm, rotationDeg: item.rotationDeg, index: placements.length });
+    });
+    crossOffsetMm += row.crossMm + parallelGapMm;
+  });
+  return placements;
 }
+
+export function riserGroupBoundsMm(options: RiserGroupLayoutOptions, dimensions: RiserDimensions) {
+  if (validateRiserGroupOptions(options).length > 0) return null;
+  const expandedRows = expandRiserRows(options, dimensions);
+  if (!expandedRows) return null;
+  const rowLayouts = layoutRiserRows(expandedRows, options.direction);
+  const parallelGapMm = options.parallelGapMm ?? RISER_DEFAULT_PARALLEL_GAP_MM;
+  const alongSpanMm = Math.max(...rowLayouts.map((row) => row.alongMm));
+  const crossSpanMm = rowLayouts.reduce((sum, row) => sum + row.crossMm, 0) + parallelGapMm * Math.max(0, rowLayouts.length - 1);
+  return options.direction === "horizontal"
+    ? { widthMm: alongSpanMm, depthMm: crossSpanMm }
+    : { widthMm: crossSpanMm, depthMm: alongSpanMm };
+}
+
 export interface RiserStageBoundsMm {
   minXMm: number;
   minYMm: number;

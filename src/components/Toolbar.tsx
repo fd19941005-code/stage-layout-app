@@ -18,6 +18,8 @@ interface Props {
   onNotice: (message: string) => void;
   onEditCommand: (command: EditCommand) => void;
   clipboardAvailable: boolean;
+  onFocusCanvas?: () => void;
+  getCanvasViewport: () => { width: number; height: number };
   onExport: () => void;
   onToggle3d: () => void;
   is3dOpen: boolean;
@@ -30,12 +32,6 @@ interface Props {
   inspectorOpen?: boolean;
 }
 
-function canvasViewport(): { width: number; height: number } {
-  const canvas = document.querySelector<SVGSVGElement>(".canvas-stage");
-  const rect = canvas?.getBoundingClientRect();
-  if (rect && rect.width > 0 && rect.height > 0) return { width: rect.width, height: rect.height };
-  return { width: Math.max(320, window.innerWidth - 520), height: Math.max(240, window.innerHeight - 180) };
-}
 
 export function Toolbar({
   state,
@@ -43,6 +39,8 @@ export function Toolbar({
   onNotice,
   onEditCommand,
   clipboardAvailable,
+  onFocusCanvas,
+  getCanvasViewport,
   onExport,
   onToggle3d,
   is3dOpen,
@@ -158,18 +156,21 @@ export function Toolbar({
     const nextMode = mode === next ? "select" : next;
     if (nextMode !== "traceWall") onClearWallDraft();
     dispatch({ type: "SET_MODE", mode: nextMode });
+    onFocusCanvas?.();
   }
 
   function zoomBy(factor: number) {
-    const viewport = canvasViewport();
+    const viewport = getCanvasViewport();
     const nextZoom = Math.min(2, Math.max(0.005, project.view.zoom * factor));
     dispatch({ type: "SET_VIEW", view: zoomAt(project.view, { x: viewport.width / 2, y: viewport.height / 2 }, nextZoom) });
+    onFocusCanvas?.();
   }
 
   function fitAll() {
-    const viewport = canvasViewport();
+    const viewport = getCanvasViewport();
     dispatch({ type: "SET_VIEW", view: fitViewToProject(project, viewport.width, viewport.height) });
     onNotice("図面全体を表示しました");
+    onFocusCanvas?.();
   }
 
   const pendingPreset = state.pendingPresetId ? findPreset(state.pendingPresetId) : null;
@@ -222,7 +223,7 @@ export function Toolbar({
 
           <EditMenu state={state} clipboardAvailable={clipboardAvailable} onCommand={onEditCommand} />
 
-          <div className="toolbar-group history-actions" aria-label="編集履歴">
+          <div className="toolbar-group history-actions" aria-label="編集履歴" onClickCapture={() => onFocusCanvas?.()}>
             <button type="button" onClick={() => dispatch({ type: "UNDO" })} disabled={state.past.length === 0} title="Ctrl/Cmd+Z" aria-label="元に戻す（Ctrl/Cmd+Z）">↶</button>
             <button type="button" onClick={() => dispatch({ type: "REDO" })} disabled={state.future.length === 0} title="Ctrl/Cmd+Shift+Z" aria-label="やり直す（Ctrl/Cmd+Shift+Z）">↷</button>
           </div>

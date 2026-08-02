@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { findPreset, OBJECT_PRESETS, PERCUSSION_LIBRARY_GROUPS } from "./presets";
 import {
+  favoritePresetIdForDigit,
   filterLibraryPresets,
   matchesPreset,
   normalizeLibraryQuery,
@@ -66,5 +67,17 @@ describe("library search and ordering", () => {
     preferences = recordRecentPresets(preferences, ["preset-8"]);
     expect(preferences.recentPresetIds[0]).toBe("preset-8");
     expect(preferences.recentPresetIds).toHaveLength(10);
+  });
+
+  it("returns the favorite preset assigned to a number key", () => {
+    const preferences: LibraryPreferences = {
+      favoritePresetIds: ["chair", "music-stand", "podium"],
+      recentPresetIds: [],
+    };
+    expect(favoritePresetIdForDigit(preferences, 1)).toBe("chair");
+    expect(favoritePresetIdForDigit(preferences, 3)).toBe("podium");
+    expect(favoritePresetIdForDigit(preferences, 4)).toBeNull();
+    expect(favoritePresetIdForDigit(preferences, 0)).toBeNull();
+    expect(favoritePresetIdForDigit(preferences, 10)).toBeNull();
   });
 });

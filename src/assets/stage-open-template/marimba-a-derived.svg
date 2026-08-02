@@ -7,75 +7,23 @@
    id="svg3"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
-  <!-- Master Definitions -->
-  <style
-     id="style1">
-text { white-space: pre; }
-.sfont-8 { font-style:normal; font-weight:400; font-size:3.175px; font-family:游ゴシック; }
-</style>
-  <defs
-     id="defs1" />
-  <!-- 多角線部品 ID=6384 -->
-  <!-- End of 多角線部品 ID=6384 -->
+  <!--
+    マリンバA原本(5オクターブ)の外形。頂点座標は原本のまま。
+    原本の translate(-0.302083,-0.29664128) を各頂点へ畳み込み、viewBox内へ収めてある。
+    全長22.000017単位、低音側6.799997単位、高音側3.33061単位。
+
+    原本のような symbol/use 経由では描かない。symbolは参照時に独自のビューポートを作り
+    既定でその外側を切り取るため、右辺が丸ごと、上辺・下辺は低音側の先端が欠けていた。
+    補完線(right-edge-repair)は右辺だけを埋めるもので、上辺・下辺の欠けは残っていた。
+    ここでは外形を単一のclosed pathで直接描き、四辺すべてを途切れなく出す。
+    4オクターブ版(marimba-4oct-a.svg)も同じ構造で作図している。
+  -->
   <g
-     id="g3">
-    <g
-       id="Group-6384"
-       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1"
-       transform="translate(-0.302083,-0.29664128)">
-      <defs
-         id="defs2">
-        <symbol
-           id="ObjectBody-0">
-          <path
-             d="m 22.3646,7.16458 c 0,0 0,-6.799997 0,-6.799997 0,0 -22.000017,1.838777 -22.000017,1.838777 0,0 0,3.33061 0,3.33061 0,0 22.000017,1.63061 22.000017,1.63061"
-             id="path1" />
-        </symbol>
-      </defs>
-      <use
-         href="#ObjectBody-0"
-         fill="#ffffffff"
-         stroke="transparent"
-         shape-rendering="crispEdges"
-         id="use2"
-         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
-      <text
-         class="sfont-8"
-         fill="#000000ff"
-         id="text2"
-         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1"><tspan
-           x="5.8030901"
-           y="4.8474898"
-           id="tspan2"
-           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1">Marimba</tspan></text>
-      <use
-         href="#ObjectBody-0"
-         fill="none"
-         stroke="#000000ff"
-         stroke-width="0.125"
-         stroke-linecap="round"
-         stroke-linejoin="round"
-         shape-rendering="crispEdges"
-         id="use3"
-         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-dasharray:none;stroke-opacity:1" />
-      <path
-         d="M 22.33335 0.364583 V 7.16458"
-         fill="none"
-         stroke="#000000"
-         stroke-width="0.125"
-         stroke-linecap="round"
-         stroke-linejoin="round"
-         id="right-edge-repair" />
-    </g>
-    <text
-       xml:space="preserve"
-       style="font-size:2.82223px;line-height:1.25;font-family:'Yu Gothic';-inkscape-font-specification:'Yu Gothic, Normal';text-align:center;text-anchor:middle;stroke-width:0.264583"
-       x="12.01775"
-       y="4.6099033"
-       id="text3"><tspan
-         id="tspan3"
-         style="stroke-width:0.264583"
-         x="12.01775"
-         y="4.6099033">Marinba</tspan></text>
+     id="Group-marimba-a"
+     style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.125;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1">
+    <path
+       id="marimba-a-body"
+       shape-rendering="crispEdges"
+       d="M 22.062517,6.86793872 L 22.062517,0.06794172 L 0.0625,1.90671872 L 0.0625,5.23732872 Z" />
   </g>
 </svg>

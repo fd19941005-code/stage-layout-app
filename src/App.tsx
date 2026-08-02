@@ -1,12 +1,13 @@
 // アプリ全体の画面構成(10.1)とデータフロー。
 // 自動保存(FR-002): IndexedDBへ最終操作から1.5秒後にデバウンスして実行する。
 
-import { Component, lazy, Suspense, useEffect, useMemo, useReducer, useRef, useState, type ErrorInfo, type ReactNode } from "react";
+import { Component, lazy, Suspense, useCallback, useEffect, useMemo, useReducer, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import type { PointMm, Project } from "./types/project";
-import { appReducer, createInitialState } from "./state/appState";
+import { appReducer, canPlaceObjects, createInitialState, type AppState, type ToolMode } from "./state/appState";
 import { generateId } from "./core/project";
-import { LIBRARY_PREFERENCES_KEY, type LibraryPreferences } from "./core/library";
+import { favoritePresetIdForDigit, LIBRARY_PREFERENCES_KEY, type LibraryPreferences } from "./core/library";
 import {
+  getFavoritePresetDigit,
   blocksCanvasShortcut,
   getKeyboardShortcut,
   getKeyboardTargetInfo,
@@ -24,7 +25,7 @@ import {
 import { appServices } from "./services";
 import { Toolbar } from "./components/Toolbar";
 import { LibraryPanel } from "./components/LibraryPanel";
-import { CanvasStage } from "./components/CanvasStage";
+import { CanvasStage, type CanvasStageController } from "./components/CanvasStage";
 import { ObjectContextMenu } from "./components/ObjectContextMenu";
 import { PropertyPanel } from "./components/PropertyPanel";
 import { StatusBar, type AutosaveStatus } from "./components/StatusBar";
@@ -39,12 +40,13 @@ import { StringSectionTemplateDialog } from "./components/StringSectionTemplateD
 import { UserTemplateNameDialog } from "./components/UserTemplateNameDialog";
 import { RiserGroupDialog, type RiserGroupSession } from "./components/RiserGroupDialog";
 import { LineArrangementDialog, type LineArrangementSession } from "./components/LineArrangementDialog";
-import { chairArcLaunchIssue, chairLineLaunchIssue, createChairArcSession, createRiserGroupObjects, fitChairLineStartMm, fitRiserGroupCenterMm, riserGroupBoundsMm, RISER_PRESET_IDS, type ChairArcSession, type RiserDimensions, type RiserPresetId } from "./core/arrangement";
+import { chairArcLaunchIssue, chairLineLaunchIssue, createChairArcSession, createRiserGroupObjects, fitChairLineStartMm, fitRiserGroupCenterMm, riserGroupBoundsMm, riserParallelRows, RISER_PRESET_IDS, type ChairArcSession, type RiserDimensions, type RiserPresetId } from "./core/arrangement";
 import { createChairLineObjects } from "./core/arrangement";
 import { createPresetObject } from "./state/appState";
-import { selectionUnits } from "./core/layout";
+import { nextSelectionId, selectionUnits } from "./core/layout";
+import { findPreset } from "./core/presets";
 import { countRequiredItems, type RequirementScope } from "./core/requirements";
-import { getBackgroundDisplaySizePx } from "./core/transform";
+import { fitViewToObjects, fitViewToProject, getBackgroundDisplaySizePx, zoomAt } from "./core/transform";
 import { deserializeUserTemplates, serializeUserTemplates } from "./core/userTemplate";
 import {
   STRING_LAYOUT_12_CONTRABASS_SEAT_PRESET_ID,
@@ -108,8 +110,38 @@ function Viewer3DLoading({ onClose }: { onClose: () => void }) {
   );
 }
 
+const EDIT_COMMAND_SHORTCUTS: ReadonlySet<KeyboardShortcut> = new Set(["undo", "redo", "copy", "cut", "paste", "pasteInPlace", "duplicate", "selectAll", "group", "ungroup", "delete"]);
+
 function isEditCommandShortcut(shortcut: KeyboardShortcut): shortcut is EditCommand {
-  return shortcut !== "escape" && !shortcut.startsWith("arrow");
+  return EDIT_COMMAND_SHORTCUTS.has(shortcut);
+}
+
+const TOOL_MODE_BY_SHORTCUT: Partial<Record<KeyboardShortcut, ToolMode>> = {
+  modeSelect: "select",
+  modeSelectRect: "selectRect",
+  modeMeasure: "measure",
+  modeTraceWall: "traceWall",
+  modeCalibrate: "calibrate",
+  modeAimPoint: "aimPoint",
+  modeAnnotationText: "annotationText",
+  modeAnnotationLine: "annotationLine",
+  modeAnnotationArrow: "annotationArrow",
+  modeAnnotationRect: "annotationRect",
+
+  modeAnnotationCircle: "annotationCircle",
+  modeAnnotationDimension: "annotationDimension",
+};
+
+function toolModeForShortcut(shortcut: KeyboardShortcut): ToolMode | null {
+  return TOOL_MODE_BY_SHORTCUT[shortcut] ?? null;
+}
+
+function hasEditableSelection(state: AppState): boolean {
+  return state.selectedIds.some((id) => {
+    const object = state.project.objects.find((candidate) => candidate.id === id);
+    const layer = object ? state.project.layers.find((candidate) => candidate.id === object.layerId) : undefined;
+    return Boolean(object && !object.locked && !object.backgroundFixed && !layer?.locked);
+  });
 }
 
 export function App() {
@@ -144,12 +176,39 @@ export function App() {
   const nudgeActiveRef = useRef(false);
   const clipboardRef = useRef<ObjectClipboard | null>(null);
   const dialogReturnFocusRef = useRef<HTMLElement | null>(null);
+  const canvasStageRef = useRef<CanvasStageController | null>(null);
+  const registerCanvasController = useCallback((controller: CanvasStageController | null) => {
+    canvasStageRef.current = controller;
+  }, []);
+  const focusCanvas = useCallback(() => {
+    canvasStageRef.current?.focus();
+  }, []);
+  const getCanvasViewport = useCallback(() => {
+    return canvasStageRef.current?.getViewport() ?? {
+      width: Math.max(320, window.innerWidth - 520),
+      height: Math.max(240, window.innerHeight - 180),
+    };
+  }, []);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
   function showNotice(message: string) {
     setNotice(message);
     window.clearTimeout(noticeTimer.current);
     noticeTimer.current = window.setTimeout(() => setNotice(null), 5000);
+  }
+  function armPresetFromShortcut(presetId: string | null): boolean {
+    if (!presetId || !findPreset(presetId)) return false;
+    if (!canPlaceObjects(state.project)) {
+      showNotice("縮尺未設定のため配置できません。先に「縮尺合わせ」で2点と実距離を指定してください。");
+      return false;
+    }
+    const layer = state.project.layers.find((candidate) => candidate.id === state.activeLayerId);
+    if (!layer || layer.locked || !layer.visible) {
+      showNotice("配置先レイヤーが非表示またはロックされています。");
+      return false;
+    }
+    dispatch({ type: "SET_PENDING_PRESET", presetId });
+    return true;
   }
   function runAutosave(project: Project) {
     const requestId = ++autosaveRequestRef.current;
@@ -315,6 +374,8 @@ export function App() {
       segments: [{ presetId: "riser-6x6" as const, count: 1 }],
       heightMm: 300 as const,
       direction: "horizontal" as const,
+      parallelCount: 1,
+      parallelGapMm: 0,
     };
     const dimensions = Object.fromEntries(RISER_PRESET_IDS.map((presetId) => {
       const preset = createPresetObject(presetId, state.activeLayerId, 0);
@@ -541,6 +602,7 @@ export function App() {
       const shortcut = getKeyboardShortcut(event);
       if (!shortcut) return;
       if (event.defaultPrevented) return;
+      const targetInfo = getKeyboardTargetInfo(event.target);
 
       const calibrationDialogOpen = state.mode === "calibrate" && state.calibPointsPx.length === 2;
       const verificationDialogOpen = state.mode === "verifyCalibration" && state.calibPointsPx.length === 2;
@@ -574,7 +636,7 @@ export function App() {
           setRiserGroup(null);
           return;
         }
-        if (isEditCommandShortcut(shortcut)) return;
+        if (!isEditCommandShortcut(shortcut)) return;
       }
 
       if (lineArrangement !== null) {
@@ -584,7 +646,7 @@ export function App() {
           setLineArrangement(null);
           return;
         }
-        if (isEditCommandShortcut(shortcut)) return;
+        if (!isEditCommandShortcut(shortcut)) return;
       }
       if (stringTemplate !== null) {
         // プレビュー中はEscで破棄する。誤って既存オブジェクトを編集しないよう編集操作は無効にする。
@@ -593,7 +655,7 @@ export function App() {
           setStringTemplate(null);
           return;
         }
-        if (isEditCommandShortcut(shortcut)) return;
+        if (!isEditCommandShortcut(shortcut)) return;
       }
 
       if (chairArc !== null) {
@@ -603,12 +665,12 @@ export function App() {
           setChairArc(null);
           return;
         }
-        if (isEditCommandShortcut(shortcut)) return;
+        if (!isEditCommandShortcut(shortcut)) return;
       }
 
       if (contextMenu !== null && !isEditCommandShortcut(shortcut)) return;
 
-      if (blocksCanvasShortcut(getKeyboardTargetInfo(event.target), shortcut)) return;
+      if (blocksCanvasShortcut(targetInfo, shortcut)) return;
       if (event.repeat && suppressesKeyRepeat(shortcut)) return;
 
       if (shortcut === "escape") {
@@ -626,6 +688,73 @@ export function App() {
 
       if (isEditCommandShortcut(shortcut)) {
         if (executeEditCommand(shortcut)) event.preventDefault();
+        return;
+      }
+
+      const toolMode = toolModeForShortcut(shortcut);
+      if (toolMode) {
+        event.preventDefault();
+        const nextMode = state.mode === toolMode ? "select" : toolMode;
+        if (nextMode !== "traceWall") setWallDraft([]);
+        dispatch({ type: "SET_MODE", mode: nextMode });
+        return;
+      }
+
+      if (shortcut === "rotateCw" || shortcut === "rotateCcw" || shortcut === "rotateCwFine" || shortcut === "rotateCcwFine") {
+        if (!hasEditableSelection(state)) return;
+        event.preventDefault();
+        const deltaDeg = shortcut === "rotateCw" ? 15 : shortcut === "rotateCcw" ? -15 : shortcut === "rotateCwFine" ? 5 : -5;
+        dispatch({ type: "ROTATE_SELECTED_DELTA", deltaDeg });
+        return;
+      }
+
+      if (shortcut === "zoomFit") {
+        event.preventDefault();
+        const viewport = getCanvasViewport();
+        dispatch({ type: "SET_VIEW", view: fitViewToProject(state.project, viewport.width, viewport.height) });
+        return;
+      }
+      if (shortcut === "zoomSelection") {
+        const viewport = getCanvasViewport();
+        const view = fitViewToObjects(state.project.objects, state.selectedIds, viewport.width, viewport.height);
+        if (!view) return;
+        event.preventDefault();
+        dispatch({ type: "SET_VIEW", view });
+        return;
+      }
+      if (shortcut === "zoomIn" || shortcut === "zoomOut") {
+        event.preventDefault();
+        const viewport = getCanvasViewport();
+        const factor = shortcut === "zoomIn" ? 1.25 : 1 / 1.25;
+        const nextZoom = Math.min(2, Math.max(0.005, state.project.view.zoom * factor));
+        dispatch({ type: "SET_VIEW", view: zoomAt(state.project.view, { x: viewport.width / 2, y: viewport.height / 2 }, nextZoom) });
+        return;
+      }
+
+      if (shortcut === "repeatLastPreset") {
+        event.preventDefault();
+        armPresetFromShortcut(state.libraryPreferences.recentPresetIds[0] ?? null);
+        return;
+      }
+      if (shortcut === "favoritePreset") {
+        const digit = getFavoritePresetDigit(event);
+        if (digit === null) return;
+        event.preventDefault();
+        armPresetFromShortcut(favoritePresetIdForDigit(state.libraryPreferences, digit));
+        return;
+      }
+
+      if (shortcut === "nextSelection" || shortcut === "previousSelection") {
+        if (!targetInfo.isCanvas) return;
+        const nextId = nextSelectionId(
+          state.project.objects,
+          state.project.layers,
+          state.selectedId,
+          shortcut === "nextSelection" ? "next" : "previous",
+        );
+        if (!nextId) return;
+        event.preventDefault();
+        dispatch({ type: "SELECT", id: nextId });
         return;
       }
 
@@ -694,7 +823,7 @@ export function App() {
   const riserPreview = useMemo(() => {
     if (!riserGroup) return null;
     const templates = new Map<RiserPresetId, NonNullable<ReturnType<typeof createPresetObject>>>();
-    [...new Set(riserGroup.options.segments.map((segment) => segment.presetId))].forEach((presetId) => {
+    [...new Set(riserParallelRows(riserGroup.options).flatMap((row) => row.segments).map((segment) => segment.presetId))].forEach((presetId) => {
       const template = createPresetObject(presetId, riserGroup.layerId, 0);
       if (template) templates.set(presetId, template);
     });
@@ -738,7 +867,7 @@ export function App() {
 
   return (
     <div className="app-layout">
-      {!viewer3dOpen && <Toolbar state={state} dispatch={dispatch} onNotice={showNotice} onEditCommand={executeEditCommand} clipboardAvailable={clipboardRef.current !== null} onExport={() => setExportOpen(true)} onToggle3d={toggleViewer3D} is3dOpen={viewer3dOpen} wallDraft={wallDraft} onFinishWall={finishWallTrace} onClearWallDraft={() => setWallDraft([])} onToggleLibrary={() => setLibraryOpen((open) => !open)} onToggleInspector={() => setInspectorOpen((open) => !open)} libraryOpen={libraryOpen} inspectorOpen={inspectorOpen} />}
+      {!viewer3dOpen && <Toolbar state={state} dispatch={dispatch} onNotice={showNotice} onEditCommand={executeEditCommand} clipboardAvailable={clipboardRef.current !== null} onFocusCanvas={focusCanvas} getCanvasViewport={getCanvasViewport} onExport={() => setExportOpen(true)} onToggle3d={toggleViewer3D} is3dOpen={viewer3dOpen} wallDraft={wallDraft} onFinishWall={finishWallTrace} onClearWallDraft={() => setWallDraft([])} onToggleLibrary={() => setLibraryOpen((open) => !open)} onToggleInspector={() => setInspectorOpen((open) => !open)} libraryOpen={libraryOpen} inspectorOpen={inspectorOpen} />}
       {!storageReady && <div className="banner info">ローカル保存データを確認中…</div>}
       {state.mode === "traceWall" && <div className="banner info">壁トレースモード: 背景上を順にクリックして壁の頂点を追加します。2点以上で「壁を確定」、高さはmmで指定してください({wallDraft.length}点)</div>}
       {state.project.calibration.mmPerPixel === null && (
@@ -768,8 +897,8 @@ export function App() {
         <>
           <main className={`main-area${libraryOpen ? " library-is-open" : ""}${inspectorOpen ? " inspector-is-open" : ""}`}>
             <LibraryPanel state={state} dispatch={dispatch} onClose={() => setLibraryOpen(false)} onNotice={showNotice} onExportUserTemplates={exportUserTemplates} onImportUserTemplates={importUserTemplates} />
-            <CanvasStage state={state} dispatch={dispatch} onCursorMm={setCursorMm} onNotice={showNotice} wallDraft={wallDraft} onWallDraftChange={setWallDraft} onContextMenu={(position) => setContextMenu(position)} chairArc={chairArc} onChairArcChange={setChairArc} chairLine={chairLine} onChairLineChange={setChairLine} stringTemplate={stringTemplate} onStringTemplateChange={setStringTemplate} riserGroup={riserGroup} onRiserGroupChange={setRiserGroup} lineArrangement={lineArrangement} onLineArrangementChange={handleLineArrangementChange} previewObjects={stringTemplatePreview?.objects} riserPreviewObjects={riserPreview ?? undefined} chairLinePreviewObjects={chairLinePreview ?? undefined} />
-            <PropertyPanel state={state} dispatch={dispatch} onOpenSaveUserTemplate={() => setTemplateSaveOpen(true)} onOpenGrid={setGridSourceId} onOpenChairArcRows={openChairArcRows} onOpenChairLine={openChairLine} onOpenStringSectionTemplate={openStringSectionTemplate} onOpenRiserGroup={openRiserGroup} onOpenLineArrangement={openLineArrangement} requirementCounts={requirementCounts} requirementScope={requirementScope} onRequirementScopeChange={setRequirementScope} onClose={() => setInspectorOpen(false)} />
+            <CanvasStage state={state} dispatch={dispatch} onCursorMm={setCursorMm} onRegisterCanvasController={registerCanvasController} onNotice={showNotice} wallDraft={wallDraft} onWallDraftChange={setWallDraft} onContextMenu={(position) => setContextMenu(position)} chairArc={chairArc} onChairArcChange={setChairArc} chairLine={chairLine} onChairLineChange={setChairLine} stringTemplate={stringTemplate} onStringTemplateChange={setStringTemplate} riserGroup={riserGroup} onRiserGroupChange={setRiserGroup} lineArrangement={lineArrangement} onLineArrangementChange={handleLineArrangementChange} previewObjects={stringTemplatePreview?.objects} riserPreviewObjects={riserPreview ?? undefined} chairLinePreviewObjects={chairLinePreview ?? undefined} />
+            <PropertyPanel state={state} dispatch={dispatch} onOpenSaveUserTemplate={() => setTemplateSaveOpen(true)} onOpenGrid={setGridSourceId} onOpenChairArcRows={openChairArcRows} onOpenChairLine={openChairLine} onOpenStringSectionTemplate={openStringSectionTemplate} onOpenRiserGroup={openRiserGroup} onOpenLineArrangement={openLineArrangement} requirementCounts={requirementCounts} requirementScope={requirementScope} onRequirementScopeChange={setRequirementScope} onFocusCanvas={focusCanvas} onClose={() => setInspectorOpen(false)} />
           </main>
           <StatusBar state={state} cursorMm={cursorMm} autosaveStatus={autosaveStatus} onRetryAutosave={() => runAutosave(state.project)} />
         </>

@@ -25,6 +25,7 @@ import {
   createGridCopies,
   createPultArcObjects,
   createRiserGroupObjects,
+  riserParallelRows,
   validateRiserGroupOptions,
   validateChairLineOptions,
   validateChairArcRowsOptions,
@@ -1122,7 +1123,7 @@ export function appReducer(state: AppState, action: Action): AppState {
       const layerId = action.layerId || state.activeLayerId;
       if (layerIsLocked(state.project, layerId) || !layerIsVisible(state.project, layerId)) return state;
       if (validateRiserGroupOptions(action.options).length > 0) return state;
-      const templateIds = [...new Set(action.options.segments.map((segment) => segment.presetId))] as RiserPresetId[];
+      const templateIds = [...new Set(riserParallelRows(action.options).flatMap((row) => row.segments).map((segment) => segment.presetId))] as RiserPresetId[];
       const templates = new Map<RiserPresetId, SceneObject>();
       templateIds.forEach((presetId) => {
         const template = createPresetObject(presetId, layerId, 0);

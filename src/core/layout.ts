@@ -1,7 +1,7 @@
 // 複数オブジェクトの整列・等間隔配置(FR-057、FR-058)。
 // mm座標だけを操作する純粋関数として分離し、Undo/Redoからも一操作として扱う。
 
-import type { PointMm, SceneObject } from "../types/project";
+import type { Layer, PointMm, SceneObject } from "../types/project";
 import { sceneObjectBoundsMm } from "./transform";
 
 export type Alignment = "left" | "centerX" | "right" | "top" | "centerY" | "bottom";
@@ -59,6 +59,31 @@ export function selectionBoundsMm(objects: readonly SceneObject[], ids: readonly
   };
 }
 
+export type SelectionCycleDirection = "next" | "previous";
+
+/** Cycle visible objects on unlocked layers in zIndex order. */
+export function nextSelectionId(
+  objects: readonly SceneObject[],
+  layers: readonly Layer[],
+  currentId: string | null,
+  direction: SelectionCycleDirection,
+): string | null {
+  const layerById = new Map(layers.map((layer) => [layer.id, layer]));
+  const candidates = objects
+    .map((object, index) => ({ object, index }))
+    .filter(({ object }) => {
+      const layer = layerById.get(object.layerId);
+      return object.visible && (layer?.visible ?? true) && !(layer?.locked ?? false);
+    })
+    .sort((a, b) => a.object.zIndex - b.object.zIndex || a.index - b.index)
+    .map(({ object }) => object);
+  if (candidates.length === 0) return null;
+
+  const currentIndex = candidates.findIndex((object) => object.id === currentId);
+  if (currentIndex < 0) return direction === "next" ? candidates[0].id : candidates[candidates.length - 1].id;
+  const offset = direction === "next" ? 1 : -1;
+  return candidates[(currentIndex + offset + candidates.length) % candidates.length].id;
+}
 /** 選択物の外接矩形の辺または中心を揃える */
 export function alignObjects(
   objects: readonly SceneObject[],

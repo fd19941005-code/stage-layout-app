@@ -25,16 +25,27 @@ describe("StageOpenTemplate SVG assets", () => {
     expect(STAGE_OPEN_TEMPLATE_ASSETS.riser6x6.viewBox).toBe("0 0 18.33 18.33");
     expect(STAGE_OPEN_TEMPLATE_ASSETS.glockenspiel.id).toBe("stage-open-template/glockenspiel-concert-provisional");
     expect(STAGE_OPEN_TEMPLATE_ASSETS.glockenspiel.rawSvg).not.toBe(STAGE_OPEN_TEMPLATE_ASSETS.xylophone.rawSvg);
-    for (const asset of [STAGE_OPEN_TEMPLATE_ASSETS.marimba, STAGE_OPEN_TEMPLATE_ASSETS.vibraphone, STAGE_OPEN_TEMPLATE_ASSETS.xylophone, STAGE_OPEN_TEMPLATE_ASSETS.glockenspiel]) {
-      expect(asset.rawSvg).toContain("right-edge-repair");
+    // 鍵盤打楽器Aは外形をclosed pathで直接描く。symbolを経由しないので切り取りが起きず、
+    // 欠けを埋めるための補完線も持たない。
+    for (const asset of [
+      STAGE_OPEN_TEMPLATE_ASSETS.marimba,
+      STAGE_OPEN_TEMPLATE_ASSETS.marimba4Oct,
+      STAGE_OPEN_TEMPLATE_ASSETS.vibraphone,
+      STAGE_OPEN_TEMPLATE_ASSETS.xylophone,
+      STAGE_OPEN_TEMPLATE_ASSETS.glockenspiel,
+    ]) {
+      expect(asset.rawSvg).not.toContain("<symbol");
+      expect(asset.rawSvg).toMatch(/<path[^>]*\sd="M[^"]*Z"/);
     }
-    expect(STAGE_OPEN_TEMPLATE_ASSETS.glockenspiel.rawSvg).toContain("bottom-edge-repair");
     for (const asset of Object.values(STAGE_OPEN_TEMPLATE_ASSETS)) {
       expect(asset.rawSvg).not.toContain("http://");
       expect(asset.rawSvg).not.toContain("https://");
       expect(asset.rawSvg).not.toContain("<text");
+      // 欠けを線1本で埋める回避策は全廃した。再発したらここで気付ける。
+      expect(asset.rawSvg).not.toContain("right-edge-repair");
+      expect(asset.rawSvg).not.toContain("bottom-edge-repair");
     }
-  });
+  });
   it("pads only the display viewBox for clipped small percussion lines", () => {
     const derived = [
       [STAGE_OPEN_TEMPLATE_ASSETS.snareA, SMALL_PERCUSSION_SVG_SOURCES.snareA, "-0.3 -0.3 4.6639968 4.8134269"],

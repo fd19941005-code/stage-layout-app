@@ -84,6 +84,11 @@ export function normalizeLibraryPreferences(value: Partial<LibraryPreferences> |
     recentPresetIds: uniqueIds(value?.recentPresetIds ?? []).slice(0, MAX_RECENT_PRESETS),
   };
 }
+/** Return the normalized favorite preset id assigned to digit 1-9. */
+export function favoritePresetIdForDigit(preferences: LibraryPreferences, digit: number): string | null {
+  if (!Number.isInteger(digit) || digit < 1 || digit > 9) return null;
+  return normalizeLibraryPreferences(preferences).favoritePresetIds[digit - 1] ?? null;
+}
 
 export function toggleFavoritePreset(preferences: LibraryPreferences, presetId: string): LibraryPreferences {
   const current = normalizeLibraryPreferences(preferences);
