@@ -2,6 +2,7 @@
 // ID生成だけを呼び出し側から注入できる純粋な座標生成関数にする。
 
 import type { PointMm, Project, SceneObject } from "../types/project";
+import { isProjectReadyForPlacement } from "./stageTemplate";
 import { normalizeDeg, rotatedBoundsMm } from "./transform";
 
 export interface GridPlacementOptions {
@@ -181,10 +182,10 @@ export function createChairLineObjects(
   return objects;
 }
 export function chairLineLaunchIssue(
-  project: Pick<Project, "calibration" | "layers">,
+  project: Pick<Project, "calibration" | "layers" | "stageTemplate">,
   activeLayerId: string,
 ): string | null {
-  if (project.calibration.mmPerPixel === null) return "\u6821\u6b63\u5f8c\u306b\u5229\u7528\u3067\u304d\u307e\u3059\u3002";
+  if (!isProjectReadyForPlacement(project)) return "\u6821\u6b63\u5f8c\u306b\u5229\u7528\u3067\u304d\u307e\u3059\u3002";
   const layer = project.layers.find((candidate) => candidate.id === activeLayerId);
   if (!layer) return "\u914d\u7f6e\u5148\u30ec\u30a4\u30e4\u30fc\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\u3002";
   if (layer.locked) return "\u914d\u7f6e\u5148\u30ec\u30a4\u30e4\u30fc\u304c\u30ed\u30c3\u30af\u3055\u308c\u3066\u3044\u307e\u3059\u3002";
@@ -1055,11 +1056,11 @@ export function detectChairArcOffStagePlacements(
  * ボタンの活性判定と通知文を1か所へ集約し、UIへ条件を散らさない。
  */
 export function chairArcLaunchIssue(
-  project: Pick<Project, "calibration" | "objects" | "layers">,
+  project: Pick<Project, "calibration" | "objects" | "layers" | "stageTemplate">,
   selectedIds: readonly string[],
   activeLayerId: string,
 ): string | null {
-  if (project.calibration.mmPerPixel === null) return "校正後に利用できます。";
+  if (!isProjectReadyForPlacement(project)) return "校正後に利用できます。";
   if (selectedIds.length !== 1) return "指揮台を1台選択してください。";
   const podium = project.objects.find((object) => object.id === selectedIds[0]);
   if (!podium || podium.type !== "podium") return "指揮台を1台選択してください。";

@@ -8,6 +8,7 @@
 // を正本として参照し、この層では持たない。
 
 import type { PointMm, Project, SceneObject } from "../types/project";
+import { isProjectReadyForPlacement, stageTemplateBoundsMm } from "./stageTemplate";
 import { sceneObjectBoundsMm } from "./transform";
 import {
   STRING_ENSEMBLE_DEFAULT_TYPE_ID,
@@ -67,10 +68,10 @@ export const STRING_ENSEMBLE_ACTIVE_PRESET_ID: EnsemblePresetId = STRING_ENSEMBL
 
 /** 起動条件を満たさない理由。満たしていればnull。 */
 export function stringSectionTemplateLaunchIssue(
-  project: Pick<Project, "calibration" | "layers">,
+  project: Pick<Project, "calibration" | "layers" | "stageTemplate">,
   activeLayerId: string,
 ): string | null {
-  if (project.calibration.mmPerPixel === null) return "校正後に利用できます。";
+  if (!isProjectReadyForPlacement(project)) return "校正後に利用できます。";
   const layer = project.layers.find((candidate) => candidate.id === activeLayerId);
   if (!layer) return "配置先レイヤーが見つかりません。";
   if (!layer.visible) return "配置先レイヤーが非表示です。";
@@ -195,9 +196,11 @@ export interface StringTemplateBackgroundBounds {
 
 /** 校正済み背景の実寸範囲。未校正・背景なしはnull。 */
 export function stringTemplateBackgroundBoundsMm(
-  project: Pick<Project, "background" | "calibration">,
+  project: Pick<Project, "background" | "calibration" | "stageTemplate">,
   displaySizePx: { widthPx: number; heightPx: number },
 ): StringTemplateBackgroundBounds | null {
+  const templateBounds = stageTemplateBoundsMm(project.stageTemplate);
+  if (templateBounds) return templateBounds;
   const mmPerPixel = project.calibration.mmPerPixel;
   if (mmPerPixel === null || !project.background.imageDataUrl) return null;
   if (displaySizePx.widthPx <= 0 || displaySizePx.heightPx <= 0) return null;

@@ -20,4 +20,17 @@ describe("実寸スナップ", () => {
     const point = { xMm: 1234, yMm: 5678 };
     expect(snapPointMm(point, { settings: { ...settings, grid: false, objects: false, stageCenter: false }, otherObjects: [], stageWidthMm: 4000 })).toEqual(point);
   });
+  it("テンプレートの中央寄せ・下端寄せグリッド原点に吸着する", () => {
+    const templateSettings = { ...settings, objects: false, stageCenter: false, gridIntervalMm: 1820 };
+    const snapped = snapPointMm(
+      { xMm: 5605, yMm: 905 },
+      {
+        settings: templateSettings,
+        otherObjects: [],
+        gridOriginXMm: 5590,
+        gridOriginYMm: 10000,
+      },
+    );
+    expect(snapped).toEqual({ xMm: 5590, yMm: 900 });
+  });
 });

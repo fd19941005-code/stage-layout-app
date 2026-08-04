@@ -5,6 +5,7 @@ import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { instrumentLabelForPreset } from "./presets";
 import type { Background, Project, SceneObject } from "../types/project";
 import { effectiveMmPerPixel } from "../state/appState";
+import { isProjectReadyForPlacement, stageTemplateBoundsMm, stageTemplateGridLines } from "./stageTemplate";
 import { getBackgroundDisplaySizePx, getEffectiveCrop, sceneObjectBoundsMm } from "./transform";
 import { concertTomSetLabel, getSymbolLabelLayout, isConcertTomSetGroup, isSingleTimpaniPresetId, timpaniSizeLabelForPreset, renderSymbolDefinitionsSvg, renderSymbolUseSvg, symbolIdForObject, symbolLabelForPreset, type SymbolLabelLayout } from "./symbols";
 import { resolveObjectStyle, type ObjectStyle } from "./visualStyle";
@@ -98,6 +99,13 @@ export function exportBoundsMm(project: Project, layers: ExportLayerOptions): Ex
       { xMm: size.widthPx * mmPerPixel, yMm: size.heightPx * mmPerPixel },
     );
   }
+  const templateBounds = stageTemplateBoundsMm(project.stageTemplate);
+  if (layers.background && templateBounds && layerIsVisible(project, "layer-background")) {
+    points.push(
+      { xMm: templateBounds.minXMm, yMm: templateBounds.minYMm },
+      { xMm: templateBounds.maxXMm, yMm: templateBounds.maxYMm },
+    );
+  }
   for (const object of selectExportObjects(project, layers)) {
     const bounds = sceneObjectBoundsMm(object);
     points.push(
@@ -153,6 +161,20 @@ function renderBackgroundSvg(project: Project, layers: ExportLayerOptions, mmPer
   const cropWidthMm = crop.widthPx * mmPerPixel;
   const cropHeightMm = crop.heightPx * mmPerPixel;
   return `<g transform="${backgroundRotationTransform(background, mmPerPixel)}"><svg x="0" y="0" width="${cropWidthMm}" height="${cropHeightMm}" viewBox="${crop.xPx} ${crop.yPx} ${crop.widthPx} ${crop.heightPx}" preserveAspectRatio="none" overflow="visible"><image href="${escapeXml(background.imageDataUrl)}" x="0" y="0" width="${background.naturalWidthPx}" height="${background.naturalHeightPx}" opacity="${background.opacity}" preserveAspectRatio="none" /></svg></g>`;
+}
+
+function renderStageTemplateSvg(project: Project, layers: ExportLayerOptions): string {
+  const template = project.stageTemplate;
+  const bounds = stageTemplateBoundsMm(template);
+  if (!layers.background || !template || !bounds || !layerIsVisible(project, "layer-background")) return "";
+  const grid = stageTemplateGridLines(template);
+  const lines = layers.grid
+    ? [
+        ...grid.verticalLinesMm.map((xMm) => `<line x1="${xMm}" y1="0" x2="${xMm}" y2="${bounds.maxYMm}" />`),
+        ...grid.horizontalLinesMm.map((yMm) => `<line x1="0" y1="${yMm}" x2="${bounds.maxXMm}" y2="${yMm}" />`),
+      ].join("")
+    : "";
+  return `<g class="stage-template-export"><rect x="0" y="0" width="${bounds.maxXMm}" height="${bounds.maxYMm}" fill="#ffffff" />${lines ? `<g class="stage-template-export-grid" stroke="#9aa6b2" stroke-width="8" opacity="0.7">${lines}</g>` : ""}<rect x="0" y="0" width="${bounds.maxXMm}" height="${bounds.maxYMm}" fill="none" stroke="#52606d" stroke-width="14" /></g>`;
 }
 
 function renderGridSvg(bounds: ExportBounds, intervalMm = 910): string {
@@ -303,9 +325,10 @@ export function renderProjectToSvg(
   const mmPerPixel = effectiveMmPerPixel(project);
   const widthPx = outputWidthPx ?? Math.max(1, Math.round(bounds.widthMm));
   const heightPx = outputHeightPx ?? Math.max(1, Math.round(bounds.heightMm));
-  const grid = layers.grid ? renderGridSvg(bounds) : "";
+  const grid = layers.grid && !project.stageTemplate ? renderGridSvg(bounds) : "";
+  const stageTemplateSvg = renderStageTemplateSvg(project, layers);
   const objects = renderObjectsSvg(project, selectExportObjects(project, layers), layers);
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${widthPx}" height="${heightPx}" viewBox="${bounds.minXMm} ${bounds.minYMm} ${bounds.widthMm} ${bounds.heightMm}"><defs><marker id="annotation-arrow" markerWidth="16" markerHeight="16" refX="12" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#d12f2f" /></marker>${renderSymbolDefinitionsSvg()}</defs><rect x="${bounds.minXMm}" y="${bounds.minYMm}" width="${bounds.widthMm}" height="${bounds.heightMm}" fill="#ffffff" />${renderBackgroundSvg(project, layers, mmPerPixel)}${grid}${objects}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${widthPx}" height="${heightPx}" viewBox="${bounds.minXMm} ${bounds.minYMm} ${bounds.widthMm} ${bounds.heightMm}"><defs><marker id="annotation-arrow" markerWidth="16" markerHeight="16" refX="12" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#d12f2f" /></marker>${renderSymbolDefinitionsSvg()}</defs><rect x="${bounds.minXMm}" y="${bounds.minYMm}" width="${bounds.widthMm}" height="${bounds.heightMm}" fill="#ffffff" />${stageTemplateSvg}${renderBackgroundSvg(project, layers, mmPerPixel)}${grid}${objects}</svg>`;
 }
 
 function clampLongSide(value: number): number {
@@ -314,7 +337,7 @@ function clampLongSide(value: number): number {
 
 /** ブラウザのcanvasで出力SVGをPNG化する */
 export async function renderProjectToPng(project: Project, options: PngExportOptions): Promise<Blob> {
-  if (project.calibration.mmPerPixel === null) throw new Error("未校正のため出力できません");
+  if (!isProjectReadyForPlacement(project)) throw new Error("未校正のため出力できません");
   const bounds = exportBoundsMm(project, options.layers);
   const longSidePx = clampLongSide(options.longSidePx);
   const landscape = bounds.widthMm >= bounds.heightMm;
@@ -410,7 +433,7 @@ export function resolvePdfScaleDenominator(
 }
 
 export async function createProjectPdf(project: Project, options: PdfExportOptions): Promise<Blob> {
-  if (project.calibration.mmPerPixel === null) throw new Error("未校正のため出力できません");
+  if (!isProjectReadyForPlacement(project)) throw new Error("未校正のため出力できません");
   const bounds = exportBoundsMm(project, options.layers);
   const denominator = resolvePdfScaleDenominator(bounds, options);
   const pageSize = pageSizePoints(options.paper, options.orientation);

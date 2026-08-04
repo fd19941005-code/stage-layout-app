@@ -1,8 +1,8 @@
 // 右プロパティパネル(10.1): 背景、レイヤー、スナップ、選択物の編集。
 // 寸法変更は数値入力のみ(FR-042、FR-043)。ドラッグによる拡大縮小は提供しない。
 
-import { useEffect, useState, type ChangeEvent, type Dispatch, type KeyboardEvent, type ReactNode } from "react";
-import type { Action, AppState } from "../state/appState";
+import { useEffect, useRef, useState, type ChangeEvent, type Dispatch, type KeyboardEvent, type ReactNode } from "react";
+import { canPlaceObjects, type Action, type AppState } from "../state/appState";
 import type { SceneObject, Wall } from "../types/project";
 import type { Alignment } from "../core/layout";
 import type { RequirementCount, RequirementScope } from "../core/requirements";
@@ -72,6 +72,7 @@ function DraftNumberField({ label, value, min, max, disabled, className, onCommi
   const currentValue = typeof value === "number" && Number.isFinite(value) ? value : 0;
   const [draft, setDraft] = useState(String(currentValue));
   const [invalid, setInvalid] = useState(false);
+  const cancelOnBlurRef = useRef(false);
 
   useEffect(() => {
     setDraft(String(currentValue));
@@ -84,10 +85,21 @@ function DraftNumberField({ label, value, min, max, disabled, className, onCommi
   }
 
   function commit() {
+    if (cancelOnBlurRef.current) {
+      cancelOnBlurRef.current = false;
+      setDraft(String(currentValue));
+      setInvalid(false);
+      return;
+    }
     const next = Number(draft);
     if (!draft.trim() || !Number.isFinite(next) || (min !== undefined && next < min) || (max !== undefined && next > max)) {
       setDraft(String(currentValue));
       setInvalid(true);
+      return;
+    }
+    if (next === currentValue) {
+      setDraft(String(currentValue));
+      setInvalid(false);
       return;
     }
     setInvalid(false);
@@ -109,7 +121,12 @@ function DraftNumberField({ label, value, min, max, disabled, className, onCommi
         onBlur={commit}
         onKeyDown={(event) => {
           if (event.key === "Enter") event.currentTarget.blur();
-          if (event.key === "Escape") { reset(); event.currentTarget.blur(); }
+          if (event.key === "Escape") {
+            event.preventDefault();
+            cancelOnBlurRef.current = true;
+            reset();
+            event.currentTarget.blur();
+          }
         }}
       />
       {invalid && <small className="input-error">数値を確認してください</small>}
@@ -614,7 +631,7 @@ export function PropertyPanel({ state, dispatch, onOpenSaveUserTemplate, onOpenG
         <summary>一括配置</summary>
         <section className="arrangement-tools">
 
-        <button type="button" disabled={!activeLayer || activeLayer.locked || !activeLayer.visible || state.project.calibration.mmPerPixel === null} onClick={onOpenRiserGroup}>山台を一括配置</button>
+        <button type="button" disabled={!activeLayer || activeLayer.locked || !activeLayer.visible || !canPlaceObjects(state.project)} onClick={onOpenRiserGroup}>山台を一括配置</button>
         <button
           type="button"
           disabled={chairArcIssue !== null}

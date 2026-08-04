@@ -1,7 +1,7 @@
 // 要件定義書 第9章「データ要件」に基づくプロジェクトモデル定義。
 // 最重要設計原則: 配置物の正本は常にmm単位。px値は保存しない。
 
-export const SCHEMA_VERSION = "1.9.0";
+export const SCHEMA_VERSION = "1.10.0";
 
 /** 実寸座標系(mm)上の点 */
 export interface PointMm {
@@ -88,6 +88,15 @@ export interface SnapSettings {
   thresholdMm: number;
   guides?: boolean;
   guideThresholdMm?: number;
+}
+
+export interface StageTemplate {
+  kind: "rectangular-grid";
+  widthMm: number;
+  depthMm: number;
+  gridIntervalMm: number;
+  horizontalAnchor: "center";
+  verticalAnchor: "bottom";
 }
 
 export type GuideKind = "horizontal" | "vertical" | "stageCenter" | "stageFrontOffset" | "radial" | "arc";
@@ -210,6 +219,8 @@ export interface Project {
   walls: Wall[];
   /** 舞台前端。Phase 5の客席視点に使用 */
   stageFront: { yMm: number } | null;
+  /** Background画像なしで作成する実寸の舞台テンプレート */
+  stageTemplate: StageTemplate | null;
   exportSettings: ExportSettings;
   displaySettings: ProjectDisplaySettings;
   snapSettings: SnapSettings;

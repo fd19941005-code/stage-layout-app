@@ -49,6 +49,7 @@ import { DEFAULT_SNAP_SETTINGS } from "../core/snap";
 import { addGuideToProject, addStageCenterGuideToProject, addStageFrontGuideToProject, deleteGuideFromProject, moveGuideInProject, setGuideLockedInProject, setGuideVisibleInProject, synchronizeProjectGuides, updateGuideInProject } from "../core/guideState";
 import { DEFAULT_LIBRARY_PREFERENCES, normalizeLibraryPreferences, recordRecentPresets, toggleFavoritePreset, type LibraryPreferences } from "../core/library";
 import { createEmptyProject, DEFAULT_LAYER_ID, generateId } from "../core/project";
+import { createStageTemplate, isProjectReadyForPlacement } from "../core/stageTemplate";
 import { CONCERT_TOM_SET_LAYOUT, TIMPANI_SET_LAYOUT } from "../core/instrumentCatalog";
 import { CHAIR_MUSIC_STAND_SET_PRESET_ID, findPreset, isObjectResizable } from "../core/presets";
 import { defaultAssetVariantIdForPreset, visualAssetVariantsForPreset } from "../core/symbolAssets";
@@ -162,15 +163,17 @@ export function effectiveMmPerPixel(project: Project): number {
 }
 
 export function canPlaceObjects(project: Project): boolean {
-  return project.calibration.mmPerPixel !== null;
+  return isProjectReadyForPlacement(project);
 }
 
 export type Action =
   | { type: "NEW_PROJECT" }
+  | { type: "NEW_PROJECT_WITH_STAGE_TEMPLATE"; name: string; widthMm: number; depthMm: number }
   | { type: "LOAD_PROJECT"; project: Project }
   | { type: "SET_PROJECT_NAME"; name: string }
   | { type: "SET_METADATA"; metadata: ProjectMetadata }
   | { type: "SET_EXPORT_SETTINGS"; settings: ExportSettings }
+  | { type: "SET_EXPORT_CONFIGURATION"; metadata: ProjectMetadata; settings: ExportSettings }
   | { type: "SET_DISPLAY_SETTINGS"; settings: ProjectDisplaySettings }
   | { type: "SET_BACKGROUND"; imageDataUrl: string; naturalWidthPx: number; naturalHeightPx: number; sourceType: BackgroundSourceType; sourcePage: number | null }
   | { type: "SET_BACKGROUND_CROP"; crop: CropPx | null }
@@ -296,6 +299,35 @@ function pushPast(past: readonly Project[], project: Project): Project[] {
   return [...past, project].slice(-MAX_HISTORY_ENTRIES);
 }
 
+function sameProjectMetadata(left: ProjectMetadata, right: ProjectMetadata): boolean {
+  return left.hallName === right.hallName
+    && left.performanceName === right.performanceName
+    && left.date === right.date
+    && left.author === right.author
+    && left.notes === right.notes;
+}
+
+function sameExportSettings(left: ExportSettings, right: ExportSettings): boolean {
+  return left.paper === right.paper
+    && left.orientation === right.orientation
+    && left.scale === right.scale;
+}
+
+function commitExportConfiguration(
+  state: AppState,
+  metadata: ProjectMetadata,
+  settings: ExportSettings,
+): AppState {
+  if (sameProjectMetadata(state.project.metadata, metadata) && sameExportSettings(state.project.exportSettings, settings)) {
+    return state;
+  }
+  return commitProject(state, {
+    ...state.project,
+    metadata: { ...metadata },
+    exportSettings: { ...settings },
+  });
+}
+
 function commitProject(state: AppState, project: Project): AppState {
   return {
     ...state,
@@ -365,9 +397,19 @@ function addObjects(state: AppState, objects: readonly SceneObject[]): AppState 
   return { ...selected, libraryPreferences: recordRecentPresets(selected.libraryPreferences, objects.flatMap((object) => object.presetId ? [object.presetId] : [])) };
 }
 
-function offsetObject(source: SceneObject, id: string, zIndex: number): SceneObject {
+function offsetObject(
+  source: SceneObject,
+  id: string,
+  zIndex: number,
+  idMap: ReadonlyMap<string, string>,
+  groupIdMap: ReadonlyMap<string, string>,
+  existingObjectIds: ReadonlySet<string>,
+): SceneObject {
   const dx = 500;
   const dy = 500;
+  const onRiserId = source.onRiserId
+    ? idMap.get(source.onRiserId) ?? (existingObjectIds.has(source.onRiserId) ? source.onRiserId : null)
+    : null;
   return {
     ...source,
     id,
@@ -375,6 +417,8 @@ function offsetObject(source: SceneObject, id: string, zIndex: number): SceneObj
     yMm: source.yMm + dy,
     endXMm: typeof source.endXMm === "number" ? source.endXMm + dx : source.endXMm,
     endYMm: typeof source.endYMm === "number" ? source.endYMm + dy : source.endYMm,
+    onRiserId,
+    groupId: source.groupId ? groupIdMap.get(source.groupId) ?? null : null,
     locked: false,
     zIndex,
   };
@@ -385,10 +429,22 @@ function duplicateObjects(state: AppState, ids: readonly string[]): AppState {
     ids.includes(object.id) && !object.backgroundFixed && !layerIsLocked(state.project, object.layerId),
   );
   if (selected.length === 0) return state;
+
+  const idMap = new Map<string, string>(selected.map((source) => [source.id, generateId("obj")]));
+  const groupIdMap = new Map<string, string>();
+  for (const source of selected) {
+    if (source.groupId && !groupIdMap.has(source.groupId)) {
+      groupIdMap.set(source.groupId, generateId("group"));
+    }
+  }
+  const existingObjectIds = new Set(state.project.objects.map((object) => object.id));
   const copies = selected.map((source, index) => offsetObject(
     source,
-    generateId("obj"),
+    idMap.get(source.id) as string,
     state.project.objects.length + index,
+    idMap,
+    groupIdMap,
+    existingObjectIds,
   ));
   const next = commitProject(state, { ...state.project, objects: [...state.project.objects, ...copies] });
   return setSelection(next, copies.map((copy) => copy.id));
@@ -515,6 +571,21 @@ function normalizeSnapSettings(settings: SnapSettings): SnapSettings {
   };
 }
 
+function sameObjectStyle(left: SceneObject["style"], right: SceneObject["style"]): boolean {
+  const leftRecord = left as Record<string, unknown> | undefined;
+  const rightRecord = right as Record<string, unknown> | undefined;
+  const keys = new Set([...Object.keys(leftRecord ?? {}), ...Object.keys(rightRecord ?? {})]);
+  return [...keys].every((key) => leftRecord?.[key] === rightRecord?.[key]);
+}
+
+function sameSceneObject(left: SceneObject, right: SceneObject): boolean {
+  const keys = new Set([...Object.keys(left), ...Object.keys(right)]);
+  return [...keys].every((key) => {
+    if (key === "style") return sameObjectStyle(left.style, right.style);
+    return left[key as keyof SceneObject] === right[key as keyof SceneObject];
+  });
+}
+
 function updateObject(state: AppState, id: string, patch: Partial<SceneObject>): AppState {
   const current = state.project.objects.find((object) => object.id === id);
   if (!current) return state;
@@ -532,6 +603,7 @@ function updateObject(state: AppState, id: string, patch: Partial<SceneObject>):
     heightMm: Math.max(0, Number.isFinite(patch.heightMm) ? patch.heightMm as number : current.heightMm),
     rotationDeg: normalizeDeg(Number.isFinite(patch.rotationDeg) ? patch.rotationDeg as number : current.rotationDeg),
   };
+  if (sameSceneObject(current, nextObject)) return state;
   return commitProject(state, {
     ...state.project,
     objects: state.project.objects.map((object) => object.id === id ? nextObject : object),
@@ -742,10 +814,17 @@ function resetProjectState(state: AppState, project?: Project): AppState {
 export function appReducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case "NEW_PROJECT": return resetProjectState(state);
+    case "NEW_PROJECT_WITH_STAGE_TEMPLATE": {
+      const stageTemplate = createStageTemplate(action.widthMm, action.depthMm);
+      if (!stageTemplate) return state;
+      const name = action.name.trim() || "新規プロジェクト";
+      return resetProjectState(state, { ...createEmptyProject(name), stageTemplate });
+    }
     case "LOAD_PROJECT": return resetProjectState(state, synchronizeProjectGuides(action.project, effectiveMmPerPixel(action.project)));
     case "SET_PROJECT_NAME": return commitProject(state, { ...state.project, name: action.name });
     case "SET_METADATA": return commitProject(state, { ...state.project, metadata: { ...action.metadata } });
     case "SET_EXPORT_SETTINGS": return commitProject(state, { ...state.project, exportSettings: { ...action.settings } });
+    case "SET_EXPORT_CONFIGURATION": return commitExportConfiguration(state, action.metadata, action.settings);
     case "SET_DISPLAY_SETTINGS": return commitProject(state, {
       ...state.project,
       displaySettings: {
@@ -767,6 +846,7 @@ export function appReducer(state: AppState, action: Action): AppState {
           rotationDeg: 0 as const,
         },
         calibration: { mmPerPixel: null, pointA: null, pointB: null, realDistanceMm: null, calibratedAt: null },
+        stageTemplate: null,
       };
       return commitProject(state, synchronizeProjectGuides(nextProject, effectiveMmPerPixel(nextProject)));
     }

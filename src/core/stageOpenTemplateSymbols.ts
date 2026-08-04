@@ -83,6 +83,17 @@ function removeElements(source: string, tag: string): string {
 }
 
 /**
+ * Editor exports contain namespace-prefixed attributes such as inkscape:connector-curvature.
+ * The source SVG's root namespace declarations are intentionally not copied into the shared
+ * defs block, so leaving these attributes behind makes the standalone export SVG invalid in browsers.
+ */
+function normalizeNamespacedAttributes(source: string): string {
+  return source
+    .replace(/\bxlink:href\s*=\s*(["'][^"']*["'])/gi, "href=$1")
+    .replace(/\s+(?!xml:)[A-Za-z_][\w.-]*:[A-Za-z_][\w.-]*\s*=\s*(?:"[^"]*"|'[^']*')/g, "");
+}
+
+/**
  * The source SVGs contain local symbols and English annotations. Normalize them
  * before placing several assets in one shared defs block.
  */
@@ -100,6 +111,7 @@ export function normalizeStageOpenTemplateSvg(raw: string, prefix: string, rotat
   body = removeElements(body, "style");
   body = removeElements(body, "text");
   body = body.replace(/<!--[\s\S]*?-->/g, "");
+  body = normalizeNamespacedAttributes(body);
 
   const ids = new Set<string>();
   for (const match of body.matchAll(/\bid="([^"]+)"/g)) ids.add(match[1]);

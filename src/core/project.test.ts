@@ -6,6 +6,7 @@ import {
   deserializeProject,
   serializeProject,
 } from "./project";
+import { createStageTemplate } from "./stageTemplate";
 import { SCHEMA_VERSION, type SceneObject } from "../types/project";
 import { INSTRUMENT_BODY_MASTERS } from "./instrumentCatalog";
 
@@ -205,5 +206,16 @@ describe("プロジェクト保存・復元 (FR-003、AC-009)", () => {
     const custom = deserializeProject(JSON.stringify(customRaw));
     expect(custom.objects[0].widthMm).toBe(800);
     expect(custom.objects[0].depthMm).toBe(800);
+  });
+  it("実寸舞台テンプレートを保存・復元し、旧JSONではnullになる", () => {
+    const project = createEmptyProject("template");
+    project.stageTemplate = createStageTemplate(13000, 10000);
+
+    const restored = deserializeProject(serializeProject(project));
+    expect(restored.stageTemplate).toEqual(project.stageTemplate);
+
+    const raw = JSON.parse(serializeProject(project)) as Record<string, unknown>;
+    delete raw.stageTemplate;
+    expect(deserializeProject(JSON.stringify(raw)).stageTemplate).toBeNull();
   });
 });

@@ -10,7 +10,8 @@ import {
   type SceneObject,
   type Wall,
 } from "../types/project";
-import { clampCrop } from "./transform";
+import { clampCrop, normalizeDeg } from "./transform";
+import { createStageTemplate, KEN_MM } from "./stageTemplate";
 import { normalizeGuide } from "./guides";
 import { parseObjectStyle } from "./visualStyle";
 import {
@@ -69,6 +70,7 @@ export function createEmptyProject(name: string): Project {
     objects: [],
     guides: [],
     walls: [],
+    stageTemplate: null,
     stageFront: null,
     exportSettings: { paper: "A3", orientation: "landscape", scale: "1:100" },
     displaySettings: { instrumentLabelsVisible: true, instrumentLabelLanguage: "ja" },
@@ -366,7 +368,7 @@ export function deserializeProject(json: string): Project {
           widthMm: migratedDimensions?.widthMm ?? Math.max(1, num(o.widthMm, 1)),
           depthMm: migratedDimensions?.depthMm ?? Math.max(1, num(o.depthMm, 1)),
           heightMm: Math.max(0, num(o.heightMm, 0)),
-          rotationDeg: num(o.rotationDeg, 0),
+          rotationDeg: normalizeDeg(num(o.rotationDeg, 0)),
           label: str(o.label, ""),
           onRiserId: typeof o.onRiserId === "string" ? o.onRiserId : null,
           avatar: typeof o.avatar === "string" ? o.avatar : null,
@@ -440,6 +442,14 @@ export function deserializeProject(json: string): Project {
   const stageFront = isRecord(raw.stageFront)
     ? { yMm: num(raw.stageFront.yMm, 0) }
     : null;
+  const stageTemplate = isRecord(raw.stageTemplate) && raw.stageTemplate.kind === "rectangular-grid"
+    ? createStageTemplate(
+        num(raw.stageTemplate.widthMm, 0),
+        num(raw.stageTemplate.depthMm, 0),
+        num(raw.stageTemplate.gridIntervalMm, KEN_MM),
+      )
+    : null;
+
 
   return {
     ...base,
@@ -495,6 +505,7 @@ export function deserializeProject(json: string): Project {
     guides,
     walls,
     stageFront,
+    stageTemplate,
     exportSettings: {
       paper: exp.paper === "A4" ? "A4" : "A3",
       orientation: exp.orientation === "portrait" ? "portrait" : "landscape",

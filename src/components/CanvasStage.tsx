@@ -19,7 +19,7 @@ import {
   zoomAt,
   type ScreenPoint,
 } from "../core/transform";
-import { createPresetObject, effectiveMmPerPixel, type Action, type AppState, type ObjectMove } from "../state/appState";
+import { canPlaceObjects, createPresetObject, effectiveMmPerPixel, type Action, type AppState, type ObjectMove } from "../state/appState";
 import { lineArrangementGapFromPointer, lineArrangementGuide, marqueeBoundsMm, moveSelectionIds, selectionBoundsMm } from "../core/layout";
 import { findAlignmentGuides, type AlignmentGuideLine } from "../core/alignmentGuides";
 import type { RiserGroupSession } from "./RiserGroupDialog";
@@ -56,6 +56,7 @@ import { defaultAssetVariantIdForPreset } from "../core/symbolAssets";
 import { snapPointMm } from "../core/snap";
 import { rotationDegTowardPoint } from "../core/orientation";
 
+import { stageTemplateBoundsMm, stageTemplateGridLines, stageTemplateGridOrigins } from "../core/stageTemplate";
 import { generateId } from "../core/project";
 import { concertTomSetLabel, getSymbolLabelLayout, isConcertTomSetGroup, isSingleTimpaniPresetId, timpaniSizeLabelForPreset, SYMBOL_DEFINITIONS, SYMBOL_VIEW_BOX, symbolIdForObject, symbolLabelForPreset, symbolPaintProps, type SymbolNode } from "../core/symbols";
 import { resolveObjectStyle, type ObjectStyle } from "../core/visualStyle";
@@ -249,15 +250,19 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice, onContextMe
   useEffect(() => {
     if (mode !== "aimPoint") setAimPointPreview(null);
   }, [mode]);
-  const { view, background, calibration } = project;
+  const { view, background, stageTemplate } = project;
   const mmpp = effectiveMmPerPixel(project);
-  const calibrated = calibration.mmPerPixel !== null;
+  const placementReady = canPlaceObjects(project);
   const crop = getEffectiveCrop(background);
   const displaySize = getBackgroundDisplaySizePx(background);
   const cropWidthMm = crop.widthPx * mmpp;
   const cropHeightMm = crop.heightPx * mmpp;
-  const stageWidthMm = displaySize.widthPx * mmpp;
-  const guideBounds = guideBoundsForProject(project, stageWidthMm, cropHeightMm);
+  const templateBounds = stageTemplateBoundsMm(stageTemplate);
+  const templateGrid = stageTemplateGridLines(stageTemplate);
+  const templateGridOrigins = stageTemplateGridOrigins(stageTemplate);
+  const stageWidthMm = templateBounds?.maxXMm ?? displaySize.widthPx * mmpp;
+  const stageHeightMm = templateBounds?.maxYMm ?? cropHeightMm;
+  const guideBounds = guideBoundsForProject(project, stageWidthMm, stageHeightMm);
   const chairArcPodium = chairArc ? project.objects.find((object) => object.id === chairArc.options.podiumId) ?? null : null;
   // プレビュー椅子は標準chairプリセットの生成経路を通し、既存の円形シンボルをそのまま使う。
   const chairArcTemplate = chairArc ? createPresetObject("chair", chairArc.options.layerId, 0) : null;
@@ -292,6 +297,8 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice, onContextMe
       stageWidthMm,
       guides: project.guides,
       guideAnchors: project.objects.filter((object) => object.type === "podium"),
+      gridOriginXMm: templateGridOrigins?.xMm,
+      gridOriginYMm: templateGridOrigins?.yMm,
     });
   }
 
@@ -304,7 +311,7 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice, onContextMe
 
   function placeUserTemplate(pMm: PointMm) {
     if (!pendingUserTemplateId) return;
-    if (!calibrated) {
+    if (!placementReady) {
       onNotice("縮尺未設定のため配置できません。先に「縮尺合わせ」で2点と実距離を指定してください。");
       return;
     }
@@ -354,7 +361,7 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice, onContextMe
 
   function placePreset(pMm: PointMm, keepPending: boolean) {
     if (!pendingPresetId) return;
-    if (!calibrated) {
+    if (!placementReady) {
       onNotice("縮尺未設定のため配置できません。先に「縮尺合わせ」で2点と実距離を指定してください。");
       return;
     }
@@ -625,7 +632,7 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice, onContextMe
       onRiserGroupChange({ ...riserGroup, options: { ...riserGroup.options, center: pMm }, pickingAnchor: false });
       return;
     }    if (mode === "traceWall" || mode === "calibrate" || mode === "verifyCalibration" || mode === "measure") {
-      if (mode === "traceWall" && !calibrated) {
+      if (mode === "traceWall" && !placementReady) {
         onNotice("縮尺未設定のため壁トレースできません。先に縮尺合わせをしてください。");
         pointersRef.current.delete(e.pointerId);
         return;
@@ -747,12 +754,12 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice, onContextMe
     const screen = toScreen(e);
     if (!pointersRef.current.has(e.pointerId) && e.buttons === 0) {
       if (mode === "aimPoint") setAimPointPreview(screenToMm(screen, view));
-      onCursorMm(calibrated ? screenToMm(screen, view) : null);
+      onCursorMm(placementReady ? screenToMm(screen, view) : null);
       return;
     }
     pointersRef.current.set(e.pointerId, screen);
     if (mode === "aimPoint") setAimPointPreview(screenToMm(screen, view));
-    onCursorMm(calibrated ? screenToMm(screen, view) : null);
+    onCursorMm(placementReady ? screenToMm(screen, view) : null);
     const drag = dragRef.current;
     if (!drag) return;
     if (drag.kind === "pinch") {
@@ -953,8 +960,28 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice, onContextMe
    * グリッドスナップが有効なときだけ、スナップ先の実寸グリッドを描く。
    * 線が潰れて見える倍率では描画しない(mm間隔が画面上2px未満)。
    */
+  function renderStageTemplate() {
+    if (!templateBounds) return null;
+    const lineStyle = { strokeWidth: Math.max(1, 8 / Math.max(0.005, view.zoom)) };
+    return (
+      <g className="stage-template" pointerEvents="none">
+        <rect className="stage-template-surface" x={0} y={0} width={templateBounds.maxXMm} height={templateBounds.maxYMm} />
+        <g className="stage-template-grid" style={lineStyle}>
+          {templateGrid.verticalLinesMm.map((xMm) => (
+            <line key={"stage-template-v-" + xMm} x1={xMm} y1={0} x2={xMm} y2={templateBounds.maxYMm} />
+          ))}
+          {templateGrid.horizontalLinesMm.map((yMm) => (
+            <line key={"stage-template-h-" + yMm} x1={0} y1={yMm} x2={templateBounds.maxXMm} y2={yMm} />
+          ))}
+        </g>
+        <rect className="stage-template-outline" x={0} y={0} width={templateBounds.maxXMm} height={templateBounds.maxYMm} />
+      </g>
+    );
+  }
+
   function renderSnapGrid() {
     const settings = project.snapSettings;
+    if (templateBounds) return null;
     const intervalMm = settings.gridIntervalMm;
     if (!settings.grid || !Number.isFinite(intervalMm) || intervalMm <= 0) return null;
     if (intervalMm * view.zoom < 2) return null;
@@ -1482,6 +1509,7 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice, onContextMe
           </g>
         )}
 
+        {renderStageTemplate()}
         {renderSnapGrid()}
         <GuideOverlay project={project} bounds={guideBounds} zoom={view.zoom} />
         {sortedObjects.map(renderObject)}
