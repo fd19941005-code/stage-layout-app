@@ -1,6 +1,7 @@
 // 座標変換の純粋関数群(9.4 座標変換の原則、12.1 実装上の制約)。
 // UIコンポーネントへ散在させず、ここに集約する。自動テスト必須領域(11.4)。
 
+import { stageTemplateBoundsMm } from "./stageTemplate";
 import type { Background, CropPx, PointMm, PointPx, Project, SceneObject, ViewState } from "../types/project";
 
 /** 画面上の点(px)。保存対象にしてはならない */
@@ -235,7 +236,7 @@ export function sceneObjectBoundsMm(obj: SceneObject): { minXMm: number; minYMm:
  * 同じmm座標系でまとめるため、画面のフィット操作でも実寸データは変更しない。
  */
 export function fitViewToProject(
-  project: Pick<Project, "background" | "calibration" | "layers" | "objects" | "walls">,
+  project: Pick<Project, "background" | "calibration" | "layers" | "objects" | "walls" | "stageTemplate">,
   viewportWidth: number,
   viewportHeight: number,
   paddingPx = 48,
@@ -256,6 +257,11 @@ export function fitViewToProject(
   if (project.background.imageDataUrl && project.background.visible && visibleLayerIds.has("layer-background")) {
     const display = getBackgroundDisplaySizePx(project.background);
     include(0, 0, display.widthPx * mmPerPixel, display.heightPx * mmPerPixel);
+  }
+
+  const templateBounds = stageTemplateBoundsMm(project.stageTemplate);
+  if (templateBounds) {
+    include(templateBounds.minXMm, templateBounds.minYMm, templateBounds.maxXMm, templateBounds.maxYMm);
   }
 
   for (const object of project.objects) {

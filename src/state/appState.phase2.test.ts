@@ -114,6 +114,73 @@ describe("複数選択・一括編集 (FR-050、FR-052、FR-056)", () => {
     expect(state.project.objects).toHaveLength(3);
   });
 
+  it("複製したグループは原本と独立したグループになる", () => {
+    let state = withObjects([chair("a"), chair("b", 1000)]);
+    state = appReducer(state, { type: "SELECT_MANY", ids: ["a", "b"] });
+    state = appReducer(state, { type: "GROUP_SELECTED" });
+    const originalGroupId = state.project.objects.find((object) => object.id === "a")?.groupId;
+    const historyBeforeDuplicate = state.past.length;
+
+    state = appReducer(state, { type: "DUPLICATE_SELECTED" });
+
+    const copiedObjects = state.selectedIds.map((id) => state.project.objects.find((object) => object.id === id));
+    expect(copiedObjects).toHaveLength(2);
+    expect(new Set(copiedObjects.map((object) => object?.groupId)).size).toBe(1);
+    expect(copiedObjects[0]?.groupId).not.toBe(originalGroupId);
+    expect(state.past).toHaveLength(historyBeforeDuplicate + 1);
+
+    state = appReducer(state, { type: "SELECT_GROUP", id: "a" });
+    expect(state.selectedIds).toEqual(["a", "b"]);
+  });
+
+  it("複製した山台上オブジェクトは複製先の山台を参照する", () => {
+    const riser: SceneObject = {
+      ...chair("riser"),
+      type: "riser",
+      presetId: "riser-6x6",
+      name: "山台",
+      widthMm: 1820,
+      depthMm: 1820,
+      heightMm: 450,
+    };
+    const chairOnRiser: SceneObject = {
+      ...chair("chair-on-riser", 500, 500),
+      onRiserId: "riser",
+    };
+    let state = withObjects([riser, chairOnRiser]);
+    state = appReducer(state, { type: "SELECT_MANY", ids: ["riser", "chair-on-riser"] });
+    state = appReducer(state, { type: "GROUP_SELECTED" });
+    state = appReducer(state, { type: "DUPLICATE_SELECTED" });
+
+    const copiedRiser = state.selectedIds.map((id) => state.project.objects.find((object) => object.id === id)).find((object) => object?.type === "riser");
+    const copiedChair = state.selectedIds.map((id) => state.project.objects.find((object) => object.id === id)).find((object) => object?.id !== copiedRiser?.id);
+    expect(copiedRiser).toBeTruthy();
+    expect(copiedChair?.onRiserId).toBe(copiedRiser?.id);
+    expect(copiedChair?.groupId).toBe(copiedRiser?.groupId);
+  });
+
+  it("山台を複製しない場合は既存の山台参照を維持する", () => {
+    const riser: SceneObject = {
+      ...chair("riser"),
+      type: "riser",
+      presetId: "riser-6x6",
+      name: "山台",
+      widthMm: 1820,
+      depthMm: 1820,
+      heightMm: 450,
+    };
+    const chairOnRiser: SceneObject = {
+      ...chair("chair-on-riser", 500, 500),
+      onRiserId: "riser",
+    };
+    let state = withObjects([riser, chairOnRiser]);
+    state = appReducer(state, { type: "SELECT", id: "chair-on-riser" });
+    state = appReducer(state, { type: "DUPLICATE_SELECTED" });
+
+    const copiedChair = state.project.objects.find((object) => state.selectedIds.includes(object.id));
+    expect(copiedChair?.onRiserId).toBe("riser");
+  });
+
   it("SELECT_RECT additive preserves existing selection", () => {
     let state = withObjects([chair("a"), chair("b", 1000), chair("c", 2000)]);
     state = appReducer(state, { type: "SELECT", id: "a" });

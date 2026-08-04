@@ -1,7 +1,7 @@
 // PNG/PDF出力ダイアログ(FR-080〜085)。出力設定と欄外情報をまとめて指定する。
 
 import { useRef, useState, type Dispatch } from "react";
-import type { Action, AppState } from "../state/appState";
+import { canPlaceObjects, type Action, type AppState } from "../state/appState";
 import type { ExportSettings, ProjectMetadata } from "../types/project";
 import {
   appServices,
@@ -29,7 +29,7 @@ export function ExportDialog({ state, dispatch, onClose, onNotice }: Props) {
   const [paper, setPaper] = useState<ExportSettings["paper"]>(state.project.exportSettings.paper);
   const [orientation, setOrientation] = useState<ExportSettings["orientation"]>(state.project.exportSettings.orientation);
   const [scale, setScale] = useState<ExportSettings["scale"]>(state.project.exportSettings.scale);
-  const [layers, setLayers] = useState<ExportLayerOptions>({ ...DEFAULT_EXPORT_LAYERS });
+  const [layers, setLayers] = useState<ExportLayerOptions>({ ...DEFAULT_EXPORT_LAYERS, grid: state.project.stageTemplate !== null });
   const [metadata, setMetadata] = useState<ProjectMetadata>({ ...state.project.metadata });
   const [busy, setBusy] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -44,7 +44,7 @@ export function ExportDialog({ state, dispatch, onClose, onNotice }: Props) {
   }
 
   async function handleExport() {
-    if (state.project.calibration.mmPerPixel === null) {
+    if (!canPlaceObjects(state.project)) {
       onNotice("未校正のため出力できません。先に校正してください。");
       return;
     }
@@ -52,8 +52,6 @@ export function ExportDialog({ state, dispatch, onClose, onNotice }: Props) {
     const exportSettings: ExportSettings = { paper, orientation, scale };
     const exportProject = { ...state.project, metadata, exportSettings };
     try {
-      dispatch({ type: "SET_METADATA", metadata });
-      dispatch({ type: "SET_EXPORT_SETTINGS", settings: exportSettings });
       const artifact = format === "png"
         ? await appServices.exporter.exportPng(exportProject, { longSidePx: pngLongSidePx, layers })
         : await appServices.exporter.exportPdf(exportProject, { paper, orientation, scale, layers });
@@ -62,6 +60,7 @@ export function ExportDialog({ state, dispatch, onClose, onNotice }: Props) {
         mimeType: artifact.mimeType,
         data: artifact.data,
       });
+      dispatch({ type: "SET_EXPORT_CONFIGURATION", metadata, settings: exportSettings });
       onNotice(`${format === "png" ? "PNG" : "PDF"}を出力しました`);
       onClose();
     } catch (error) {
@@ -75,7 +74,7 @@ export function ExportDialog({ state, dispatch, onClose, onNotice }: Props) {
     <div className="dialog-backdrop">
       <div ref={dialogRef} className="dialog export-dialog" role="dialog" aria-modal="true" aria-label="図面出力" tabIndex={-1}>
         <h2>図面を出力</h2>
-        {state.project.calibration.mmPerPixel === null && <p className="error-message">未校正のため出力できません。</p>}
+        {!canPlaceObjects(state.project) && <p className="error-message">実寸設定がないため出力できません。</p>}
 
         <label>
           出力形式
@@ -105,7 +104,7 @@ export function ExportDialog({ state, dispatch, onClose, onNotice }: Props) {
           <label className="row"><input type="checkbox" checked={layers.background} onChange={(e) => setLayer("background", e.target.checked)} />背景</label>
           <label className="row"><input type="checkbox" checked={layers.objects} onChange={(e) => setLayer("objects", e.target.checked)} />配置物</label>
           <label className="row"><input type="checkbox" checked={layers.labels} onChange={(e) => setLayer("labels", e.target.checked)} />ラベル</label>
-          <label className="row"><input type="checkbox" checked={layers.grid} onChange={(e) => setLayer("grid", e.target.checked)} />910mmグリッド</label>
+          <label className="row"><input type="checkbox" checked={layers.grid} onChange={(e) => setLayer("grid", e.target.checked)} />{state.project.stageTemplate ? "1間グリッド" : "910mmグリッド"}</label>
           <label className="row"><input type="checkbox" checked={layers.annotations !== false} onChange={(e) => setLayer("annotations", e.target.checked)} />注釈</label>
         </div>
 
@@ -118,7 +117,7 @@ export function ExportDialog({ state, dispatch, onClose, onNotice }: Props) {
 
         <div className="dialog-buttons">
           <button type="button" onClick={onClose}>キャンセル</button>
-          <button type="button" className="primary" disabled={busy || state.project.calibration.mmPerPixel === null} onClick={handleExport}>{busy ? "出力中…" : `${format === "png" ? "PNG" : "PDF"}を出力`}</button>
+          <button type="button" className="primary" disabled={busy || !canPlaceObjects(state.project)} onClick={handleExport}>{busy ? "出力中…" : `${format === "png" ? "PNG" : "PDF"}を出力`}</button>
         </div>
         {format === "pdf" && (
           <div className="export-scale-hint hint">

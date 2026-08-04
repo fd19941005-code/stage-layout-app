@@ -16,6 +16,11 @@ interface AutosaveRecord {
   updatedAt: string;
 }
 
+interface AutosaveSnapshot {
+  project: Project;
+  savedAtMs: number;
+}
+
 function indexedDb(): IDBFactory | null {
   return typeof window !== "undefined" && window.indexedDB ? window.indexedDB : null;
 }
@@ -36,35 +41,73 @@ function openDatabase(): Promise<IDBDatabase> {
   });
 }
 
-function readLegacyAutosave(): Project | undefined {
+function autosaveSnapshot(json: string | undefined): AutosaveSnapshot | undefined {
+  if (!json) return undefined;
+  try {
+    const raw = JSON.parse(json) as unknown;
+    const project = deserializeProject(json);
+    const rawUpdatedAt = typeof raw === "object" && raw !== null && !Array.isArray(raw)
+      && typeof (raw as Record<string, unknown>).updatedAt === "string"
+      ? (raw as Record<string, unknown>).updatedAt as string
+      : "";
+    const parsedTime = Date.parse(rawUpdatedAt);
+    return {
+      project,
+      savedAtMs: Number.isFinite(parsedTime) ? parsedTime : Number.NEGATIVE_INFINITY,
+    };
+  } catch {
+    return undefined;
+  }
+}
+
+function readLegacyAutosave(): AutosaveSnapshot | undefined {
   try {
     if (typeof localStorage === "undefined") return undefined;
-    const json = localStorage.getItem(LEGACY_AUTOSAVE_KEY);
-    return json ? deserializeProject(json) : undefined;
+    return autosaveSnapshot(localStorage.getItem(LEGACY_AUTOSAVE_KEY) ?? undefined);
   } catch {
     return undefined;
   }
 }
 
 export async function loadAutosavedProject(): Promise<Project | undefined> {
+  let indexedDbSnapshot: AutosaveSnapshot | undefined;
+  let database: IDBDatabase | undefined;
   try {
-    const database = await openDatabase();
+    database = await openDatabase();
     const record = await new Promise<AutosaveRecord | undefined>((resolve, reject) => {
-      const transaction = database.transaction(STORAGE_STORE_NAME, "readonly");
+      const transaction = database!.transaction(STORAGE_STORE_NAME, "readonly");
       const request = transaction.objectStore(STORAGE_STORE_NAME).get(AUTOSAVE_RECORD_KEY);
       request.onsuccess = () => resolve(request.result as AutosaveRecord | undefined);
       request.onerror = () => reject(request.error);
     });
     database.close();
-    if (record?.json) return deserializeProject(record.json);
+    database = undefined;
+    indexedDbSnapshot = autosaveSnapshot(record?.json);
   } catch {
+    database?.close();
     // 既存localStorageまたはプライベートブラウズの容量制限へフォールバックする。
   }
-  return readLegacyAutosave();
+
+  const legacySnapshot = readLegacyAutosave();
+  if (!indexedDbSnapshot) return legacySnapshot?.project;
+  if (!legacySnapshot) return indexedDbSnapshot.project;
+  // IDBの書き込み失敗時にlocalStorageへ退避した最新スナップショットを優先する。
+  return legacySnapshot.savedAtMs > indexedDbSnapshot.savedAtMs
+    ? legacySnapshot.project
+    : indexedDbSnapshot.project;
 }
 
-export async function saveAutosavedProject(project: Project): Promise<void> {
-  const json = serializeProject(project);
+/**
+ * 自動保存の書き込みを呼び出し順に直列化する。
+ *
+ * IndexedDBのトランザクション自体は非同期なので、短時間に発生した複数の
+ * 編集を並行して保存すると、古い要求が最後に完了して新しい状態を上書き
+ * する可能性がある。ここで要求を一本のキューに通し、最新のスナップショット
+ * が必ず最後に書き込まれるようにする。
+ */
+let autosaveWriteQueue: Promise<void> = Promise.resolve();
+
+async function persistAutosave(json: string, updatedAt: string): Promise<void> {
   try {
     const database = await openDatabase();
     await new Promise<void>((resolve, reject) => {
@@ -72,7 +115,7 @@ export async function saveAutosavedProject(project: Project): Promise<void> {
       transaction.objectStore(STORAGE_STORE_NAME).put({
         key: AUTOSAVE_RECORD_KEY,
         json,
-        updatedAt: project.updatedAt,
+        updatedAt,
       } satisfies AutosaveRecord);
       transaction.oncomplete = () => resolve();
       transaction.onerror = () => reject(transaction.error ?? new Error("IndexedDBへの保存に失敗しました"));
@@ -87,4 +130,13 @@ export async function saveAutosavedProject(project: Project): Promise<void> {
       throw new Error("自動保存に失敗しました(容量超過の可能性があります)");
     }
   }
+}
+
+export function saveAutosavedProject(project: Project): Promise<void> {
+  const json = serializeProject(project);
+  const task = autosaveWriteQueue.then(() => persistAutosave(json, project.updatedAt));
+  // 失敗した要求でキュー全体が永久に止まらないようにする。呼び出し元には
+  // taskを返すため、個々の保存失敗は従来どおり通知できる。
+  autosaveWriteQueue = task.catch(() => undefined);
+  return task;
 }

@@ -2,6 +2,7 @@
 // ここではmm座標とrotationDegだけを扱い、SVGの反転や描画固有の状態は扱わない。
 
 import type { PointMm, Project, SceneObject } from "../types/project";
+import { stageTemplateBoundsMm } from "./stageTemplate";
 import { getBackgroundDisplaySizePx, normalizeDeg } from "./transform";
 
 export type OrientationIdFactory = (prefix: string) => string;
@@ -32,8 +33,10 @@ export function rotationDegTowardPoint(origin: PointMm, target: PointMm): number
 
 /** 背景図面の実寸幅から舞台中心線のX座標を求める。未校正・背景なしではnull。 */
 export function stageCenterXMm(
-  project: Pick<Project, "background" | "calibration">,
+  project: Pick<Project, "background" | "calibration" | "stageTemplate">,
 ): number | null {
+  const templateBounds = stageTemplateBoundsMm(project.stageTemplate);
+  if (templateBounds) return templateBounds.maxXMm / 2;
   const mmPerPixel = project.calibration.mmPerPixel;
   if (!project.background.imageDataUrl || !Number.isFinite(mmPerPixel) || (mmPerPixel ?? 0) <= 0) return null;
   const displaySize = getBackgroundDisplaySizePx(project.background);

@@ -36,6 +36,8 @@ export interface SnapContext {
   settings: SnapSettings;
   otherObjects: readonly SceneObject[];
   stageWidthMm?: number | null;
+  gridOriginXMm?: number | null;
+  gridOriginYMm?: number | null;
 }
 
 /** 1点を有効なスナップ候補へ寄せる。複数選択移動では代表点にだけ適用する。 */
@@ -47,8 +49,10 @@ export function snapPointMm(point: PointMm, context: SnapContext): PointMm {
 
   if (settings.grid && settings.gridIntervalMm > 0) {
     const interval = settings.gridIntervalMm;
-    const gridX = Math.round(xMm / interval) * interval;
-    const gridY = Math.round(yMm / interval) * interval;
+    const originX = context.gridOriginXMm ?? 0;
+    const originY = context.gridOriginYMm ?? 0;
+    const gridX = originX + Math.round((xMm - originX) / interval) * interval;
+    const gridY = originY + Math.round((yMm - originY) / interval) * interval;
     if (Math.abs(gridX - xMm) <= threshold) xMm = gridX;
     if (Math.abs(gridY - yMm) <= threshold) yMm = gridY;
   }

@@ -14,7 +14,14 @@ afterEach(() => {
 
 describe("PDF出力のブラウザ境界", () => {
   it("AC-011/AC-012: 1ページPDFを生成し、A3横のページ寸法を維持する", async () => {
-    vi.stubGlobal("URL", { createObjectURL: () => "blob:stage-export", revokeObjectURL: () => undefined });
+    const createdBlobs: Blob[] = [];
+    vi.stubGlobal("URL", {
+      createObjectURL: (value: Blob) => {
+        createdBlobs.push(value);
+        return "blob:stage-export";
+      },
+      revokeObjectURL: () => undefined,
+    });
     vi.stubGlobal("Image", class FakeImage {
       onload: (() => void) | null = null;
       onerror: (() => void) | null = null;
@@ -47,5 +54,8 @@ describe("PDF出力のブラウザ境界", () => {
     const page = pdf.getPage(0);
     expect(page.getWidth()).toBeCloseTo(420 * 72 / 25.4, 5);
     expect(page.getHeight()).toBeCloseTo(297 * 72 / 25.4, 5);
+    const svgOutputs = await Promise.all(createdBlobs.map((blob) => blob.text()));
+    expect(svgOutputs[0]).not.toMatch(/\b(?:inkscape|sodipodi|rdf|cc|dc):/);
+    expect(svgOutputs[0]).not.toContain("xlink:");
   });
 });

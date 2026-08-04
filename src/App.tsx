@@ -3,7 +3,7 @@
 
 import { Component, lazy, Suspense, useCallback, useEffect, useMemo, useReducer, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import type { PointMm, Project } from "./types/project";
-import { appReducer, canPlaceObjects, createInitialState, type AppState, type ToolMode } from "./state/appState";
+import { appReducer, canPlaceObjects, createInitialState, effectiveMmPerPixel, type AppState, type ToolMode } from "./state/appState";
 import { generateId } from "./core/project";
 import { favoritePresetIdForDigit, LIBRARY_PREFERENCES_KEY, type LibraryPreferences } from "./core/library";
 import {
@@ -48,6 +48,7 @@ import { findPreset } from "./core/presets";
 import { countRequiredItems, type RequirementScope } from "./core/requirements";
 import { fitViewToObjects, fitViewToProject, getBackgroundDisplaySizePx, zoomAt } from "./core/transform";
 import { deserializeUserTemplates, serializeUserTemplates } from "./core/userTemplate";
+import { stageTemplateBoundsMm } from "./core/stageTemplate";
 import {
   STRING_LAYOUT_12_CONTRABASS_SEAT_PRESET_ID,
   STRING_LAYOUT_12_SEAT_PRESET_ID,
@@ -288,8 +289,7 @@ export function App() {
       showNotice(issue);
       return;
     }
-    const mmPerPixel = state.project.calibration.mmPerPixel;
-    if (mmPerPixel === null) return;
+    const mmPerPixel = effectiveMmPerPixel(state.project);
     rememberDialogTrigger();
     setChairArc(null);
     setStringTemplate(null);
@@ -297,14 +297,15 @@ export function App() {
     setLineArrangement(null);
 
     const displaySize = getBackgroundDisplaySizePx(state.project.background);
-    const stageBounds = state.project.background.imageDataUrl
+    const templateBounds = stageTemplateBoundsMm(state.project.stageTemplate);
+    const stageBounds = templateBounds ?? (state.project.background.imageDataUrl
       ? {
           minXMm: 0,
           minYMm: 0,
           maxXMm: displaySize.widthPx * mmPerPixel,
           maxYMm: displaySize.heightPx * mmPerPixel,
         }
-      : null;
+      : null);
     const requestedCenter = stageBounds
       ? { xMm: (stageBounds.minXMm + stageBounds.maxXMm) / 2, yMm: (stageBounds.minYMm + stageBounds.maxYMm) / 2 }
       : { xMm: 0, yMm: 0 };
@@ -343,7 +344,7 @@ export function App() {
 
 
   function openRiserGroup() {
-    if (state.project.calibration.mmPerPixel === null) {
+    if (!canPlaceObjects(state.project)) {
       showNotice("縮尺未設定のため山台を配置できません。先に縮尺合わせをしてください。");
       return;
     }
@@ -356,16 +357,17 @@ export function App() {
     setChairArc(null);
     setStringTemplate(null);
     setLineArrangement(null);
-    const mmPerPixel = state.project.calibration.mmPerPixel;
+    const mmPerPixel = effectiveMmPerPixel(state.project);
     const displaySize = getBackgroundDisplaySizePx(state.project.background);
-    const stageBounds = state.project.background.imageDataUrl
+    const templateBounds = stageTemplateBoundsMm(state.project.stageTemplate);
+    const stageBounds = templateBounds ?? (state.project.background.imageDataUrl
       ? {
           minXMm: 0,
           minYMm: 0,
           maxXMm: displaySize.widthPx * mmPerPixel,
           maxYMm: displaySize.heightPx * mmPerPixel,
         }
-      : null;
+      : null);
     const requestedCenter = cursorMm ?? (stageBounds
       ? { xMm: (stageBounds.minXMm + stageBounds.maxXMm) / 2, yMm: (stageBounds.minYMm + stageBounds.maxYMm) / 2 }
       : { xMm: 0, yMm: 0 });
@@ -431,12 +433,13 @@ export function App() {
     // 背景画像がない場合はgetEffectiveCropが1pxへ丸めるため、実寸幅として扱わない。
     const displaySize = getBackgroundDisplaySizePx(state.project.background);
     const mmPerPixel = state.project.calibration.mmPerPixel ?? 0;
+    const templateBounds = stageTemplateBoundsMm(state.project.stageTemplate);
     const hasBackground = Boolean(state.project.background.imageDataUrl);
     setChairArc(null);
     setStringTemplate(createStringSectionTemplateSession({
       selectedPodium,
-      backgroundWidthMm: hasBackground ? displaySize.widthPx * mmPerPixel : 0,
-      backgroundHeightMm: hasBackground ? displaySize.heightPx * mmPerPixel : 0,
+      backgroundWidthMm: templateBounds?.maxXMm ?? (hasBackground ? displaySize.widthPx * mmPerPixel : 0),
+      backgroundHeightMm: templateBounds?.maxYMm ?? (hasBackground ? displaySize.heightPx * mmPerPixel : 0),
       stageFrontYMm: state.project.stageFront?.yMm ?? null,
       layerId: state.activeLayerId,
     }));
@@ -870,7 +873,7 @@ export function App() {
       {!viewer3dOpen && <Toolbar state={state} dispatch={dispatch} onNotice={showNotice} onEditCommand={executeEditCommand} clipboardAvailable={clipboardRef.current !== null} onFocusCanvas={focusCanvas} getCanvasViewport={getCanvasViewport} onExport={() => setExportOpen(true)} onToggle3d={toggleViewer3D} is3dOpen={viewer3dOpen} wallDraft={wallDraft} onFinishWall={finishWallTrace} onClearWallDraft={() => setWallDraft([])} onToggleLibrary={() => setLibraryOpen((open) => !open)} onToggleInspector={() => setInspectorOpen((open) => !open)} libraryOpen={libraryOpen} inspectorOpen={inspectorOpen} />}
       {!storageReady && <div className="banner info">ローカル保存データを確認中…</div>}
       {state.mode === "traceWall" && <div className="banner info">壁トレースモード: 背景上を順にクリックして壁の頂点を追加します。2点以上で「壁を確定」、高さはmmで指定してください({wallDraft.length}点)</div>}
-      {state.project.calibration.mmPerPixel === null && (
+      {state.project.calibration.mmPerPixel === null && state.project.stageTemplate === null && (
         <div className="banner warning">未校正です。背景読込 → 縮尺合わせで既知の2点をクリック → その2点間の実寸を選択、の順で始めてください(1間=1820mm、半間=910mm)。</div>
       )}
       {state.mode === "calibrate" && state.calibPointsPx.length < 2 && (

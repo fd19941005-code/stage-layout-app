@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { createStageTemplate } from "./stageTemplate";
 import { createEmptyProject } from "./project";
 import {
   exportBoundsMm,
@@ -41,11 +42,30 @@ describe("出力計算(FR-080〜085、11.4)", () => {
     expect(svg).not.toContain("selection-marquee");
   });
 
+  it("出力SVGの共有defsに未宣言の名前空間接頭辞を残さない", () => {
+    const project = createEmptyProject("SVG名前空間テスト");
+    project.calibration.mmPerPixel = 1;
+    const svg = renderProjectToSvg(project, { background: false, objects: false, labels: false, grid: false }, 100, 100);
+    expect(svg).not.toMatch(/\b(?:inkscape|sodipodi|rdf|cc|dc):/);
+    expect(svg).not.toContain("xlink:");
+  });
+
   it("fitはページの使用可能領域へ収まる縮尺分母を計算する", () => {
     const project = createEmptyProject("fit");
     project.calibration.mmPerPixel = 1;
     project.objects.push({ id: "large", type: "shape", presetId: null, name: "大きな図形", xMm: 10000, yMm: 5000, widthMm: 20000, depthMm: 10000, heightMm: 0, rotationDeg: 0, label: "", onRiserId: null, avatar: null, locked: false, visible: true, groupId: null, layerId: "layer-objects", zIndex: 0, shape: "rect" });
     const denominator = resolvePdfScaleDenominator(exportBoundsMm(project, { background: false, objects: true, labels: true, grid: false }), { paper: "A3", orientation: "landscape", scale: "fit" });
     expect(denominator).toBeGreaterThan(50);
+  });
+  it("実寸舞台テンプレートを舞台範囲と1間グリッド付きで出力する", () => {
+    const project = createEmptyProject("template export");
+    project.stageTemplate = createStageTemplate(13000, 10000);
+
+    const bounds = exportBoundsMm(project, { background: true, objects: false, labels: false, grid: true });
+    expect(bounds).toMatchObject({ minXMm: 0, minYMm: 0, widthMm: 13000, heightMm: 10000 });
+    const svg = renderProjectToSvg(project, { background: true, objects: false, labels: false, grid: true });
+    expect(svg).toContain("stage-template-export");
+    expect(svg).toContain(`x1="5590" y1="0"`);
+    expect(svg).toContain(`x1="0" y1="900"`);
   });
 });

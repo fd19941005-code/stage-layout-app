@@ -5,10 +5,11 @@ import { useEffect, useRef, useState, type Dispatch } from "react";
 import type { PointMm } from "../types/project";
 import type { EditCommand } from "../core/editCommands";
 import type { Action, AppState, ToolMode } from "../state/appState";
-import { toolModeLabel } from "../state/appState";
+import { canPlaceObjects, toolModeLabel } from "../state/appState";
 import { fitViewToProject, zoomAt } from "../core/transform";
 import { findPreset } from "../core/presets";
 import { useDialogFocus } from "./useDialogFocus";
+import { NewProjectDialog } from "./NewProjectDialog";
 import { EditMenu } from "./EditMenu";
 import { appServices, isPdfFile, isSupportedBackgroundFile, type PdfPageImage } from "../services";
 
@@ -54,6 +55,7 @@ export function Toolbar({
 }: Props) {
   const [pdfPages, setPdfPages] = useState<PdfPageImage[]>([]);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [newProjectDialogOpen, setNewProjectDialogOpen] = useState(false);
   const [fileSaving, setFileSaving] = useState(false);
   const [wallHeightMm, setWallHeightMm] = useState(6000);
   const [projectNameDraft, setProjectNameDraft] = useState(state.project.name);
@@ -71,7 +73,18 @@ export function Toolbar({
 
   function handleNew() {
     if (saveState === "dirty" && !window.confirm("未保存の変更があります。新規プロジェクトを作成しますか？")) return;
+    setNewProjectDialogOpen(true);
+  }
+
+  function createBlankProject() {
     dispatch({ type: "NEW_PROJECT" });
+    setNewProjectDialogOpen(false);
+  }
+
+  function createStageTemplate(widthMm: number, depthMm: number) {
+    dispatch({ type: "NEW_PROJECT_WITH_STAGE_TEMPLATE", name: "実寸舞台テンプレート", widthMm, depthMm });
+    setNewProjectDialogOpen(false);
+    onNotice("実寸舞台テンプレートを作成しました。横方向は中央基準、縦方向は図面下端基準です。");
   }
 
   function applyBackground(page: PdfPageImage, sourceType: "image" | "pdf") {
@@ -149,7 +162,11 @@ export function Toolbar({
   }
 
   function setMode(next: ToolMode) {
-    if (next === "verifyCalibration" && project.calibration.mmPerPixel === null) {
+    if (next === "calibrate" && project.stageTemplate) {
+      onNotice("実寸舞台テンプレートでは縮尺合わせは不要です。");
+      return;
+    }
+    if (next === "verifyCalibration" && (project.stageTemplate || project.calibration.mmPerPixel === null)) {
       onNotice("縮尺設定済みの図面で縮尺確認を実行してください");
       return;
     }
@@ -218,7 +235,7 @@ export function Toolbar({
             <button type="button" onClick={handleNew}>新規</button>
             <button type="button" onClick={handleOpen}>開く</button>
             <button type="button" className="primary-action" onClick={handleSave} disabled={fileSaving}>{fileSaving ? "ファイル保存中…" : "ファイル保存"}</button>
-            <button type="button" onClick={onExport} disabled={project.calibration.mmPerPixel === null}>出力</button>
+            <button type="button" onClick={onExport} disabled={!canPlaceObjects(project)}>出力</button>
           </div>
 
           <EditMenu state={state} clipboardAvailable={clipboardAvailable} onCommand={onEditCommand} />
@@ -257,8 +274,8 @@ export function Toolbar({
           <div className="tool-cluster">
             <span className="tool-cluster-label">図面</span>
             <button type="button" onClick={handleBackgroundOpen} disabled={pdfLoading}>{pdfLoading ? "読込中…" : "背景読込"}</button>
-            {modeButton("calibrate", "縮尺合わせ")}
-            {modeButton("verifyCalibration", "縮尺確認", project.calibration.mmPerPixel === null)}
+            {modeButton("calibrate", "縮尺合わせ", project.stageTemplate !== null)}
+            {modeButton("verifyCalibration", "縮尺確認", project.stageTemplate !== null || project.calibration.mmPerPixel === null)}
             {modeButton("measure", "距離を測る")}
           </div>
           <div className="tool-cluster">
@@ -293,6 +310,7 @@ export function Toolbar({
           </div>
         )}
       </header>
+      {newProjectDialogOpen && <NewProjectDialog onClose={() => setNewProjectDialogOpen(false)} onCreateBlank={createBlankProject} onCreateStageTemplate={createStageTemplate} />}
 
       {pdfPages.length > 0 && (
         <div className="dialog-backdrop">
