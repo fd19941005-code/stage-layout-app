@@ -1084,6 +1084,7 @@ export function createChairArcSession(podium: SceneObject, layerId: string): Cha
       rowGapMm: CHAIR_ARC_DEFAULT_ROW_GAP_MM,
       rows: CHAIR_ARC_DEFAULT_ROW_CHAIR_COUNTS.map((chairCount) => ({ chairCount })),
       layerId,
+      includeMusicStands: true,
     },
     pickingDirection: false,
   };

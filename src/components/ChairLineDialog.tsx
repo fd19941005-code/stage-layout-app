@@ -41,7 +41,7 @@ export function createChairLineSession(start: { xMm: number; yMm: number }, laye
       gapMm: CHAIR_LINE_DEFAULT_GAP_MM,
       rotationDeg: CHAIR_LINE_DEFAULT_ROTATION_DEG,
       layerId,
-      includeMusicStands: false,
+      includeMusicStands: true,
     },
     pickingAnchor: false,
   };

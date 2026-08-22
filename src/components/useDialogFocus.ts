@@ -72,10 +72,18 @@ export function useDialogFocus<T extends HTMLElement>(
       }
     }
 
-    dialogElement.addEventListener("keydown", handleKeyDown);
+    function focusBackInside(event: FocusEvent) {
+      if (dialogElement.contains(event.target as Node)) return;
+      const firstFocusable = dialogElement.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
+      (firstFocusable ?? dialogElement).focus();
+    }
+
+    document.addEventListener("keydown", handleKeyDown, true);
+    document.addEventListener("focusin", focusBackInside);
     return () => {
       window.cancelAnimationFrame(focusFrame);
-      dialogElement.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("keydown", handleKeyDown, true);
+      document.removeEventListener("focusin", focusBackInside);
       if (trigger?.isConnected) {
         window.requestAnimationFrame(() => trigger.focus());
       }

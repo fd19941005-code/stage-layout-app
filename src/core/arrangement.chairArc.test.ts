@@ -220,6 +220,7 @@ describe("椅子多列円弧配置の幾何計算", () => {
     expect(session.options.rows.map((row) => row.chairCount)).toEqual([6, 8]);
     expect(session.options.firstGapMm).toBe(1820);
     expect(session.options.rowGapMm).toBe(910);
+    expect(session.options.includeMusicStands).toBe(true);
     expect(session.pickingDirection).toBe(false);
   });
 

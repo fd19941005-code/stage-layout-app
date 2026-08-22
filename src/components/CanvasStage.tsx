@@ -169,6 +169,16 @@ function snapRotation(deg: number): number {
   return Math.round(deg / 15) * 15;
 }
 
+/** 回転ハンドルはオブジェクト外周から300mm離し、当たり領域が本体へ重ならないようにする。 */
+const ROTATE_HANDLE_OFFSET_MM = 300;
+const ROTATE_HANDLE_TOUCH_RADIUS_PX = 16;
+const ROTATE_HANDLE_MAX_HIT_RADIUS_MM = 240;
+
+function rotateHandleHitRadiusMm(zoom: number): number {
+  if (!Number.isFinite(zoom) || zoom <= 0) return ROTATE_HANDLE_MAX_HIT_RADIUS_MM;
+  return Math.min(ROTATE_HANDLE_TOUCH_RADIUS_PX / zoom, ROTATE_HANDLE_MAX_HIT_RADIUS_MM);
+}
+
 function annotationKindForMode(mode: AppState["mode"]): AnnotationKind | null {
   switch (mode) {
     case "annotationText": return "text";
@@ -1189,10 +1199,24 @@ export function CanvasStage({ state, dispatch, onCursorMm, onNotice, onContextMe
           </>
         )}
         {selected && editable && !isAnnotation && mode === "select" && (
-          <g className="rotate-handle" data-rotate-handle="true" data-object-id={object.id}>
-            <line x1={0} y1={-object.depthMm / 2} x2={0} y2={-object.depthMm / 2 - 300} />
-            <circle className="rotate-hit-area" pointerEvents="all" cx={0} cy={-object.depthMm / 2 - 300} r={28 / view.zoom} />
-            <circle cx={0} cy={-object.depthMm / 2 - 300} r={110} />
+          <g className="rotate-handle">
+            <line x1={0} y1={-object.depthMm / 2} x2={0} y2={-object.depthMm / 2 - ROTATE_HANDLE_OFFSET_MM} />
+            <circle
+              className="rotate-hit-area"
+              data-rotate-handle="true"
+              data-object-id={object.id}
+              pointerEvents="all"
+              cx={0}
+              cy={-object.depthMm / 2 - ROTATE_HANDLE_OFFSET_MM}
+              r={rotateHandleHitRadiusMm(view.zoom)}
+            />
+            <circle
+              data-rotate-handle="true"
+              data-object-id={object.id}
+              cx={0}
+              cy={-object.depthMm / 2 - ROTATE_HANDLE_OFFSET_MM}
+              r={110}
+            />
           </g>
         )}
       </g>

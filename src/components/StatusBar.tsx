@@ -18,27 +18,24 @@ export function StatusBar({ state, cursorMm, autosaveStatus, onRetryAutosave }: 
   const { calibration, stageTemplate } = state.project;
   const [mA, mB] = state.measurePointsMm;
   const autosaveLabel = autosaveStatus === "saving"
-    ? "自動保存中…"
+    ? "保存中…"
     : autosaveStatus === "saved"
-      ? "自動保存済み"
-      : autosaveStatus === "error"
-        ? "自動保存失敗"
-        : autosaveStatus === "pending"
-          ? "自動保存待機中…"
-          : "自動保存待機中";
+      ? "保存済み"
+    : autosaveStatus === "error"
+      ? "保存失敗"
+    : autosaveStatus === "pending"
+      ? "待機中…"
+      : "待機中";
   return (
-    <footer className="status-bar">
+    <footer className="status-bar" aria-label="図面の状態">
       <span className={!stageTemplate && calibration.mmPerPixel === null ? "warning" : ""}>
         {stageTemplate ? "実寸テンプレート: 1間 = 1,820mm" : calibration.mmPerPixel === null ? "縮尺未設定" : `縮尺設定済み: 1px = ${calibration.mmPerPixel.toFixed(2)}mm`}
       </span>
-      <span>{cursorMm ? `X: ${Math.round(cursorMm.xMm)}mm / Y: ${Math.round(cursorMm.yMm)}mm` : "—"}</span>
+      <span>{cursorMm ? `X: ${Math.round(cursorMm.xMm)}mm / Y: ${Math.round(cursorMm.yMm)}mm` : "座標なし"}</span>
       <span>{mA && mB ? `距離: ${Math.round(mmDistance(mA, mB))}mm` : ""}</span>
       <span>選択: {state.selectedIds.length} / {state.project.objects.length}個</span>
-      <span className={state.saveState === "dirty" ? "warning" : ""}>
-        {state.saveState === "dirty" ? "ファイル未保存" : "ファイル保存済み"}
-      </span>
       <span className={autosaveStatus === "error" ? "warning autosave-status" : "autosave-status"} aria-live="polite">
-        {autosaveLabel}
+        自動保存: {autosaveLabel}
         {autosaveStatus === "error" && (
           <button type="button" className="status-retry" onClick={onRetryAutosave}>再試行</button>
         )}

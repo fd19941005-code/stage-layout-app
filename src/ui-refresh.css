@@ -11,7 +11,17 @@
   --ux-teal-dark: #163f45;
   --ux-coral: #c65d45;
   --ux-gold: #c8943d;
+  --ux-primary: #c99348;
+  --ux-primary-hover: #e2b66a;
+  --ux-primary-ink: #21383a;
+  --ux-danger: #a03f39;
+  --ux-radius-control: 6px;
+  --ux-radius-panel: 8px;
+  --ux-radius-dialog: 10px;
+  --ux-radius-pill: 999px;
   --ux-shadow: 0 8px 22px rgba(30, 43, 43, 0.08);
+  --ux-shadow-drawer: 0 10px 30px rgba(18, 34, 36, 0.2);
+  --ux-shadow-dialog: 0 14px 34px rgba(27, 43, 44, 0.22);
 }
 
 html,
@@ -126,8 +136,8 @@ svg:focus-visible {
   align-items: center;
   min-height: 20px;
   padding: 1px 7px;
-  border-radius: 999px;
-  font-size: 10px;
+  border-radius: var(--ux-radius-pill);
+  font-size: 11px;
   font-weight: 800;
   white-space: nowrap;
 }
@@ -151,31 +161,30 @@ svg:focus-visible {
   min-height: 29px;
   padding: 5px 9px;
   border: 1px solid rgba(198, 220, 213, 0.26);
-  border-radius: 6px;
+  border-radius: var(--ux-radius-control);
   background: rgba(255, 255, 255, 0.08);
   color: #f7faf5;
   font-size: 11px;
   font-weight: 700;
-  transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+  transition: background 120ms ease, border-color 120ms ease;
 }
 
 .toolbar.app-toolbar button:hover:not(:disabled) {
   border-color: rgba(239, 218, 162, 0.8);
   background: rgba(255, 255, 255, 0.16);
-  transform: translateY(-1px);
 }
 
 .toolbar.app-toolbar button.primary-action {
-  border-color: #c99348;
-  background: #c99348;
-  color: #fffaf0;
+  border-color: var(--ux-primary);
+  background: var(--ux-primary);
+  color: var(--ux-primary-ink);
 }
 
 .toolbar.app-toolbar button.tool-button.active,
 .toolbar.app-toolbar button.panel-toggle[aria-pressed="true"] {
-  border-color: #e2b66a;
-  background: #e2b66a;
-  color: #21383a;
+  border-color: var(--ux-primary-hover);
+  background: var(--ux-primary-hover);
+  color: var(--ux-primary-ink);
 }
 
 
@@ -206,7 +215,7 @@ svg:focus-visible {
   min-width: 248px;
   padding: 6px;
   border: 1px solid #c9c2b4;
-  border-radius: 8px;
+  border-radius: var(--ux-radius-panel);
   background: #fffdf8;
   box-shadow: 0 12px 28px rgba(26, 43, 43, 0.22);
   color: #203438;
@@ -281,7 +290,7 @@ svg:focus-visible {
 .viewport-actions {
   padding: 3px 4px;
   border: 1px solid rgba(198, 220, 213, 0.2);
-  border-radius: 7px;
+  border-radius: var(--ux-radius-panel);
   background: rgba(10, 28, 31, 0.2);
 }
 
@@ -384,7 +393,7 @@ svg:focus-visible {
   width: 82px;
   padding: 4px 6px;
   border: 1px solid rgba(198, 220, 213, 0.28);
-  border-radius: 5px;
+  border-radius: var(--ux-radius-control);
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
 }
@@ -417,10 +426,11 @@ svg:focus-visible {
 .main-area {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(224px, 260px) minmax(0, 1fr) minmax(286px, 340px);
+  grid-template-columns: minmax(238px, 260px) minmax(420px, 1fr) minmax(300px, 340px);
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
+  isolation: isolate;
   background: var(--ux-paper);
 }
 
@@ -443,6 +453,10 @@ svg:focus-visible {
   border-left: 1px solid var(--ux-line);
 }
 
+.panel-scrim {
+  display: none;
+}
+
 .panel-heading {
   display: flex;
   align-items: flex-start;
@@ -456,13 +470,13 @@ svg:focus-visible {
 .panel-heading h2 {
   margin: 2px 0 0;
   color: var(--ux-ink);
-  font-size: 17px;
+  font-size: 18px;
   letter-spacing: -0.04em;
 }
 
 .eyebrow {
   color: var(--ux-muted);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 900;
   letter-spacing: 0.1em;
 }
@@ -510,7 +524,7 @@ svg:focus-visible {
 .property-panel > .inspector-section > summary {
   padding: 2px 0;
   color: var(--ux-ink);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 900;
   cursor: pointer;
 }
@@ -539,7 +553,7 @@ svg:focus-visible {
 .requirements-panel summary {
   padding: 2px 0;
   color: var(--ux-ink);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 900;
   cursor: pointer;
 }
@@ -650,21 +664,21 @@ svg:focus-visible {
 .property-panel h2 {
   margin: 0 0 9px;
   color: var(--ux-ink);
-  font-size: 13px;
+  font-size: 14px;
   letter-spacing: 0.01em;
 }
 
 .property-panel h3 {
   margin: 12px 0 6px;
   color: #526367;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .property-panel label {
   display: block;
   margin: 0 0 9px;
   color: #5e6b6d;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -684,7 +698,7 @@ svg:focus-visible {
   margin-top: 4px;
   padding: 6px 8px;
   border: 1px solid var(--ux-line-strong);
-  border-radius: 6px;
+  border-radius: var(--ux-radius-control);
   background: #fffefa;
   color: var(--ux-ink);
   font-size: 12px;
@@ -712,7 +726,7 @@ svg:focus-visible {
   margin-top: 4px;
   padding: 2px;
   border: 1px solid var(--ux-line-strong);
-  border-radius: 5px;
+  border-radius: var(--ux-radius-control);
   background: #fff;
 }
 
@@ -732,7 +746,7 @@ svg:focus-visible {
 .property-panel .hint {
   margin: 5px 0;
   color: #7b8889;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.5;
 }
 
@@ -764,7 +778,7 @@ svg:focus-visible {
   margin: 10px 0;
   padding: 10px;
   border: 1px solid #ddd8ca;
-  border-radius: 9px;
+  border-radius: var(--ux-radius-panel);
   background: #faf7ef;
 }
 
@@ -785,7 +799,7 @@ svg:focus-visible {
   min-height: 30px;
   padding: 4px 5px;
   border: 2px solid;
-  border-radius: 5px;
+  border-radius: var(--ux-radius-control);
   font-size: 10px;
   font-weight: 800;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.22);
@@ -809,7 +823,7 @@ svg:focus-visible {
   min-height: 30px;
   padding: 5px 7px;
   border: 1px solid var(--ux-line-strong);
-  border-radius: 6px;
+  border-radius: var(--ux-radius-control);
   background: #f8f7f1;
   color: #3f5558;
   font-size: 11px;
@@ -931,6 +945,8 @@ svg.canvas-stage .scene-object .symbol-label-light {
   min-height: 29px;
   align-items: center;
   padding: 5px 14px;
+  overflow-x: auto;
+  scrollbar-width: thin;
   border-top: 1px solid #273e42;
   background: #203c42;
   color: #d7e6df;
@@ -956,13 +972,42 @@ svg.canvas-stage .scene-object .symbol-label-light {
 
 .dialog {
   border: 1px solid #d9d5c8;
-  border-radius: 12px;
+  border-radius: var(--ux-radius-dialog);
   background: #fffdf8;
-  box-shadow: 0 20px 55px rgba(27, 43, 44, 0.24);
+  box-shadow: var(--ux-shadow-dialog);
+}
+
+.dialog-buttons {
+  gap: 8px;
+}
+
+.dialog-buttons button {
+  min-height: 34px;
+  border-radius: var(--ux-radius-control);
+  border-color: var(--ux-line-strong);
+  background: #f8f7f1;
+  color: var(--ux-ink);
+  font-weight: 700;
+}
+
+.dialog-buttons button:hover:not(:disabled) {
+  border-color: #9baaa4;
+  background: #eeece4;
+}
+
+.dialog-buttons button.primary {
+  border-color: var(--ux-primary);
+  background: var(--ux-primary);
+  color: var(--ux-primary-ink);
+}
+
+.dialog-buttons button.primary:hover:not(:disabled) {
+  border-color: var(--ux-primary-hover);
+  background: var(--ux-primary-hover);
 }
 
 /* Tablet and iPad: canvas stays mounted; panels become drawers. */
-@media (max-width: 960px) {
+@media (max-width: 1120px) {
   .toolbar.app-toolbar {
     padding-inline: 10px;
   }
@@ -990,8 +1035,22 @@ svg.canvas-stage .scene-object .symbol-label-light {
     position: absolute;
     top: 0;
     bottom: 0;
-    width: min(86vw, 360px);
+    width: min(88vw, 380px);
     transition: transform 180ms ease, box-shadow 180ms ease;
+    z-index: 5;
+  }
+
+  .panel-scrim {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: block;
+    width: 100%;
+    min-height: 100%;
+    padding: 0;
+    border: 0;
+    background: rgba(18, 34, 36, 0.22);
+    cursor: default;
   }
 
   .library-panel {
@@ -1007,7 +1066,7 @@ svg.canvas-stage .scene-object .symbol-label-light {
   .main-area.library-is-open .library-panel,
   .main-area.inspector-is-open .property-panel {
     transform: translateX(0);
-    box-shadow: 0 10px 35px rgba(18, 34, 36, 0.23);
+    box-shadow: var(--ux-shadow-drawer);
   }
 
   .main-area:not(.library-is-open) .library-panel,
@@ -1067,18 +1126,16 @@ svg.canvas-stage .scene-object .symbol-label-light {
 
 @media (max-width: 700px) {
   .toolbar-topline {
-    flex-wrap: nowrap;
-    overflow-x: auto;
+    flex-wrap: wrap;
+    overflow: visible;
     padding-bottom: 7px;
+    row-gap: 6px;
   }
 
   .brand-lockup {
-    flex: 0 0 165px;
-    position: sticky;
-    left: 0;
-    z-index: 3;
+    flex: 1 1 100%;
+    min-width: 0;
     padding-inline: 6px;
-    background: #18353b;
   }
 
   .brand-mark {
@@ -1096,6 +1153,9 @@ svg.canvas-stage .scene-object .symbol-label-light {
   .viewport-actions,
   .panel-actions {
     flex: 0 0 auto;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: thin;
   }
 
   .tool-ribbon {
@@ -1142,7 +1202,7 @@ svg.canvas-stage .scene-object .symbol-label-light {
   }
 }
 
-@media (min-width: 961px) {
+@media (min-width: 1121px) {
   .main-area .library-panel,
   .main-area .property-panel {
     position: relative;

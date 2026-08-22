@@ -146,6 +146,7 @@ function hasEditableSelection(state: AppState): boolean {
 }
 
 export function App() {
+  const PANEL_DRAWER_BREAKPOINT = 1120;
   const [state, dispatch] = useReducer(appReducer, undefined, () => createInitialState());
   const [storageReady, setStorageReady] = useState(false);
   const [templateSaveOpen, setTemplateSaveOpen] = useState(false);
@@ -167,8 +168,8 @@ export function App() {
   const [cursorMm, setCursorMm] = useState<PointMm | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [autosaveStatus, setAutosaveStatus] = useState<AutosaveStatus>("idle");
-  const [libraryOpen, setLibraryOpen] = useState(() => window.innerWidth > 960);
-  const [inspectorOpen, setInspectorOpen] = useState(() => window.innerWidth > 960);
+  const [libraryOpen, setLibraryOpen] = useState(() => window.innerWidth > PANEL_DRAWER_BREAKPOINT);
+  const [inspectorOpen, setInspectorOpen] = useState(() => window.innerWidth > PANEL_DRAWER_BREAKPOINT);
   const autosaveRequestRef = useRef(0);
   const noticeTimer = useRef<number | undefined>(undefined);
   const storageLoadStarted = useRef(false);
@@ -191,6 +192,29 @@ export function App() {
     };
   }, []);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    function keepDrawerStateUsable() {
+      if (window.innerWidth <= PANEL_DRAWER_BREAKPOINT && libraryOpen && inspectorOpen) {
+        setInspectorOpen(false);
+      }
+    }
+    keepDrawerStateUsable();
+    window.addEventListener("resize", keepDrawerStateUsable);
+    return () => window.removeEventListener("resize", keepDrawerStateUsable);
+  }, [libraryOpen, inspectorOpen]);
+
+  function toggleLibraryPanel() {
+    const nextOpen = !libraryOpen;
+    setLibraryOpen(nextOpen);
+    if (nextOpen && window.innerWidth <= PANEL_DRAWER_BREAKPOINT) setInspectorOpen(false);
+  }
+
+  function toggleInspectorPanel() {
+    const nextOpen = !inspectorOpen;
+    setInspectorOpen(nextOpen);
+    if (nextOpen && window.innerWidth <= PANEL_DRAWER_BREAKPOINT) setLibraryOpen(false);
+  }
 
   function showNotice(message: string) {
     setNotice(message);
@@ -870,8 +894,8 @@ export function App() {
 
   return (
     <div className="app-layout">
-      {!viewer3dOpen && <Toolbar state={state} dispatch={dispatch} onNotice={showNotice} onEditCommand={executeEditCommand} clipboardAvailable={clipboardRef.current !== null} onFocusCanvas={focusCanvas} getCanvasViewport={getCanvasViewport} onExport={() => setExportOpen(true)} onToggle3d={toggleViewer3D} is3dOpen={viewer3dOpen} wallDraft={wallDraft} onFinishWall={finishWallTrace} onClearWallDraft={() => setWallDraft([])} onToggleLibrary={() => setLibraryOpen((open) => !open)} onToggleInspector={() => setInspectorOpen((open) => !open)} libraryOpen={libraryOpen} inspectorOpen={inspectorOpen} />}
-      {!storageReady && <div className="banner info">ローカル保存データを確認中…</div>}
+      {!viewer3dOpen && <Toolbar state={state} dispatch={dispatch} onNotice={showNotice} onEditCommand={executeEditCommand} clipboardAvailable={clipboardRef.current !== null} onFocusCanvas={focusCanvas} getCanvasViewport={getCanvasViewport} onExport={() => setExportOpen(true)} onToggle3d={toggleViewer3D} is3dOpen={viewer3dOpen} wallDraft={wallDraft} onFinishWall={finishWallTrace} onClearWallDraft={() => setWallDraft([])} onToggleLibrary={toggleLibraryPanel} onToggleInspector={toggleInspectorPanel} libraryOpen={libraryOpen} inspectorOpen={inspectorOpen} />}
+      {!storageReady && <div className="banner info" role="status">ローカル保存データを確認中…</div>}
       {state.mode === "traceWall" && <div className="banner info">壁トレースモード: 背景上を順にクリックして壁の頂点を追加します。2点以上で「壁を確定」、高さはmmで指定してください({wallDraft.length}点)</div>}
       {state.project.calibration.mmPerPixel === null && state.project.stageTemplate === null && (
         <div className="banner warning">未校正です。背景読込 → 縮尺合わせで既知の2点をクリック → その2点間の実寸を選択、の順で始めてください(1間=1820mm、半間=910mm)。</div>
@@ -888,7 +912,7 @@ export function App() {
         <div className="banner info">{"\u6307\u5b9a\u70b9\u30e2\u30fc\u30c9: \u30ad\u30e3\u30f3\u30d0\u30b9\u4e0a\u306e\u57fa\u6e96\u70b9\u3092\u30af\u30ea\u30c3\u30af\u3059\u308b\u3068\u3001\u9078\u629e\u7269\u3092\u305d\u306e\u70b9\u3078\u5411\u3051\u307e\u3059\u3002Escape\u3067\u30ad\u30e3\u30f3\u30bb\u30eb\u3067\u304d\u307e\u3059\u3002"}</div>
       )}
       {state.mode.startsWith("annotation") && <div className="banner info">注釈モード: キャンバスをクリックまたはドラッグして注釈を作成します。作成後にラベルや寸法を編集できます。</div>}
-      {notice && <div className="banner notice">{notice}</div>}
+      {notice && <div className="banner notice" role="status" aria-live="polite">{notice}</div>}
 
       {viewer3dOpen ? (
         <Viewer3DErrorBoundary onClose={() => setViewer3dOpen(false)}>
@@ -898,7 +922,19 @@ export function App() {
         </Viewer3DErrorBoundary>
       ) : (
         <>
-          <main className={`main-area${libraryOpen ? " library-is-open" : ""}${inspectorOpen ? " inspector-is-open" : ""}`}>
+          <main
+            id="workspace-main"
+            className={`main-area${libraryOpen ? " library-is-open" : ""}${inspectorOpen ? " inspector-is-open" : ""}`}
+            aria-label="舞台配置作業領域"
+          >
+            {(libraryOpen || inspectorOpen) && (
+              <button
+                type="button"
+                className="panel-scrim"
+                aria-label="パネルを閉じてキャンバスに戻る"
+                onClick={() => { setLibraryOpen(false); setInspectorOpen(false); }}
+              />
+            )}
             <LibraryPanel state={state} dispatch={dispatch} onClose={() => setLibraryOpen(false)} onNotice={showNotice} onExportUserTemplates={exportUserTemplates} onImportUserTemplates={importUserTemplates} />
             <CanvasStage state={state} dispatch={dispatch} onCursorMm={setCursorMm} onRegisterCanvasController={registerCanvasController} onNotice={showNotice} wallDraft={wallDraft} onWallDraftChange={setWallDraft} onContextMenu={(position) => setContextMenu(position)} chairArc={chairArc} onChairArcChange={setChairArc} chairLine={chairLine} onChairLineChange={setChairLine} stringTemplate={stringTemplate} onStringTemplateChange={setStringTemplate} riserGroup={riserGroup} onRiserGroupChange={setRiserGroup} lineArrangement={lineArrangement} onLineArrangementChange={handleLineArrangementChange} previewObjects={stringTemplatePreview?.objects} riserPreviewObjects={riserPreview ?? undefined} chairLinePreviewObjects={chairLinePreview ?? undefined} />
             <PropertyPanel state={state} dispatch={dispatch} onOpenSaveUserTemplate={() => setTemplateSaveOpen(true)} onOpenGrid={setGridSourceId} onOpenChairArcRows={openChairArcRows} onOpenChairLine={openChairLine} onOpenStringSectionTemplate={openStringSectionTemplate} onOpenRiserGroup={openRiserGroup} onOpenLineArrangement={openLineArrangement} requirementCounts={requirementCounts} requirementScope={requirementScope} onRequirementScopeChange={setRequirementScope} onFocusCanvas={focusCanvas} onClose={() => setInspectorOpen(false)} />
