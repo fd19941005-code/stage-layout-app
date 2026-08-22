@@ -225,8 +225,13 @@ export function Toolbar({
                 }}
                 aria-label="プロジェクト名"
               />
-              <span className={`save-chip ${saveState === "dirty" ? "dirty" : "saved"}`}>
-                {saveState === "dirty" ? "ファイル未保存" : "ファイル保存済み"}
+              <span
+                className={`save-chip ${saveState === "dirty" ? "dirty" : "saved"}`}
+                role="status"
+                aria-live="polite"
+                title="JSONファイルへの明示保存の状態"
+              >
+                {saveState === "dirty" ? "ファイル: 未保存" : "ファイル: 保存済み"}
               </span>
             </div>
           </div>
@@ -265,8 +270,8 @@ export function Toolbar({
           </details>
 
           <div className="toolbar-group panel-actions" aria-label="パネル表示">
-            {onToggleLibrary && <button type="button" className="panel-toggle" aria-pressed={libraryOpen} onClick={onToggleLibrary}>ライブラリ</button>}
-            {onToggleInspector && <button type="button" className="panel-toggle" aria-pressed={inspectorOpen} onClick={onToggleInspector}>インスペクター</button>}
+            {onToggleLibrary && <button type="button" className="panel-toggle" aria-pressed={libraryOpen} aria-expanded={libraryOpen} aria-controls="library-panel" aria-label={`ライブラリを${libraryOpen ? "閉じる" : "開く"}`} onClick={onToggleLibrary}>ライブラリ</button>}
+            {onToggleInspector && <button type="button" className="panel-toggle" aria-pressed={inspectorOpen} aria-expanded={inspectorOpen} aria-controls="property-panel" aria-label={`インスペクターを${inspectorOpen ? "閉じる" : "開く"}`} onClick={onToggleInspector}>インスペクター</button>}
           </div>
         </div>
 

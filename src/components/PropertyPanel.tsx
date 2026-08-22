@@ -614,7 +614,7 @@ export function PropertyPanel({ state, dispatch, onOpenSaveUserTemplate, onOpenG
   }
 
   return (
-    <aside className="property-panel">
+    <aside id="property-panel" className="property-panel" aria-label="インスペクター">
       <div className="panel-heading">
         <div><span className="eyebrow">図面情報 / 編集</span><h2>インスペクター</h2></div>
         {onClose && <button type="button" className="panel-close" onClick={onClose} aria-label="インスペクターを閉じる">×</button>}
@@ -627,7 +627,7 @@ export function PropertyPanel({ state, dispatch, onOpenSaveUserTemplate, onOpenG
         {selectedObjects.length >= 2 && renderOrientationTools()}
         {renderMultipleProperties()}
       </section>
-      <details className="inspector-section" open>
+      <details className="inspector-section">
         <summary>一括配置</summary>
         <section className="arrangement-tools">
 

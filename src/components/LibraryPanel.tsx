@@ -124,9 +124,9 @@ export function LibraryPanel({ state, dispatch, onClose, onNotice, onExportUserT
   );
 
   return (
-    <aside className="library-panel symbol-library">
+    <aside id="library-panel" className="library-panel symbol-library" aria-label="シンボルライブラリ">
       <header className="library-header">
-        <p className="library-kicker">STAGE MARKS / 実寸プリセット</p>
+        <p className="library-kicker">実寸プリセット</p>
         <div className="library-title-row">
           <h2>シンボルライブラリ</h2>
           <span className="library-count" aria-label={`${resultCount}件表示`}>{resultCount}件</span>

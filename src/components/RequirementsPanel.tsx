@@ -20,7 +20,7 @@ export function RequirementsPanel({ counts, scope, onScopeChange }: Props) {
       <summary>必要物一覧</summary>
       <div className="requirements-panel-body">
         <p className="sr-only" role="status" aria-live="polite">
-          {counts.length === 0 ? "配置物はありません" : counts.map((row) => row.label + " " + row.count + "個").join("、")}
+          {counts.length === 0 ? "配置物はありません" : `必要物は${counts.length}種類、合計${totalObjects}個です`}
         </p>
         <fieldset className="requirements-scope">
           <legend>集計範囲</legend>
